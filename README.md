@@ -19,6 +19,30 @@ the tool in front of that check; it decides nothing about what an effect may do,
 from that repository at run time, and **replicates no install steps** - the next section says
 what has to be true on your machine.
 
+## Who reads this page
+
+Three readers, and each needs one thing from this tree:
+
+- **You, installing the package.** You need what has to be true on your machine, one call to
+  try, and what to do when every call is refused. This page answers the first; `guides/first-session.md`
+  answers the other two.
+- **The model this package runs.** It reads `skills/eyg-codemode/SKILL.md` and the tool's own rows
+  before it writes EYG; it needs the forms, the shape of a refusal, and where to ask for a function
+  it can reuse.
+- **The agent working in this repository.** It reads `AGENTS.md` and `docs/world/`, and needs the
+  commands with their costs and the rules a change must satisfy.
+
+## The words this package uses
+
+| word | what it means here |
+| --- | --- |
+| runner | the EYG CLI this package starts; it is the only thing that can answer for an effect |
+| preset | the EYG program the runner loads first, with one rule per effect it decides; this package ships `policies/agent-roots.eyg` and `policies/deny-all.eyg` |
+| roots | the directories a session may reach; the shipped preset reads them from `EYG_ALLOWED_ROOTS` |
+| the checks | a preset's decision for one effect, made before the host performs it |
+| checked, unchecked | an effect a preset answers for, and an effect no preset can forbid |
+| registry scope | a directory of function-sets the tool reads: the workspace, the home, this package's `libraries/` |
+
 ## What you need before it does anything
 
 **The EYG CLI is not in this package** - nothing here builds it, and the check lives in
