@@ -1,5 +1,5 @@
 ---
-id: pi.codemode-gate
+id: pi.codemode-tool
 type: entity
 owner: delegate
 status: current
@@ -11,18 +11,18 @@ supersedes: null
 superseded_by: null
 ---
 
-# The pi agent's coding tool is EYG behind the CLI gate
+# The pi agent's coding tool is EYG, checked effect by effect
 
 This workspace **is** the package: `pi list` (2026-11-18) resolves the declaration `..`
 in `.pi/settings.json` to `/home/chexxor/Git/pi-eyg-codemode`, whose one extension
 registers one tool, `eyg`. With `"-builtin:codemode"` in `extensions` the built-in
 JavaScript codemode is disabled, and `defaultTools` names only `read`, `edit`, `write`,
 `bash`, `codemode`, `grep`, so the model's channel to the outside world is an EYG
-program whose every effect is decided by the gate before the host performs it.
+program whose every effect is decided by the policy in force before the host performs it.
 
 - `extensions/eyg-codemode.ts` builds argv `[mode, "--policy", policy, "-c", code]`
   and spawns it with `pi.exec`, which has no shell, so no quoting can smuggle a second
-  command past the gate; with no policy configured the tool refuses to run anything.
+  command past the checks; with no policy configured the tool refuses to run anything.
 - The defaults come from inside the installed package, so a first session configures
   nothing: `packageDir()` resolves the package directory from `import.meta.url` (the
   module file the extension was loaded from), `defaultPolicy()` is
@@ -31,12 +31,12 @@ program whose every effect is decided by the gate before the host performs it.
   after it. Resolution order is `policy` argument, `EYG_POLICY`, package default, and
   the tool says which one it used.
 - The runner is probed, not assumed: a candidate is usable only if its `--help`
-  advertises `--policy`, because the gate lives in the runner and the prebuilt release
+  advertises `--policy`, because the check lives in the runner and the prebuilt release
   on `PATH` predates that flag. **On this host the probe fails**: `~/.local/bin/eyg`
   (v0.1.0) has no `--policy` in its help, so the tool refuses, and every statement about
   what a preset allows at run time is UNVERIFIED from this workspace. `EYG_CODEMODE_RUNNER`
-  overrides the probe. Using a runner without the flag is both ungated and a mis-parsed
-  argv - it reads `run` as a program path.
+  overrides the probe. Using a runner without the flag runs unchecked and mis-parses
+  the argv - it reads `run` as a program path.
 - The tool renders like the built-in `bash` tool: `renderCall` and `renderResult` are
   registered on it, and the shapes they paint live in `lib/render-helpers.mjs` as
   `{tone, text}` rows (`callLines`, `resultLines`) that the extension only colours.
@@ -63,15 +63,15 @@ program whose every effect is decided by the gate before the host performs it.
   that question, not two (`notes/pi_codemode_registry_probe.md`).
 - Search has two routes. `libraries/search.eyg` is search as a library, bound by the
   tool's `libraries` parameter as `<name>_lib`: it walks with `ReadDirectory`, so the
-  policy gates every directory it opens and it cannot see outside the roots. The CLI
+  policy decides every directory it opens and it cannot see outside the roots. The CLI
   runtime also has a `Search` effect (landed 2026-11-16 in the language workspace),
   mapped to the existing `read_file` policy field, so one host action is decided once
-  by the same roots that gate reads and no new policy field exists. Both routes report
+  by the same roots that decide reads and no new policy field exists. Both routes report
   names under an allowed root - including the name of a file a read of that path would
   be refused for - and never its contents.
 - `policies/agent-roots.eyg` is the policy module: it imports nothing and answers the
   roots named in `EYG_ALLOWED_ROOTS` with the preset written out inline, one rule per
-  gated effect, denying `.env.eyg`. `policies/deny-all.eyg` is the other shipped preset.
+  effect that can be refused, denying `.env.eyg`. `policies/deny-all.eyg` is the other shipped preset.
   The presets were inlined from the language workspace's `overlay/policy.eyg` on
   2026-11-18 (`notes/pi-codemode-preset-inlining.md`).
 - A refusal is reported, not swallowed: the runner exits 1 with the reason on stderr,
@@ -79,7 +79,7 @@ program whose every effect is decided by the gate before the host performs it.
 
 ## Not this
 
-Not the gate mechanism - `overlay.policy-gate` owns that, and the runner side is in the
+Not the permission mechanism - `overlay.policy-rules` owns that, and the runner side is in the
 language workspace. Not the EYG language reference - `guides/pi_codemode_agent.md` is
 how to run such a session, `guides/syntax.md` is the language, and the language *skill*
 is the separate `pi-eyg-expressions` package.

@@ -7,11 +7,11 @@ date: 2026-11-16
 
 Three trade-offs that the code states but does not argue.
 
-**The runner is probed, not configured.** The gate lives in the runner:
+**The runner is probed, not configured.** The check lives in the runner:
 `packages/gleam_cli/src/eyg_cli.gleam` sends `run`/`script`/`eval` through
 `policy_runner` only when `--policy` is present. The CLI installed on `PATH`
 (`~/.local/bin/eyg`) is the prebuilt release and has no such flag, so a tool that
-assumed it would be a tool with no gate, and the argv would be mis-parsed by that
+assumed it would be a tool with no check, and the argv would be mis-parsed by that
 release: it reads `run` as a program path (`error: no such file: <cwd>/run`).
 Assuming either the path or the version is a guess about the host; probing `--help`
 once per session costs 0.1-0.6 s wall and fails with a message that names the
@@ -49,7 +49,7 @@ change is visible, and it is the trap that wasted an hour: `packages/loam/manife
 resolves `touch_grass` with `source = "hex"`, so a standalone `gleam build` in `loam` compiles
 the published artifact and cannot see a new local module; `packages/gleam_cli/manifest.toml:107`
 resolves it as `{ path = "../touch_grass" }`, so the build that produces `dist/eyg` - the
-runner the package gates - does see the local tree. `gleam 1.19.2` has `compile-package` and
+runner the package requires - does see the local tree. `gleam 1.19.2` has `compile-package` and
 no `local-packages` subcommand, so the offline route is the CLI build; publishing a new
 version or restating a dependency as a path is still the operator's decision, and is what
 would make a standalone `loam` build agree. Gating reuses the existing `read_file` policy

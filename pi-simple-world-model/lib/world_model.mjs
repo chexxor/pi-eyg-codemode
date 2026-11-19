@@ -730,7 +730,7 @@ export function generateMap(root) {
   out.push("");
   out.push(`- entities: ${entities.length} · invariants: ${invariants.length} · decisions: ${decisions.length} · runbooks: ${runbooks.length} · traps: ${traps.length}`);
   out.push(`- suspect right now: ${suspects.length ? suspects.map((record) => record.data.id).join(", ") : "none"}`);
-  out.push(`- re-check everything: \`npm run world\` · gate: \`npm run world:lint\` · regenerate this index: \`npm run world:map\``);
+  out.push(`- re-check everything: \`npm run world\` · checks: \`npm run world:lint\` · regenerate this index: \`npm run world:map\``);
   out.push(MARKER_CLOSE);
   return out.join("\n");
 }

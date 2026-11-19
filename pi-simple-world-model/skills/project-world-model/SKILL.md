@@ -13,7 +13,7 @@ Run the tools from the repository root. All of them are offline, dependency-free
 under a second except `verify`, whose cost is the commands the claims name.
 
 ```bash
-node pi-simple-world-model/bin/world_lint.mjs        # schema gate, exit 1 with file:line: rule
+node pi-simple-world-model/bin/world_lint.mjs        # schema check, exit 1 with file:line: rule
 node pi-simple-world-model/bin/world_map.mjs --check # is the tier-0 index stale?
 node pi-simple-world-model/bin/world_verify.mjs --all
 ```

@@ -5,8 +5,8 @@ description: Reference for effects implemented by the eyg CLI .
 *(Copied from the language workspace on 2026-11-18 as reference for this package. Paths
 it names - `packages/...`, `eyg_packages/...`, `spec/...` - belong to that workspace and
 are not files in this tree, so its relative links do not resolve from here. This tree
-type-checks modules with the CLI on `PATH`; it does not build the CLI and does not gate a
-run - see `AGENTS.md`.)*
+type-checks modules with the CLI on `PATH`; it does not build the CLI and does not check what a
+run may do - see `AGENTS.md`.)*
 
 EYG separates the **declaration** of an effect (in your script:
 `perform Foo(...)`) from its **implementation** (provided by the runner).
@@ -23,7 +23,7 @@ below for an argument shape.
 Gate classes, against the preset a codemode agent uses (`policy.read_write(roots)` in
 `eyg_packages/overlay/policy.eyg`):
 
-- `path-gated` - the policy allows it only for paths under the roots; a refusal comes back
+- `path-checked` - the policy allows it only for paths under the roots; a refusal comes back
   as `Error("<field> denied by policy: <path>")` and nothing touched the host.
 - `constant` - the preset decides without looking at the value; "allowed" or "refused" below.
 - `unchecked` - `DecodeJSON`, `EYGParse`, `Hash` and `Sign` are deterministic host helpers
@@ -32,29 +32,29 @@ Gate classes, against the preset a codemode agent uses (`policy.read_write(roots
 
 | Effect | Policy field | Gate class | Returns |
 |---|---|---|---|
-| AppendFile | `append_file` | path-gated, value is a record with `path` | `Result({}, String)` |
+| AppendFile | `append_file` | path-checked, value is a record with `path` | `Result({}, String)` |
 | CreateKey | `create_key` | constant, refused | `Ok(...) | Error(String)` |
 | CWD | `cwd` | constant, allowed | `Ok(String) | Error({})` |
 | DecodeJSON | none | unchecked | `Ok(List({term, depth})) | Error(String)` |
-| DeleteFile | `delete_file` | path-gated, value is a bare path | `Result({}, String)` |
+| DeleteFile | `delete_file` | path-checked, value is a bare path | `Result({}, String)` |
 | Env | `env` | constant, refused (answers `None({})`) | `Option(String)` |
 | Exit | `exit` | constant, allowed | `Never` |
 | EYGParse | none | unchecked | `Ok(List(AstNode)) | Error(String)` |
 | Fetch | `fetch` | constant, refused | `Result({status, headers, body}, String)` |
 | Flip | `flip` | constant, allowed | `True({}) | False({})` |
 | Hash | none | unchecked | `Binary` |
-| MakeDirectory | `make_directory` | path-gated, value is a bare path | `Result({}, String)` |
+| MakeDirectory | `make_directory` | path-checked, value is a bare path | `Result({}, String)` |
 | Now | `now` | constant, allowed | `Int` |
 | Random | `random` | constant, allowed | `Int` |
-| ReadDirectory | `read_directory` | path-gated, value is a bare path | `Result(List({name, type}), String)` |
-| ReadFile | `read_file` | path-gated, value is a record with `path` | `Result(Binary, String)` |
-| Search | `read_file` | path-gated, decides the whole walk | `Result(List(String), String)` |
+| ReadDirectory | `read_directory` | path-checked, value is a bare path | `Result(List({name, type}), String)` |
+| ReadFile | `read_file` | path-checked, value is a record with `path` | `Result(Binary, String)` |
+| Search | `read_file` | path-checked, decides the whole walk | `Result(List(String), String)` |
 | Sign | none | unchecked | `Result(Binary, String)` |
 | Sleep | `sleep` | constant, allowed | `{}` |
 | StandardError | `standard_error` | constant, allowed | `{}` |
 | StandardIn | `standard_in` | constant, refused | `Result(Binary, String)` |
 | StandardOut | `standard_out` | constant, allowed | `{}` |
-| WriteFile | `write_file` | path-gated, value is a record with `path` | `Result({}, String)` |
+| WriteFile | `write_file` | path-checked, value is a record with `path` | `Result({}, String)` |
 
 `Search` shares the `read_file` field with `ReadFile`, so one decision covers the whole
 walk. `env` refuses with `None({})` rather than an error, which is why a program that reads

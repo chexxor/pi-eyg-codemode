@@ -29,7 +29,7 @@ refusal shape (`Mock(Error("<effect> denied by policy: <path>"))`) and a substit
 environment (`deny-all.eyg:60`). `deny-all.eyg:58` refuses `cwd` with `Mock(Error({}))` because
 `CWD` returns a `Result`. The obligation the code cannot show is the **type**: the mocked value
 must be the effect's own value type, and `Mock` cannot answer `Exit` at all. Whether the runner
-checks that before performing is UNVERIFIED here (no gated runner to run it on), so a
+checks that before performing is UNVERIFIED here (no runner that checks to run it on), so a
 mis-typed mock should be read as a runtime error rather than a refusal until proven.
 
 **Do not mock in an act preset.** An act preset that mocks `write_file` reports a successful
@@ -46,18 +46,19 @@ one extra runner start-up (0.06-0.07 s measured in the language workspace).
 **Rejected: a `tools` parameter in the extension** that maps names to modules and dispatches
 them. That is a second answer to "what may this reach", and it would disagree with the runner's
 - the same reason the registry listing's availability is advisory and re-probed rather than a
-gate (`notes/pi_codemode_registry_probe.md`). Permission belongs in the one record the host
+check (`notes/pi_codemode_registry_probe.md`). Permission belongs in the one record the host
 loads. **Rejected: a new domain effect** (`QueryKB`, `Snapshot`) to get such a tool: an effect
-is an escalation in the language workspace's rules, the 19 fields already gate the paths it
+is an escalation in the language workspace's rules, the 19 fields already decide the paths it
 needs, and a new effect would still need a rule in every preset.
 
 **The store discipline, and the one number that matters.** Context that lives under a root and
 is pulled by `ReadFile` `offset`/`limit` or `Search` `limit` stays out of the conversation
-history and costs the runner, not the prompt; this tree's own store is 33 claims re-verified in
-0.37 s with 0 prompt lines until a session asks, and a claim whose verify command fails moves
-to `status: suspect`, so stale context is visible rather than silently trusted. A read is still
-not free - the model pays for whatever slice it pulls in. Calls are not the constraint:
-10-30 gated calls per session is 0.6-2 s against a 44-142 s live session (`@measured 2026-11-15`
+history and costs the runner, not the prompt; this tree's own store is 39 claims re-verified in
+0.7 s wall with 0 prompt lines until a session asks (`world_verify.mjs --all`, 2026-11-19), and a
+claim whose verify command fails moves to `status: suspect`, so stale context is visible rather
+than silently trusted. A read is still
+not free. Calls are not the constraint:
+10-30 checked calls per session is 0.6-2 s against a 44-142 s live session (`@measured 2026-11-15`
 in the language workspace), so what an operator should budget is decisions to approve, not
 runner time.
 

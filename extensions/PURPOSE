@@ -1,1 +1,1 @@
-The one pi extension: it registers the `eyg` tool, resolves the policy, the roots and the runner from inside the package, and spawns the gated runner through argv.
+The one pi extension: it registers the `eyg` tool, resolves the policy, the roots and the runner from inside the package, and spawns the runner that checks every effect through argv.

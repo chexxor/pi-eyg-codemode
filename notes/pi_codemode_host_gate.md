@@ -1,5 +1,5 @@
 ---
-name: the codemode gate is host-side, and a pure-EYG mediated runner cannot exist
+name: the codemode checks are host-side, and a pure-EYG mediated runner cannot exist
 description: Why the agent's restriction is installed on the runner that starts the interpreter rather than in the program or in a mediated EYG helper; the decision and the material that rules the alternatives out.
 date: 2026-11-15
 ---
@@ -38,11 +38,11 @@ where the effect loop is. This is a rejected alternative, not a deferred one.
 # Consequences the code does not show
 
 - The policy module is host-authored configuration, so `policy_runner.gleam` evaluates
-  it with the *ungated* evaluator: a policy may perform effects, such as reading an API
-  token from the environment. The program under the gate cannot see that token, because
+  it with the *unchecked* evaluator: a policy may perform effects, such as reading an API
+  token from the environment. The program under the policy cannot see that token, because
   `deny_all` answers `Env` with `None`, which is how `policy.with_header` injects a
   token on one host without the agent ever holding it.
-- Paths are resolved to absolute before the gate sees them
+- Paths are resolved to absolute before a check sees them
   (`resolve_policy_input` in `packages/gleam_cli/src/eyg/cli/overlay.gleam`), so a
   policy only ever reasons about absolute paths and a program cannot dodge a root with
   `..`.

@@ -21,7 +21,7 @@ decides what to do with them"), so more than one place could hold an implementat
 policy module the host loads, a registry module the model calls, the CLI runtime's own effect
 code in the language workspace, or `handle EffectName` inside the program. Those are not
 interchangeable - one of them is in the program, and a permission decided in the program is
-not a permission. Each also costs something different: 0.06-0.07 s per gated call, one runner
+not a permission. Each also costs something different: 0.06-0.07 s per checked call, one runner
 start-up per call, or an escalation in the language workspace.
 
 ## Decision
@@ -39,17 +39,17 @@ to act.
 - **A `tools` parameter in the extension** that maps names to modules and dispatches them: a
   second answer to "what may this reach", which would disagree with the runner's decision. Same
   reasoning as the registry listing's advisory availability
-  (`notes/pi_codemode_registry_probe.md`) - a second gate would be a second answer.
+  (`notes/pi_codemode_registry_probe.md`) - a second check would be a second answer.
 - **`Mock` as the boundary of an act preset**: mocking `write_file` reports a successful run
   with nothing on disk, which is the failure mode an operator least wants. `Mock` belongs in a
   plan preset, where "nothing lands" is the point.
 - **A new domain effect in the language** (`QueryKB`, `Snapshot`) to get the tool: an effect is
-  an escalation in the language workspace's rules, the 19 policy fields already gate the paths
+  an escalation in the language workspace's rules, the 19 policy fields already decide the paths
   such a tool needs, and a new effect would need a rule in every preset anyway.
 - **`handle EffectName` in the program** as the seam: it is the one route where the program
   supplies a handler, the language documents it in two lines for "advanced embedding
   scenarios", and whether it can shadow the host's rule is UNVERIFIED from this workspace
-  (`docs/world/traps.md`, `docs/world/entities/overlay.policy-gate.md`). Nothing here relies on
+  (`docs/world/traps.md`, `docs/world/entities/overlay.policy-rules.md`). Nothing here relies on
   it, and it must not become the way trust is expressed.
 
 ## Consequences

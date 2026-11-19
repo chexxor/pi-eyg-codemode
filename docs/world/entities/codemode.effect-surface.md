@@ -17,7 +17,7 @@ A running program reaches the host only through effects, and the set it may perf
 intersection of three files. Read them in this order, and the answer costs one lookup:
 
 1. `guides/cli_effects_reference.md`, section `Every effect at a glance` - one row per effect,
-   with the policy field it sits under and the gate class. That is the capability question.
+   with the policy field it sits under and what that field allows. That is the capability question.
 2. The preset in force - `policies/agent-roots.eyg` decides each policy field for the roots
    named in `EYG_ALLOWED_ROOTS`; the vocabulary is written out inline, one rule per field.
 3. The roots themselves, for a path question. The tool reports the policy it used and its
@@ -33,7 +33,7 @@ error, not a silent allow: `lib/render-helpers.mjs` carries `POLICY_FIELDS` and 
 compares it against the fixture, so a surface that moved fails the suite rather than
 silently allowing.
 
-Three shapes matter when gating by path: `read_directory`, `delete_file` and `make_directory`
+Three shapes matter when a rule decides by path: `read_directory`, `delete_file` and `make_directory`
 carry a bare path string, `read_file`, `write_file` and `append_file` carry a record with a
 `path` field, and `env` refuses with `None({})` instead of an error.
 

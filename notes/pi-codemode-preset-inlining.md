@@ -65,6 +65,6 @@ What the check does **not** cover: the decisions at run time. A denial is a valu
 `policy.read_write(["/x"])` refusing a path can only be observed by running a program
 through a runner that has the `--policy` flag. `which eyg` is `/home/chexxor/.local/bin/eyg`,
 `eyg --version` prints `eyg v0.1.0`, and `eyg --help` advertises no `--policy`, so this host
-has no runner that can gate. End-to-end gate behaviour in this workspace is UNVERIFIED until
+has no runner that checks effects. Run behaviour in this workspace is UNVERIFIED until
 a policy-capable runner is installed (`guides/install_from_source.md` in this workspace covers
 building one, or set `EYG_CODEMODE_RUNNER`).

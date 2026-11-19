@@ -29,34 +29,33 @@ another workspace at run time.**
 ## The layout, and what each directory is for
 
 `extensions/` the one pi extension (registers the `eyg` tool, resolves policy/roots/runner,
-spawns the gated runner through argv) · `lib/` the plain-JavaScript shapes shared by the
+spawns the runner that checks every effect through argv) · `lib/` the plain-JavaScript shapes shared by the
 tool and its tests · `libraries/` the EYG modules bound by the tool's `libraries`
-parameter · `policies/` the policy presets, one record, one rule per gated effect, inlined
+parameter · `policies/` the policy presets, one record, one rule per refusable effect, inlined
 · `skills/` the pi skill a model reads before writing EYG · `test/` the unit test and the
 recorded `rule_mapping` snapshot the drift guard compares against · `guides/` the prose
 reference · `notes/` the trade-offs the code cannot show · `docs/world/` the claims with
 their verify commands · `pi-simple-world-model/` the vendored tool over those claims ·
 `.agents/skills/` the skills the coding agent loads. Every one carries a `PURPOSE` file.
 
-## What the gate is, in facts
+## What the checks are, in facts
 
 A program reaches the host only through effects, and this package has no effect that runs
 shell commands; a policy module decides each effect before the host performs it.
 
 - The tool spawns `<runner> <mode> --policy <module.eyg> -c <source>` through argv - no
-  shell in between, so quoting cannot be a route around the gate.
+  shell in between, so quoting cannot be a route around the checks.
 - Policy resolution order: the `policy` argument, then `EYG_POLICY`, then the package's own
   `policies/agent-roots.eyg`, and if none exists the tool refuses rather than running
-  ungated (`extensions/eyg-codemode.ts:372-377`).
+  unchecked (`extensions/eyg-codemode.ts:372-377`).
 - The runner is probed, not assumed: candidates `eyg` on PATH and
   `<cwd>/packages/gleam_cli/dist/eyg`, and a candidate only qualifies when its `--help`
   mentions `--policy` (`extensions/eyg-codemode.ts:387-404`).
 - **On this host that probe fails.** `command -v eyg` answers `/home/chexxor/.local/bin/eyg`,
   `eyg --version` answers `eyg v0.1.0`, and `grep -c -- '--policy' <<< "$(~/.local/bin/eyg --help 2>&1)"`
   printed `0` (measured 2026-11-18). So from this workspace the CLI type-checks but cannot
-  gate a run, and any statement about what a preset *allows at runtime* is UNVERIFIED here -
-  never report it as PASS. The gated runner is built in the language workspace and is not
-  vendored here.
+  check a run, and any statement about what a preset *allows at runtime* is UNVERIFIED here -
+  never report it as PASS.
 - Env: `EYG_CODEMODE_RUNNER` (absolute runner path), `EYG_POLICY` (absolute module path),
   `EYG_ALLOWED_ROOTS` (comma-separated absolute roots, read by the default preset),
   `EYG_CODEMODE_TIMEOUT` (ms, default 30000, cap 120000); the tool's `timeout` parameter is
@@ -128,7 +127,7 @@ never put a workspace fact in a guide - a fact in two places drifts.
   delete the restatement and keep the link. `install from <url>`, not `install from the
   docs, not from this README, the website is the source`. Check it by hand: name the
   paragraph's key noun, grep the paragraph, a hit in two sentences is one too many.
-- **EYG reaches the outside world only through effects**, and the gate is host-side: a
+- **EYG reaches the outside world only through effects**, and the checks are host-side: a
   program cannot opt out of it by writing different code. Do not loosen a preset to get
   past a boundary - name the boundary, and if a preset must change, say why in a note and
   change the whole preset, one rule per effect.
@@ -163,15 +162,15 @@ never put a workspace fact in a guide - a fact in two places drifts.
 
 ## What is not here yet
 
-- **No planning system.** `PLAN.md`, `NEXT.md`, `QUESTIONS.md`, milestones and gates are the
+- **No planning system.** `PLAN.md`, `NEXT.md`, `QUESTIONS.md`, milestones and stage checks are the
   language workspace's; nothing here carries a queue. Trigger to port one: a task from the
   operator that spans several steps of its own.
-- **No CI, no gate script.** There is no `bin/agent/audit.sh`, no `.github/workflows`, no
-  `entry.eyg` here; the checks in the table above are the whole gate. Trigger: the first
+- **No CI, no check script.** There is no `bin/agent/audit.sh`, no `.github/workflows`, no
+  `entry.eyg` here; the checks in the table above are all of it. Trigger: the first
   time a session has to re-derive the same check three times.
-- **The gated runner is not in this workspace.** The type-checking CLI on PATH has no
-  `--policy`, so end-to-end gate behaviour is UNVERIFIED from here. Trigger: the first
-  session that actually needs a gated run - then vendor or build a `--policy` runner and
+- **The runner that checks effects is not in this workspace.** The type-checking CLI on PATH has no
+  `--policy`, so end-to-end check behaviour is UNVERIFIED from here. Trigger: the first
+  session that actually needs a run with checks in force - then vendor or build a `--policy` runner and
   record what the presets then do.
 - **Three copies of the world model tool.** This one, the language workspace's, and the
   publisher's; drift between them is invisible. Revisit trigger: two `CHANGELOG.md`s differ,

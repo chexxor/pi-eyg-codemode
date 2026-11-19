@@ -15,9 +15,9 @@ supersedes: null
 superseded_by: null
 ---
 
-EYG is the language this package gates, and it does not have an effect to run shell
+EYG is the language this package runs its agent in, and it does not have an effect to run shell
 commands. Bash here is for reading the tree and for work EYG cannot express, not for doing
-the work the operator asked for. A tool that spawned a shell would be a tool with no gate.
+the work the operator asked for. A tool that spawned a shell would be a tool with no check.
 
 ---
 id: invariant.notes-frontmatter

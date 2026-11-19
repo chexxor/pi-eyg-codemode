@@ -43,7 +43,7 @@ package is the root; they are one level deep in both cases.
 | `.agents/skills/` | 7 skills (`effect-change`, `eyg-run`, `eyg-test`, `fork-sync`, `gleam-gate`, `note-keeping`, `snapshot-review`) | only the applicable ones | no Gleam build, no birdie suites, no `eyg_packages`, no remote push flow |
 | `notes/pi_codemode_*.md` | `pi_codemode_host_gate.md`, `pi_codemode_runner_probe.md`, `pi_codemode_registry_probe.md` | `notes/` | the codemode design record |
 | `guides/` | `pi_codemode_agent.md`, `cli_effects_reference.md`, `syntax.md` | `guides/` | cited by the README and the package skill |
-| `docs/world/` | `00-map.md`, `roster.yaml`, `invariants.md`, `traps.md`, `decisions/`, `entities/` | `docs/world/` | the codemode entities `pi.codemode-gate`, `codemode.effect-surface`, `overlay.policy-gate` carry the claims this package makes |
+| `docs/world/` | `00-map.md`, `roster.yaml`, `invariants.md`, `traps.md`, `decisions/`, `entities/` | `docs/world/` | the codemode entities `pi.codemode-tool`, `codemode.effect-surface`, `overlay.policy-rules` carry the claims this package makes |
 | `pi-simple-world-model/` | 15 files, pi package v1.0.0 | `pi-simple-world-model/` | copied per workspace, never declared across workspaces: see `~/Git/eyg-lang/docs/world/decisions/ADR-001-world-model-import.md` |
 | `.pi/settings.json` | `.pi/settings.json` | `.pi/settings.json` | mirror of the installed context: `./pi-simple-world-model`, `npm:@woksin/pi-context-budget`, the EYG skill at `~/Git/pi-eyg-expressions`, `"-builtin:codemode"`, compaction off, same `defaultTools` |
 | `.gitignore` | `.gitignore` | `.gitignore` | same rule: keep `.pi/settings.json`, ignore `.pi/goals/`, the goal-pool snapshot and `.pi/npm/` |
@@ -87,20 +87,20 @@ unchanged in the surviving README.*
   a transcript would make the claim un-verbatim, so the blocks stay byte-identical and each
   gets a provenance line naming the old workspace and the capture date.
 - `README.md:368,370,384` and `CHANGELOG.md` release entries — records of runs taken in the
-  old workspace (the `bin/agent/gate.sh` gate, the Gleam `manifest.toml` path).
+  old workspace (the `bin/agent/gate.sh` script, the Gleam `manifest.toml` path).
 
 ## What could not be re-probed here
 
 `which eyg` prints `/home/chexxor/.local/bin/eyg` and `eyg --version` prints `eyg v0.1.0`;
 `eyg --help` advertises no `--policy`, and `eyg run --help` fails with
 `error: no such file: .../--help`, so the PATH runner is the prebuilt release that predates
-the gate flag. The package's own runner probe (`/\-\-policy/` against `<runner> --help`)
+the `--policy` flag. The package's own runner probe (`/\-\-policy/` against `<runner> --help`)
 therefore finds no runner on this host, and the policy decision cannot be re-observed here
 without building `packages/gleam_cli` from source inside the language repository — out of
-this port's scope. Gate behaviour in this workspace is **UNVERIFIED** until a policy-capable
+this port's scope. Run behaviour in this workspace is **UNVERIFIED** until a policy-capable
 runner is installed; the inlined presets are held to the preset source read on 2026-11-18.
 
-## The gate run from this workspace root, `@measured 2026-11-18`
+## The checks run from this workspace root, `@measured 2026-11-18`
 
 Everything below was run with this directory as the working directory. Costs are wall
 time; the date of every run is 2026-11-18 (the shell clock: `date` printed
@@ -114,7 +114,7 @@ so they write 2026-11-19 here - see `docs/world/traps.md`).
 | world model records | `node pi-simple-world-model/bin/world_lint.mjs` | `world lint: clean`, 0.06 s |
 | claims re-run | `node pi-simple-world-model/bin/world_verify.mjs --all` | `33 claim(s) checked, 0 failed`, 0.37 s |
 | tier-0 index | `node pi-simple-world-model/bin/world_map.mjs --check` | `world map: current`, 0.04 s |
-| the same gate as a pi session sees it | `pi --world-model-check` | exit 0, 1.14 s |
+| the same checks as a pi session sees them | `pi --world-model-check` | exit 0, 1.14 s |
 | packages registered | `pi list` | `.. -> /home/chexxor/Git/pi-eyg-codemode`, `../pi-simple-world-model -> .../pi-simple-world-model`, `npm:@woksin/pi-context-budget -> .pi/npm/...`, `../../pi-eyg-expressions -> /home/chexxor/Git/pi-eyg-expressions` |
 
 ### The isolation sweeps
@@ -147,7 +147,7 @@ section below); `.agents/skills/eyg-run/SKILL.md` 1/0 - the measured host facts;
 
 A reader who does not know EYG could not use the README as it stood: EYG was never defined,
 the prerequisite that a runner must accept `--policy` first appears 160 lines below "That is
-all", the boundary ("the gate is not in this package") was at line 638, and every example was
+all", the boundary that the checks are not in this package was at line 638, and every example was
 a capture from the other workspace. The file was rewritten around those four facts and
 shortened from 662 lines to 288 (`wc -l README.md`, 2026-11-18):
 
@@ -161,7 +161,7 @@ shortened from 662 lines to 288 (`wc -l README.md`, 2026-11-18):
   `Search`-effect landing (files, manifest resolution, `gleam 1.19.2` notes), the 30-line
   registry listing, the four `eyg run --policy` argv captures. They still live in the language
   workspace's README, and their decisions are recorded here in `CHANGELOG.md`,
-  `docs/world/traps.md`, `docs/world/entities/overlay.policy-gate.md` and the `notes/` set. Each
+  `docs/world/traps.md`, `docs/world/entities/overlay.policy-rules.md` and the `notes/` set. Each
   dropped fact keeps a pointer in the rewritten README to the document that carries it.
 - **Re-measured here for the rewrite:** `node --test` 0.09 s wall either form (was quoted as
   45 ms in process, 49 ms wall in `AGENTS.md`), `eyg check` over the three modules 0.43 s, and
@@ -178,7 +178,7 @@ it has.
 
 - **Re-measured after the rewrite:** the sweeps return 28 and 42 lines over the same 18 files
   (`README.md` 50/7 -> 6/1 - the dropped captures were the bulk of it); the test is 0.09 s wall
-  in either form, so the "49-55 ms" in the gate table above and the "69 and 47 lines" in the
+  in either form, so the "49-55 ms" in the checks table above and the "69 and 47 lines" in the
   audit below both describe the README before this rewrite.
 - **Absolute machine paths taken out of the README the same day:** a first-time reader cannot
   use a path that only exists on this operator's machine. Removed from instructions and prose:
@@ -215,10 +215,10 @@ $ find /tmp/eyg-proof -newermt '2026-11-18' -print
 (no output - nothing was written to the proof path today)
 ```
 
-Read as: v0.1.0 reads `run` as a program path, so the gated call never started; the policy
+Read as: v0.1.0 reads `run` as a program path, so the checked call never started; the policy
 decision was therefore **not observed** from this workspace. The claims about what each
 preset does at run time stay **UNVERIFIED** here, and say so wherever they appear
-(`docs/world/entities/cli.prebuilt-binary.md`, `docs/world/entities/pi.codemode-gate.md`,
+(`docs/world/entities/cli.prebuilt-binary.md`, `docs/world/entities/pi.codemode-tool.md`,
 `AGENTS.md`, `guides/pi_codemode_agent.md`, this note). What *is* proven here is that both
 presets parse, carry all 18 policy fields, and type-check; that the package's extension
 resolves its own policy, library and render helpers from inside itself; and that the
@@ -237,13 +237,13 @@ commit that carries the audit).
 | the sweeps | `grep -rn "Git/eyg-lang" . --exclude-dir=.git --exclude-dir=.pi` / same for `eyg_packages` | 69 and 47 lines, 18 files, every one a labelled historical record or a sentence naming the language workspace (the classification, file by file, is above in this note) |
 | the test | `node --test test/render-helpers.test.mjs` | exit 0, `pass 1 fail 0` |
 | registration | `pi list` | `..` → `/home/chexxor/Git/pi-eyg-codemode`, `../pi-simple-world-model` → the vendored copy, `npm:@woksin/pi-context-budget` → `.pi/npm/...`, `../../pi-eyg-expressions` → `/home/chexxor/Git/pi-eyg-expressions` |
-| the vendored world model gate sees it as a session does | `pi --world-model-check` | exit 0, ends `tool registered: yes (22 tools active in this session)` |
+| the vendored world model checks, as a session sees them | `pi --world-model-check` | exit 0, ends `tool registered: yes (22 tools active in this session)` |
 | local commit only | `git status --porcelain` / `git remote -v` | 0 lines / 0 lines; `git log` shows the local commits, no remote exists |
 | the language workspace is untouched | `cd ~/Git/eyg-lang && git diff \| wc -l` | `0` tracked diffs; `git status --porcelain` prints only the pre-existing `?? .ai-work/` |
 
 Still **UNVERIFIED**, and named as such wherever it appears: that a preset actually refuses
 or allows an effect at run time. The CLI on PATH (`/home/chexxor/.local/bin/eyg`, `eyg v0.1.0`)
-has no `--policy` (`grep -c -- '--policy' <<< "$(eyg --help 2>&1)"` → `0`), so both gated probes
+has no `--policy` (`grep -c -- '--policy' <<< "$(eyg --help 2>&1)"` → `0`), so both checked probes
 print `error: no such file: <this workspace>/run` and exit 1 without starting a program. What the
 presets' semantics rest on here is the recorded preset source, `eyg check` on both modules, the
 18-field comparison against `test/fixtures/rule_mapping.gleam`, and the unit test - not an

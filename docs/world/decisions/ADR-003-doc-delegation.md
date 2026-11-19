@@ -47,7 +47,7 @@ never presented as current instructions.
 ## Consequences
 
 + A new user follows one authoritative, current source for the language; this README stays
-  short and stays about the gate.
+  short and stays about the checks.
 + The copies remain useful offline, and their staleness window is dated on their face.
 - Two documents describe the same how-to, so a guide copy and its page can disagree; the
   README says which one wins (the website), and `docs/world/traps.md` carries the trap.

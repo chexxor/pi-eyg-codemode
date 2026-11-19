@@ -39,7 +39,7 @@ declaration into `.pi/settings.json`.
 
 ## Consequences
 
-+ This repository carries the tool, so a clone of it brings the gate with it; the
++ This repository carries the tool, so a clone of it brings the checks with it; the
   documented commands (`node pi-simple-world-model/bin/world_lint.mjs`) are
   literally true from the repository root.
 - Two copies. A fix to the tool has to be applied in both, and drift between them

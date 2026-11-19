@@ -3,7 +3,8 @@
 Every entry below 1.5.0 records what ran while this package lived inside
 `/home/chexxor/Git/eyg-lang`; the paths in them (`packages/...`, `eyg_packages/...`,
 `bin/agent/gate.sh`, `pi --world-model-check` counts) are that workspace's and are kept as
-history, not as instructions for this tree.
+history, not as instructions for this tree. On 2026-11-19 the word "gate" was replaced with
+"the checks", "checked" and "unchecked" throughout these entries; what ran is unchanged.
 
 ## 1.5.0 - 2026-11-18
 
@@ -28,15 +29,15 @@ history, not as instructions for this tree.
   `install_from_source`, `install_prebuilt`), the codemode notes, and a `docs/world/` tree
   checked by a `pi-simple-world-model` copy vendored into this workspace - the tool is copied
   per workspace, never declared across workspaces.
-- Not done here, and named rather than claimed: end-to-end gate behaviour. The CLI on `PATH`
+- Not done here, and named rather than claimed: end-to-end run behaviour. The CLI on `PATH`
   (`/home/chexxor/.local/bin/eyg`, `eyg v0.1.0`) advertises no `--policy`, so no runner on this
-  host can gate, and UNVERIFIED is what the README says until one is built.
+  host can check effects, and UNVERIFIED is what the README says until one is built.
 
 ## 1.4.0 - 2026-11-16
 
 - `action: "effects"` answers the capability question in one call instead of one probe
   program per effect: it spawns one probe per name in `POLICY_FIELDS` and prints
-  `effect | policy field | decision`, where the decision comes from the gate that will run
+  `effect | policy field | decision`, where the decision comes from the runner that will run
   the real program, never from a copy of the preset in this package. `Env`, `Exit` and
   `StandardIn` say `unknown` with the reason they are not probed, and the header prints the
   policy, where it came from, the roots and the wall time.
@@ -47,7 +48,7 @@ history, not as instructions for this tree.
   `effectLine` are the pure helpers behind it in `lib/render-helpers.mjs`.
 - The effect list moved out of prose and into the repository's effect reference: the table
   at the top of `guides/cli_effects_reference.md` names all 23 effects with their field and
-  gate class, and gains a `Search` section (the skill pointed at one that did not exist).
+  what the field allows, and gains a `Search` section (the skill pointed at one that did not exist).
   `docs/world/entities/codemode.effect-surface.md` claims the same thing with a verify
   command that greps the table and counts the `PolicyField` lines.
 
@@ -83,7 +84,7 @@ history, not as instructions for this tree.
   that can read); `MAX_TIMEOUT_MS` left in the new constants, which the tool's own output caught
   as `MAX_TIMEOUT_MS is not defined`; testing `code === 0` before `killed` for a timed-out run,
   which pi reports with both.
-- The gate for this package is still SKIP in `bin/agent/gate.sh`: it walks `packages/*/` and
+- This package is still SKIP in `bin/agent/gate.sh`: it walks `packages/*/` and
   `eyg_packages/` and this package sits at the repository root as a pi package. The loops that
   did run are the `node --test` above, `pi --world-model-check` (lint clean, 36 claims, 0 failing)
   and fresh headless `pi -p --no-session --no-builtin-tools --tools eyg` runs, quoted verbatim in
@@ -98,10 +99,10 @@ history, not as instructions for this tree.
   this package - `packages/loam/src/loam/platform/computer.gleam` (`search_the_tree`,
   `search_max_depth = 32`) over the interface published in `touch_grass` 0.4.4 - made the
   same day, with tests in `packages/loam/test/computer_test.gleam`; `README.md` names the
-  route, the gate run for it, and the boundary a search keeps: names under an allowed root
+  route, the checks run for it, and the boundary a search keeps: names under an allowed root
   come through, contents never do.
 - `libraries/search.eyg` remains the route for a runtime that lacks the effect: one import,
-  and the same roots rule gates every directory it opens.
+  and the same roots rule decides every directory it opens.
 
 ## 1.1.0 - 2026-11-16
 
@@ -110,9 +111,9 @@ history, not as instructions for this tree.
   than requiring `EYG_POLICY`, and the roots default to the session working directory,
   passed to the preset as `EYG_ALLOWED_ROOTS` for one call and restored after it.
 - The runner is probed, not assumed (`resolveRunner`): a runner is usable only if its help
-  text advertises `--policy`, because the gate lives in the runner and the prebuilt CLI
+  text advertises `--policy`, because the check lives in the runner and the prebuilt CLI
   release predates that flag. The old default, `eyg` on `PATH`, used to hand `run` to that
-  release as a program path (`error: no such file: <cwd>/run`) and run the program ungated.
+  release as a program path (`error: no such file: <cwd>/run`) and run the program unchecked.
 - `libraries/search.eyg` and a `libraries` tool parameter: search is a library over
   `ReadDirectory`, bound as `search_lib`, and the effects it performs go through the policy
   like the program's own.
@@ -122,7 +123,7 @@ history, not as instructions for this tree.
 
 ## 1.0.0 - 2026-11-15
 
-- First release: one tool, `eyg`, that runs EYG source through the gated CLI runner
+- First release: one tool, `eyg`, that runs EYG source through the CLI runner that checks effects
   (`packages/gleam_cli/src/eyg/cli/policy_runner.gleam`, `eyg run|eval|script --policy <module.eyg>`).
   Every effect of the program is decided by the host policy module before the host
   performs it, so this package has no shell, no file editor and no JavaScript sandbox.
@@ -132,6 +133,6 @@ history, not as instructions for this tree.
 - `skills/eyg-codemode/SKILL.md` carries the EYG forms the model needs (`perform` with
   one argument, `let _ =` binding, no infix operators) and what a refusal means.
 - The tool refuses to run anything when no policy module is configured: a session
-  cannot fall back to an ungated run.
+  cannot fall back to an unchecked run.
 - `pi.exec` is used with argv, not a shell, so no quoting can smuggle a second command
   past the policy.

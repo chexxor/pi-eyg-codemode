@@ -26,5 +26,5 @@ superseded_by: null
    human promotes it back.
 
 What this workspace cannot check: an effect actually running or being refused. The runner
-probe fails here (see `cli.prebuilt-binary`), so gate behaviour stays UNVERIFIED - say so,
+probe fails here (see `cli.prebuilt-binary`), so run behaviour stays UNVERIFIED - say so,
 do not report a PASS.

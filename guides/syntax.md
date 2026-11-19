@@ -5,8 +5,8 @@ description: Syntax reference for the EYG text representation.
 *(Copied from the language workspace on 2026-11-18 as reference for this package. Paths
 it names - `packages/...`, `eyg_packages/...`, `spec/...` - belong to that workspace and
 are not files in this tree, so its relative links do not resolve from here. This tree
-type-checks modules with the CLI on `PATH`; it does not build the CLI and does not gate a
-run - see `AGENTS.md`.)*
+type-checks modules with the CLI on `PATH`; it does not build the CLI and does not check what a
+run may do - see `AGENTS.md`.)*
 
 # EYG Syntax Guide
 

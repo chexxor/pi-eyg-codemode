@@ -49,7 +49,7 @@ before trusting it.
 
 ```bash
 node pi-simple-world-model/bin/world_map.mjs --init        # create docs/world/ in a repo
-node pi-simple-world-model/bin/world_lint.mjs              # schema gate, exit 1, file:line: rule
+node pi-simple-world-model/bin/world_lint.mjs              # schema check, exit 1, file:line: rule
 node pi-simple-world-model/bin/world_map.mjs --check       # is the generated index stale?
 node pi-simple-world-model/bin/world_verify.mjs --all      # run every claim's verify command
 node pi-simple-world-model/bin/world_verify.mjs --changed-from origin/main

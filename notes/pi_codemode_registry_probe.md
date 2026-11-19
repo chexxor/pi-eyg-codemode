@@ -1,6 +1,6 @@
 ---
-name: registry availability is a re-probed advisory, not a gate
-description: Why the eyg-codemode registry probes each effect at every listing, why the probe arguments are root-relative rather than fixed, and why availability is advisory rather than a second gate that blocks a run.
+name: registry availability is a re-probed advisory, not a block
+description: Why the eyg-codemode registry probes each effect at every listing, why the probe arguments are root-relative rather than fixed, and why availability is advisory rather than a second check that blocks a run.
 date: 2026-11-16
 ---
 *(Carried from the language workspace, 2026-11-16: the registry probes and their output were measured there, against the language workspace's preset library. This tree re-states the shapes it depends on in `policies/` and `lib/`; the probe itself is UNVERIFIED here.)*
@@ -64,7 +64,7 @@ the registry, and `@measured 2026-11-16` a listing of two modules that name one 
 0.23 s wall - the listing prints its own wall time in its header for the same reason.
 
 Availability is **advisory** and the tool does not block a run whose effect was probed refused.
-A second gate in the listing would be a second answer to the same question, in a place the program
+A second check in the listing would be a second answer to the same question, in a place the program
 cannot see, and it would disagree with the runner's answer - the policy can have changed between
 the probe and the call, and the refusal then surfaces as the ordinary `Error("<field> denied by
 policy: ...")` value the program already handles. The listing says so in its own footer, and the
@@ -79,7 +79,7 @@ name, and it got its answer the same way: one whole spawned `run --policy <modul
 effect (`POLICY_FIELDS` x `probeProgram` x `classifyProbeOutput`), not a program that imports a
 preset and calls its field. That alternative was tried on 2026-11-16 and rejected on evidence.
 
-`eyg eval -c` importing `eyg_packages/overlay/policy.eyg` and calling one field, run ungated, showed
+`eyg eval -c` importing `eyg_packages/overlay/policy.eyg` and calling one field, run unchecked, showed
 the decisions are observable values:
 
 ```
@@ -91,10 +91,11 @@ p.read_write([root]).read_file({path: "/tmp/README.md"}) -> Mock(Error("read_fil
 So `Pass`/`Mock` can be read. What it cannot give is the decision of *this session*, because the
 preset that the tool actually runs - `pi-eyg-codemode/policies/agent-roots.eyg` - reads `EYG_ALLOWED_ROOTS`
 with an `Env` effect, and a program that imports it gets `unhandled effect Env("EYG_ALLOWED_ROOTS")`
-instead: a preset that performs its own effects cannot be imported by a gated program, and importing
+instead: a preset that performs its own effects cannot be imported by a program running under a
+policy, and importing
 a *copy* of the preset in the tool would be a second answer to one question, which is what
-`notes/pi_codemode_host_gate.md` rules out for the same reason. Hence the spawn: the gate that will
-run the real program is the gate that answers the probe.
+`notes/pi_codemode_host_gate.md` rules out for the same reason. Hence the spawn: the runner that
+will run the real program is the runner that answers the probe.
 
 Cost, `@measured` on this host: 23 rows, 16 of them probes, 1.15 s wall on 2026-11-16 and 1.62 s
 wall on 2026-11-17 (the runner's start-up dominates), against `pi -p` at 8-14 s as an event and the
@@ -106,6 +107,6 @@ guide table at 0 lookups.
 | --- | --- | --- |
 | the registry lists, shadows and cross-checks | `pi -p --no-session --no-builtin-tools --tools eyg 'Call the eyg tool with action "list_functions" and code ""'` | 8-14 s wall, one headless session (`pi -p` is an event, not a loop) |
 | the shapes the listing prints, offline | `cd pi-eyg-codemode && node --test test/render-helpers.test.mjs` | 41-43 ms in process, 0.09 s wall `@measured 2026-11-16` |
-| a probe at `/dev/null` is refused, a probe at the root is not | one gated program performing `ReadFile("/dev/null/.eyg-codemode-probe")` and `ReadDirectory("<root>/.eyg-codemode-probe")` | 0.07 s per effect, quoted verbatim above |
-| `action: effects` answers through the gate | `pi --print --mode json --approve 'Call the eyg tool exactly once, with action set to effects'` | 123.18 s wall for the session, 1.62 s of it probes (`@measured 2026-11-17`); the result's `details.action` is `effects` and its header prints `16 probes in 1.62 s wall` |
+| a probe at `/dev/null` is refused, a probe at the root is not | one program running under a policy performing `ReadFile("/dev/null/.eyg-codemode-probe")` and `ReadDirectory("<root>/.eyg-codemode-probe")` | 0.07 s per effect, quoted verbatim above |
+| `action: effects` answers through the policy | `pi --print --mode json --approve 'Call the eyg tool exactly once, with action set to effects'` | 123.18 s wall for the session, 1.62 s of it probes (`@measured 2026-11-17`); the result's `details.action` is `effects` and its header prints `16 probes in 1.62 s wall` |
 | a preset that performs effects cannot be imported by a program | `EYG_ALLOWED_ROOTS=<root> packages/gleam_cli/dist/eyg run --policy pi-eyg-codemode/policies/agent-roots.eyg -c 'let a = import "<abs>/pi-eyg-codemode/policies/agent-roots.eyg" a'` | `error: unhandled effect Env("EYG_ALLOWED_ROOTS")`, 0.11 s wall `@measured 2026-11-17` |

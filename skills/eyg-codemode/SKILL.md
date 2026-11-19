@@ -1,15 +1,15 @@
 ---
 name: eyg-codemode
-description: "Use when a session's side effects must go through EYG instead of bash or the built-in JavaScript codemode: the `eyg` tool is registered and a host policy module gates every effect. Trigger on the `eyg` tool, a policy module, EYG_ALLOWED_ROOTS, EYG_POLICY, `--policy`, or any attempt to reach a file, the network or a process. Not for editing this package's own source."
+description: "Use when a session's side effects must go through EYG instead of bash or the built-in JavaScript codemode: the `eyg` tool is registered and a host policy module decides every effect. Trigger on the `eyg` tool, a policy module, EYG_ALLOWED_ROOTS, EYG_POLICY, `--policy`, or any attempt to reach a file, the network or a process. Not for editing this package's own source."
 ---
 
 # EYG codemode: effects are the only channel to the outside world
 
-An EYG program reaches the outside world only through effects; a host policy gates each.
+An EYG program reaches the outside world only through effects; a host policy decides each.
 Capability question first: `guides/cli_effects_reference.md` opens with `Every effect at a glance`,
-one row per effect with the policy field it sits under and its gate class - that answers "can I
+one row per effect with the policy field it sits under and what that field allows - that answers "can I
 perform this here" without deriving it. Then the one-line smoke test `perform StandardOut("ok")`
-shows the gate answering. The presets this package ships are written out in full in
+shows the policy answering. The presets this package ships are written out in full in
 `policies/agent-roots.eyg` and `policies/deny-all.eyg`, so authoring another one means editing
 one of those records, not reading a library somewhere else; the renderer, the timeout shape and
 the registry scopes are in `README.md`, presets and security in `guides/pi_codemode_agent.md`,
@@ -42,7 +42,7 @@ on its value, as the last two lines above do.
   program performs `StandardOut`, so a refusal left as the trailing value is invisible. A performed effect
   that is not the last expression must be bound (`let _ = perform ...`) or the program does not parse.
 - with no `policy` argument the tool uses the preset it ships over the session working directory, and a
-  call is never ungated. Paths must be absolute - the runner resolves a relative path before the policy
+  call is never unchecked. Paths must be absolute - the runner resolves a relative path before the policy
   sees it - and a path outside the roots is refused, not truncated.
 - under the agent preset `Env` is refused and answers `None({})`: a token belongs in the policy module,
   which may read the environment, never in the program.
@@ -78,4 +78,4 @@ the whole walk under its `read_file` rule; matching and `limit` semantics are in
 
 A search reports **names**, including the name of a path a read of would be refused for, so a listed path is
 not permission to read it and contents never come through. Without the `Search` effect, pass `libraries:
-["search"]` and call `search_lib.search({root, pattern, limit})`: the same gate, one decision per directory.
+["search"]` and call `search_lib.search({root, pattern, limit})`: the same policy, one decision per directory.

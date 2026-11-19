@@ -8,7 +8,7 @@ verified: 2026-11-14
 
 The CLI's own reference lives in the language workspace
 (`/home/chexxor/Git/eyg-lang/packages/gleam_cli/README.md`), which this tree does not
-read; the effect surface this package gates is here, in
+read; the effect surface this package documents is here, in
 `guides/cli_effects_reference.md`. Read that rather than guessing at effects.
 
 ## Which execute command
@@ -45,7 +45,7 @@ Measured 2026-11-18: `command -v eyg` answers `/home/chexxor/.local/bin/eyg`, an
 `eyg --version` answers `eyg v0.1.0`. That build's help has no `--policy`
 (`grep -c -- '--policy' <<< "$(~/.local/bin/eyg --help 2>&1)"` prints `0`), so from
 this workspace the CLI **type-checks** (`eyg check <file>.eyg`, 0.43 s for both
-modules plus the library) but **cannot gate a run**. A gated run needs the runner
+modules plus the library) but **cannot check a run**. A run with checks in force needs the runner
 built in the language workspace (`packages/gleam_cli/dist/eyg` after `./bin/compile`),
 which is not vendored here - so an effect-level result claimed from this tree is
 UNVERIFIED, never PASS.

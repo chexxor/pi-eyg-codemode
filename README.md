@@ -15,13 +15,13 @@ The language itself, its compiler, its test suite and **its documentation** live
 the code is in a separate repository - the language repository, checked out somewhere on the
 operator's machine and referred to here as the *language workspace* - and the prose is on the
 **EYG website, <https://eyg.run>** (guides, references, the policy vocabulary). This package is
-the tool in front of that gate; it decides nothing about what an effect may do, reads nothing
+the tool in front of that check; it decides nothing about what an effect may do, reads nothing
 from that repository at run time, and **replicates no install steps** - the next section says
 what has to be true on your machine.
 
 ## What you need before it does anything
 
-**The EYG CLI is not in this package** - nothing here builds it, and the gate lives in
+**The EYG CLI is not in this package** - nothing here builds it, and the check lives in
 it: the tool spawns a runner started with `--policy <module.eyg>`, and only that runner can
 answer for an effect. Install it from
 <https://eyg.run/guides/install-a-prebuilt-binary> or
@@ -41,14 +41,14 @@ Then the tool has to find what you installed. It looks in exactly three places, 
 
 A candidate counts only when `<candidate> --help` mentions `--policy` - the probe runs once per
 session and the refusal names the remedy, so a tool that assumed a path or a version would be a
-tool with no gate (`notes/pi_codemode_runner_probe.md`). Check the candidate, not merely that a
+tool with no check (`notes/pi_codemode_runner_probe.md`). Check the candidate, not merely that a
 binary exists:
 
     <the eyg you installed> --help 2>&1 | grep -c -- --policy   # 0 => every call will be refused
 
 **The prebuilt route is not enough on this host.** On the machine this workspace was developed
 on, 2026-11-18, the release found by `command -v eyg` answers `v0.1.0` and that check printed
-`0` - it predates the gate flag, and it mis-parses the argv this tool passes. So until a release
+`0` - it predates the `--policy` flag and mis-parses the argv this tool passes. Until a release
 with `--policy` is published: build from source (the other guide) and point `EYG_CODEMODE_RUNNER`
 at that binary, or read this package as documentation - installing the tool and getting a
 refusal for every call is the honest outcome, not a bug to chase. Until such a runner runs here,
@@ -82,13 +82,12 @@ the presets is `eyg check` on the modules and the drift guard against
   whose verify command fails moves to `status: suspect` with the date it was caught, so stale
   context is visible rather than silently trusted.
 - **Costs**, measured where a `--policy` runner exists (the language workspace,
-  `@measured 2026-11-15`): one gated call 0.06-0.07 s (runner start-up dominates), one
+  `@measured 2026-11-15`): one run under a policy 0.06-0.07 s (runner start-up dominates), one
   effect listing 1.15-1.62 s (16 spawns), one live one-shot session
   `pi --print --mode json` 44-142 s - an event, not a loop. This workspace's own checks
   cost 0.10 s (test) and 0.43 s (type-check); `AGENTS.md` carries the full table.
 - **When not to use it:** a workspace whose agent must run arbitrary host commands -
   builds, git, a compiler - or a session whose job is editing this package's own source.
-  There is no effect that runs a shell command, and none will be added to get one.
 
 ## First session, nothing to configure
 
@@ -98,8 +97,8 @@ pi list                # prints the absolute path every declaration resolves to
 ```
 
 Install from wherever the package sits on your machine (`pi install /your/path/pi-eyg-codemode
--l` does the same thing); resolve the path with `pi list` rather than by eye, because a local
-declaration is written relative to `.pi/settings.json` and reads as `..` (`docs/world/traps.md`).
+-l` does the same thing); a local declaration is written relative to `.pi/settings.json` and reads
+as `..` (`docs/world/traps.md`).
 
 With no `policy` argument and no `EYG_POLICY` the tool uses the preset this package ships,
 `policies/agent-roots.eyg`, over the session working directory: a program may read and
@@ -146,7 +145,7 @@ names the path it was denied and the policy that denied it.
 `policies/agent-roots.eyg` is the default (files under the roots, nothing else) and
 `policies/deny-all.eyg` is the narrowest record there is: it refuses every failable effect
 except `Now`, `Sleep`, `StandardOut`, `StandardError`. Both are one record, one rule per
-gated effect, **written out in full and importing nothing** - the preset vocabulary used to
+refusable effect, **written out in full and importing nothing** - the preset vocabulary used to
 be imported from the language workspace (`import "../../eyg_packages/overlay/policy.eyg"`)
 and was inlined on 2026-11-18 so the package owns its whole decision
 (`notes/pi-codemode-preset-inlining.md`, and `docs/world/traps.md` for the trap that
@@ -171,7 +170,7 @@ the value the program asked for, and it answers with one of three things:
   roots, request_path))`, which refuses `.env.eyg` before the roots are consulted. Handlers
   compose by application, and the composed rule is still one field in one record.
 
-The policy module is itself an EYG program, run by the runner **outside the gate** - it may
+The policy module is itself an EYG program, run by the runner **outside those checks** - it may
 `perform Env(...)`, and it does read the roots from `EYG_ALLOWED_ROOTS` that way
 (`policies/agent-roots.eyg:144`). The program under it may not: that is why a token belongs in
 a policy module and never in a program (`guides/pi_codemode_agent.md:169`).
@@ -191,17 +190,16 @@ preset, this package's or any other, can forbid them
 (`docs/world/traps.md`, `docs/world/entities/codemode.effect-surface.md`).
 
 Two vocabularies, and only one of them is this package's. The **host layer** is what the
-`--policy` module this tool loads builds: one record, one field per gated effect, rules that
-answer `Pass`/`Mock`. The **language layer** is documented on the website
+`--policy` module this tool loads builds: one record, one field per effect the policy decides,
+rules that answer `Pass`/`Mock`. The **language layer** is documented on the website
 (<https://eyg.run/guides/effect-access-policies>, read 2026-11-18): an `overlay.access` package
 applied *inside* a program - `access.apply(policy, (_) -> { perform ... })` - whose fields
 answer `Allow({})` (perform), `Mock(value)` (resume with `Ok(value)`) or `Deny(reason)`
 (resume with `Error(reason)`), with helpers such as `access.read_file.allow_under(["data"])`,
 `max_bytes`, `access.fetch.allow_get_hosts`, and `access.write_file.mock_success` for dry runs.
 The website marks that package as "currently unpublished", and it manages six effects
-(`Fetch`, `ReadFile`, `ReadDirectory`, `WriteFile`, `AppendFile`, `DeleteFile"); the CLI's own
-gate covers the 19 fields above. Same idea, different reach: the access package wraps a
-computation you wrote; the policy record gates whatever the model writes.
+(`Fetch`, `ReadFile`, `ReadDirectory`, `WriteFile`, `AppendFile`, `DeleteFile`); the CLI's own
+policy decides the 19 fields above.
 
 One seam this tree cannot check, and it is worth knowing rather than discovering: `guides/syntax.md:383`
 documents `handle EffectName` - a *program* taking the handler for an effect, "used to install
@@ -235,19 +233,19 @@ the access package; this package dry-runs the whole session by loading the narro
 what was rejected; `notes/pi-codemode-handler-seam.md` carries the trade-offs, including the one
 thing this workspace cannot check about it.
 
-## The effect surface, answered by the gate rather than from memory
+## The effect surface, answered by the policy rather than from memory
 
-`action: "effects"` (`code: ""`) asks the **gate**: one probe program per effect, one row
+`action: "effects"` (`code: ""`) asks the **policy in force**: one probe program per effect, one row
 per policy field, `<effect> | <field or none> | allowed | refused | not implemented |
 unknown`, plus a header naming the policy, where it came from and the roots. Probes are
 chosen so they fail at the host before they could change anything (a read and a delete
 name `<root>/.eyg-codemode-probe`, a write names `<root>` itself, a directory, `Fetch`
 points at the reserved TLD `.invalid`); `Env`, `Exit`, `StandardIn` report `unknown`
-because they would read the caller's environment, stop the probe or swallow stdin. Path
-gated rows answer for the probe value, not for every path.
+because they would read the caller's environment, stop the probe or swallow stdin. The
+rows that check a path answer for the probe value, not for every path.
 
 Two search routes, and one boundary that surprises people. The `Search` effect (in the
-CLI runtime, gated by the existing `read_file` field - one decision per walk) and
+CLI runtime, checked by the existing `read_file` field - one decision per walk) and
 `libraries/search.eyg`, bound as `search_lib` by the `libraries` parameter, which walks
 with `ReadDirectory` and so is checked one directory at a time. Both report **names**
 under an allowed root, including the name of a file a read of that path would be refused
@@ -272,8 +270,8 @@ walking, 32 directories deep) are in that file's `Search` section of
 escalation in the language repository's own rules. What this package does when the
 language lands one is follow the mapping: `Search` was landed on 2026-11-16 and mapped to
 `read_file`, so no new policy field exists here. The claim over the whole mapping is
-`docs/world/entities/overlay.policy-gate.md`; the full record of that landing - the files,
-the manifest resolution, the gate output - is in the language workspace and in
+`docs/world/entities/overlay.policy-rules.md`; the full record of that landing - the files,
+the manifest resolution, the check's output - is in the language workspace and in
 `CHANGELOG.md`.
 
 ## How a call is shown, and how long it took
@@ -357,7 +355,7 @@ the `perform` names in the module's own text in both directions (a stale annotat
 undeclared effect is an error, not a silent pass), and **whether the policy in force can
 perform them** - `available`, `refused by the policy in force`, `not implemented by this
 runner`, `unknown` with the reason. Availability is **advisory and re-probed at every
-query**, because the policy in force can change between calls; it is not a second gate -
+query**, because the policy in force can change between calls; it is not a second check -
 running a function whose effect the probe called refused gets the ordinary
 `Error("<field> denied by policy: ...")` value, the same answer the program gets. The
 probes are written against the first advertised root, not a fixed path: an earlier version
@@ -368,20 +366,18 @@ probed at `/dev/null` and read as "refused" in a session that can read
 
 The rule of this README: a block under an italic tag `*[date · the language workspace]*` is a
 verbatim capture taken there on that date - paths and all, never re-run here and never edited,
-so the paths in it are the operator's machine and mean nothing on yours. The tag used to name
-that workspace by its checkout path; on 2026-11-18 the tag was rewritten to name it generically
-(the blocks themselves are unchanged), which is why every path inside a tagged block is an
-absolute one you cannot reproduce. Untagged blocks are instructions, or captures taken in this
-workspace. On 2026-11-18 this README was rewritten shorter: captures that carried a decision a
+so the paths in it are the operator's machine and mean nothing on yours. Since 2026-11-18 the tag
+names that workspace generically and the blocks themselves stay unchanged. Untagged blocks
+are instructions, or captures taken in this workspace. On 2026-11-18 this README was rewritten shorter: captures that carried a decision a
 reader still needs were kept (the refusal above, the `.env.eyg` name boundary, the status lines),
-and the rest - the language workspace's gate transcripts, the `Search`-effect landing, the
+and the rest - the language workspace's policy transcripts, the `Search`-effect landing, the
 registry listing - were dropped rather than shortened, and live in `CHANGELOG.md`,
 `docs/world/traps.md` and the `notes/` set. The command and date for each remaining claim are
 beside it.
 
 ## Commands that run here
 
-`AGENTS.md` carries the gate table with measured costs:
+`AGENTS.md` carries the command table with measured costs:
 `node --test 'test/*.mjs'`, `eyg check` on the shipped modules,
 `node pi-simple-world-model/bin/world_{lint,map,verify}.mjs`, and
 `pi --world-model-check`. Do not run `node --test test/` - node takes a file or a glob,
@@ -391,7 +387,7 @@ not a directory (`docs/world/traps.md`).
 
 | path | what it is |
 | --- | --- |
-| `extensions/eyg-codemode.ts` | the one pi extension: registers `eyg`, resolves policy/roots/runner from inside the package, spawns the gated runner through argv, renders the rows, reads the registry scopes |
+| `extensions/eyg-codemode.ts` | the one pi extension: registers `eyg`, resolves policy/roots/runner from inside the package, spawns the runner that checks every effect through argv, renders the rows, reads the registry scopes |
 | `policies/agent-roots.eyg` | the default preset: files under `EYG_ALLOWED_ROOTS`, nothing else, `.env.eyg` never readable |
 | `policies/deny-all.eyg` | the narrowest preset: a session that may only compute |
 | `libraries/search.eyg` | the search helper bound as `search_lib` by the `libraries` parameter; carries the `metadata` record the registry reads |
