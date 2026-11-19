@@ -11,22 +11,35 @@ per call, before the host performs it. A refused effect is a value
 (`Error("write_file denied by policy: /abs/path")`), so the model reads the
 permission it was refused and acts on it; nothing happened on disk.
 
-The language itself, its compiler and its test suite live in the language repository
-in the language workspace at `/home/chexxor/Git/eyg-lang`. This package is the tool
-in front of that gate; it decides nothing about what an effect may do, and it reads
-nothing from that workspace at run time.
+The language itself, its compiler and its test suite live in a **separate repository** - the
+language repository, checked out somewhere on the operator's machine and referred to here as
+the *language workspace*. This package is the tool in front of that gate; it decides nothing
+about what an effect may do, and it reads nothing from that repository at run time, so this
+package works on any machine that has a suitable EYG CLI installed - see the next section for
+what "suitable" means. Where a file in this tree shows an absolute path into that other
+repository, read it as the operator's path, never as something to find on your own machine.
 
 ## What you need before it does anything
 
-An EYG CLI that accepts `--policy`. **This host has none** - `command -v eyg` prints
-`/home/chexxor/.local/bin/eyg`, `eyg --version` prints `eyg v0.1.0`, and
-`grep -c -- '--policy' <<< "$(eyg --help 2>&1)"` prints `0` (this workspace, 2026-11-18):
-the prebuilt release predates the gate flag. The tool probes its runner rather than
-assuming one, so it refuses instead of running ungated. Point `EYG_CODEMODE_RUNNER` at a
-current build (built in the language workspace, `guides/install_from_source.md`). Until
-you do, **end-to-end policy behaviour here is UNVERIFIED**
-(`docs/world/entities/cli.prebuilt-binary.md`) - what holds the presets in this tree is
-`eyg check` and the drift guard, never an observed refusal.
+An EYG CLI that accepts `--policy`. **Check yours before you install anything** - three
+commands, on any machine:
+
+```bash
+command -v eyg                                                     # is there an EYG CLI at all?
+eyg --version                                                      # which release?
+eyg --help 2>&1 | grep -c -- --policy                              # 0 => no gate flag => this tool refuses
+```
+
+If `--policy` is missing from the help, the prebuilt release predates the gate flag and the
+tool will refuse every call: the tool probes its runner rather than assuming one, and refuses
+instead of running ungated. Either point `EYG_CODEMODE_RUNNER` at a build that accepts `--policy`
+(built in the language workspace, `guides/install_from_source.md` is the copy of that guide
+here), or read this package as documentation only - with no gated runner the tool refuses, so
+installing it and getting nothing is the honest outcome, not a bug to chase. On the host this workspace was developed on, 2026-11-18,
+those commands answered `v0.1.0` and `0` - so **end-to-end policy behaviour in this tree is
+UNVERIFIED** (`docs/world/entities/cli.prebuilt-binary.md`): what holds the presets here is
+`eyg check` and the drift guard, never an observed refusal. Your machine may already have a
+newer CLI; the check above is the answer, not this paragraph.
 
 ## What you get, and what it costs
 
@@ -40,12 +53,14 @@ you do, **end-to-end policy behaviour here is UNVERIFIED**
   it needs are in `skills/eyg-codemode/SKILL.md` (loaded automatically); the surface
   syntax is `guides/syntax.md` and the effect reference is
   `guides/cli_effects_reference.md`, both copied into this workspace as reference; the
-  language *skill* is the separate package `/home/chexxor/Git/pi-eyg-expressions`.
+  language *skill* is the separate package `pi-eyg-expressions` (a sibling pi package, not in
+  this tree; `pi list` prints the absolute path a declaration of it resolves to on your
+  machine).
 - **A store outside the history, read in slices.** `ReadFile` takes `offset`/`limit` and
   `Search` takes a `limit` spent while walking, so a big knowledge base or instruction set can
   live under a root and a session pulls the slice it needs - the store costs the runner
   (0.06-0.07 s a call), the window costs whatever the slice is. This tree is the working
-  example: 33 claims in `docs/world/`, all re-run in 0.37 s, and no lines in the prompt until
+  example: 35 claims in `docs/world/`, all re-run in 0.37 s, and no lines in the prompt until
   a session asks for one. What that does **not** buy you: a read is not free, and a claim
   whose verify command fails moves to `status: suspect` with the date it was caught, so stale
   context is visible rather than silently trusted.
@@ -61,9 +76,13 @@ you do, **end-to-end policy behaviour here is UNVERIFIED**
 ## First session, nothing to configure
 
 ```bash
-cd /home/chexxor/Git/pi-eyg-codemode
-pi install . -l        # the declaration pi writes is ".." - this directory IS the package
+pi install . -l        # from inside the package directory; the declaration pi writes is ".."
+pi list                # prints the absolute path every declaration resolves to
 ```
+
+Install from wherever the package sits on your machine (`pi install /your/path/pi-eyg-codemode
+-l` does the same thing); resolve the path with `pi list` rather than by eye, because a local
+declaration is written relative to `.pi/settings.json` and reads as `..` (`docs/world/traps.md`).
 
 With no `policy` argument and no `EYG_POLICY` the tool uses the preset this package ships,
 `policies/agent-roots.eyg`, over the session working directory: a program may read and
@@ -73,7 +92,7 @@ root, and both shipped presets refuse the network. A program is never run withou
 One call, verbatim, from the language workspace this package was split out of (paths are
 that workspace's) - a read inside the roots and a write outside them, in one program:
 
-*[2026-11-16 · ~/Git/eyg-lang]*
+*[2026-11-16 · the language workspace]*
 
 ```
 eyg run: ran
@@ -196,7 +215,7 @@ with `ReadDirectory` and so is checked one directory at a time. Both report **na
 under an allowed root, including the name of a file a read of that path would be refused
 for; contents never come through:
 
-*[2026-11-16 · ~/Git/eyg-lang]*
+*[2026-11-16 · the language workspace]*
 
 ```
 read_file denied by policy: /home/chexxor/Git/eyg-lang/.search-proof/.env.eyg
@@ -246,8 +265,8 @@ The offline loop for the renderer is the unit test, which pins the shapes `callL
 other. Re-run here:
 
 ```
-$ cd /home/chexxor/Git/pi-eyg-codemode && node --test test/render-helpers.test.mjs
-✔ test/render-helpers.test.mjs (45.8249ms)
+$ node --test test/render-helpers.test.mjs   # from the package root
+✔ test/render-helpers.test.mjs (39.94ms)
 ℹ tests 1
 ℹ suites 0
 ℹ pass 1
@@ -255,7 +274,7 @@ $ cd /home/chexxor/Git/pi-eyg-codemode && node --test test/render-helpers.test.m
 ℹ cancelled 0
 ℹ skipped 0
 ℹ todo 0
-ℹ duration_ms 58.487568
+ℹ duration_ms 47.54
 ```
 
 What the test cannot show is that pi paints the row from those shapes; that needs a human
@@ -309,15 +328,18 @@ probed at `/dev/null` and read as "refused" in a session that can read
 
 ## Evidence, and how it is marked
 
-The rule of this README: a block under an italic tag `*[date · ~/Git/eyg-lang]*` is a
-verbatim capture taken in the language workspace on that date - paths and all, never
-re-run here and never edited. Untagged blocks are instructions or captures for this
-workspace. On 2026-11-18 this README was rewritten shorter: captures that carried a
-decision a reader still needs were kept (the refusal above, the `.env.eyg` name boundary,
-the status lines), and the rest - the language workspace's gate transcripts, the
-`Search`-effect landing, the registry listing - were dropped rather than shortened, and
-live in `CHANGELOG.md`, `docs/world/traps.md` and the `notes/` set. The command and date
-for each remaining claim are beside it.
+The rule of this README: a block under an italic tag `*[date · the language workspace]*` is a
+verbatim capture taken there on that date - paths and all, never re-run here and never edited,
+so the paths in it are the operator's machine and mean nothing on yours. The tag used to name
+that workspace by its checkout path; on 2026-11-18 the tag was rewritten to name it generically
+(the blocks themselves are unchanged), which is why every path inside a tagged block is an
+absolute one you cannot reproduce. Untagged blocks are instructions, or captures taken in this
+workspace. On 2026-11-18 this README was rewritten shorter: captures that carried a decision a
+reader still needs were kept (the refusal above, the `.env.eyg` name boundary, the status lines),
+and the rest - the language workspace's gate transcripts, the `Search`-effect landing, the
+registry listing - were dropped rather than shortened, and live in `CHANGELOG.md`,
+`docs/world/traps.md` and the `notes/` set. The command and date for each remaining claim are
+beside it.
 
 ## Commands that run here
 

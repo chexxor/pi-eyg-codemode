@@ -180,6 +180,17 @@ it has.
   (`README.md` 50/7 -> 6/1 - the dropped captures were the bulk of it); the test is 0.09 s wall
   in either form, so the "49-55 ms" in the gate table above and the "69 and 47 lines" in the
   audit below both describe the README before this rewrite.
+- **Absolute machine paths taken out of the README the same day:** a first-time reader cannot
+  use a path that only exists on this operator's machine. Removed from instructions and prose:
+  the language workspace's checkout path, this package's own checkout path (the install
+  commands now say `pi install . -l` from inside the package, or `/your/path/...`, and point at
+  `pi list` for the resolution), the sibling `pi-eyg-expressions` path, and the `eyg` binary's
+  path (the section now gives the three commands to run on **any** machine and quotes only the
+  version and the `--policy` count measured here). The two capture tags were retagged
+  `*[2026-11-16 · the language workspace]*` so a reader is not shown a path they cannot open;
+  the text inside those blocks is unchanged, still verbatim, and the two `Git/eyg-lang` paths
+  left in the README are inside such a block. `AGENTS.md` and `docs/world/` keep the absolute
+  path on their own terms - they are this workspace's facts, not a new user's instructions.
 
 ### What the probes proved, and did not prove
 
