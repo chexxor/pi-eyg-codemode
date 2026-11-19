@@ -131,9 +131,9 @@ on 2026-11-18.
 | the codemode package suite (language workspace) | `eyg script eyg_packages/codemode_policy/entry.eyg` | 2.3 s - not runnable here |
 | the whole EYG suite (language workspace) | `eyg script entry.eyg` | 5.7 s (100 tests, 0 failed) - not runnable here |
 | every committed policy rule needed? (language workspace) | `node scripts/mutation-check.mjs` | 13.5-15.4 s (6 suite runs) - not here: no such script in this tree |
-| one type-check of this package's modules (here) | `for f in policies/*.eyg libraries/*.eyg; do eyg check "$f"; done` | 0.43 s |
-| this package's unit test (here) | `node --test 'test/*.mjs'` | 49 ms |
-| the world model checks (here) | `node pi-simple-world-model/bin/world_lint.mjs`, `world_map.mjs --check`, `pi --world-model-check` | 0.06 s, 0.04 s, 1.14 s (`@measured 2026-11-18`) |
+| one type-check of this package's modules (here) | `for f in policies/*.eyg libraries/*.eyg; do eyg check "$f"; done` | in `AGENTS.md`'s command table |
+| this package's unit test (here) | `node --test 'test/*.mjs'` | in `AGENTS.md`'s command table |
+| the world model checks (here) | `node pi-simple-world-model/bin/world_lint.mjs`, `world_map.mjs --check`, `pi --world-model-check` | in `AGENTS.md`'s command table |
 | a live agent session | `pi --print --mode json --approve '<prompt>'` | 44-142 s - an event |
 
 `gleam_cli` supports the javascript/bun target on this host; `erl` and `escript`

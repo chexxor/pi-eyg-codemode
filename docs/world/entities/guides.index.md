@@ -4,21 +4,27 @@ type: entity
 owner: delegate
 status: current
 verified_at: 2026-11-19
-verify: "grep -q '^name: EYG syntax guide' guides/syntax.md && grep -q '^name: Builtins reference' guides/builtins_reference.md && test -f guides/pi_codemode_agent.md && test -f guides/cli_effects_reference.md && grep -q 'https://eyg.run/guides/install-a-prebuilt-binary' README.md"
+verify: "grep -q '^name: EYG syntax guide' guides/syntax.md && grep -q '^name: Builtins reference' guides/builtins_reference.md && test -f guides/pi_codemode_agent.md && test -f guides/cli_effects_reference.md && test -f guides/first-session.md && test -f guides/tool-reference.md && test -f guides/how-to-share-functions.md && grep -q 'first-session.md' README.md"
 confidence: high
-sources: [guides/syntax.md, guides/builtins_reference.md, guides/cli_effects_reference.md, guides/pi_codemode_agent.md]
+sources: [guides/syntax.md, guides/builtins_reference.md, guides/cli_effects_reference.md, guides/pi_codemode_agent.md, guides/first-session.md, guides/tool-reference.md, guides/how-to-share-functions.md, README.md]
 supersedes: null
 superseded_by: null
 ---
 
-# Guides are the language reference
+# Guides are the language reference and this package's own how-tos
 
-`guides/` holds the prose an agent reads before writing EYG: `syntax.md` is the surface
-syntax, `builtins_reference.md` catalogues every `!builtin`, `cli_effects_reference.md` is
-the full effect reference for the CLI runtime, and `pi_codemode_agent.md` is how to run a
-policy-checked codemode session. `install_from_source.md` and `install_prebuilt.md` say how
-the CLI reaches a user; they describe the language workspace's build, not a command that
-runs here.
+`guides/` holds the prose an agent reads before writing EYG, in two sets. The **language set**
+is the offline mirror: `syntax.md` is the surface syntax, `builtins_reference.md` catalogues
+every `!builtin`, `cli_effects_reference.md` is the full effect reference for the CLI runtime,
+`pi_codemode_agent.md` is how to run a policy-checked codemode session, and
+`install_from_source.md` plus `install_prebuilt.md` say how the CLI reaches a user - they
+describe the language workspace's build, not a command that runs here.
+
+The **package set** was written here on 2026-11-19 and is not a copy of anything: `first-session.md`
+is the tutorial a new user follows to one call, the `how-to-*.md` pages carry the four things the
+reference implies (point at your runner, write another preset, read in slices, ask the registry),
+and `tool-reference.md` is this package's own reference - the knobs, the rows, the probes and the
+seam it cannot check. The README links all of them and carries none of their content.
 
 **The website is the source; `guides/` is an offline mirror.** The EYG documentation lives at
 <https://eyg.run> - <https://eyg.run/guides> carries install, syntax, the CLI effect reference,

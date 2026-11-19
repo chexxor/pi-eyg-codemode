@@ -15,7 +15,7 @@ nothing here reads that repository at run time, and this tree never writes to it
 | --- | --- |
 | docs/ | The world model records for this workspace: docs/world/00-map.md (tier-0 index), the entity, decision and runbook pages, invariants.md, traps.md and roster.yaml. The lint, map and verify CLIs that check them live in pi-simple-world-model/. |
 | extensions/ | The one pi extension: it registers the `eyg` tool, resolves the policy, the roots and the runner from inside the package, and spawns the runner that checks every effect through argv. |
-| guides/ | Prose guides read before writing EYG: surface syntax, builtins, the CLI effect reference, and running a policy-checked codemode session. |
+| guides/ | Prose guides read before writing EYG, in two sets: the language reference copied from the |
 | lib/ | The pure JavaScript shapes the tool and its tests share: render rows, the effect scan, availability-probe arguments, the registry walk, the argument mapping. |
 | libraries/ | EYG modules this package ships: bound by the tool's `libraries` parameter and listed in its function registry. |
 | notes/ | Design notes with name/description/date front-matter; the record of trade-offs that are not clear in the code. |
@@ -43,7 +43,7 @@ nothing here reads that repository at run time, and this tree never writes to it
 | gap.roots-have-no-config-file | The roots in force are the session working directory, or `EYG_ALLOWED_ROOTS` read from the environment by the shipped ... | delegate | 2026-11-19 |
 | gap.runner-release-lacks-policy | The latest release the language repository serves is `gleam_cli-v0.1.0` ... | delegate | 2026-11-19 |
 | gap.windows-is-undocumented | `guides/install_prebuilt.md` offers `eyg-windows-x64.exe` as a release asset, and `README.md` mentions Windows nowhere. | delegate | 2026-11-19 |
-| guides.index | `guides/` holds the prose an agent reads before writing EYG: `syntax.md` is the surface syntax, `builtins_reference.md` ... | delegate | 2026-11-19 |
+| guides.index | `guides/` holds the prose an agent reads before writing EYG, in two sets. | delegate | 2026-11-19 |
 | notes.format | `notes/` is where trade-offs go when they are not clear from the code: one file per subject, `name:`, `description:` ... | delegate | 2026-11-19 |
 | overlay.policy-rules | A running EYG program is stopped at every effect before the host performs it, and a user-supplied function decides. | delegate | 2026-11-19 |
 | pi.codemode-tool | This workspace **is** the package: `pi list` (2026-11-18) resolves the declaration `..` in `.pi/settings.json` to ... | delegate | 2026-11-19 |
@@ -57,12 +57,12 @@ nothing here reads that repository at run time, and this tree never writes to it
 | ADR-002-handler-seam | ## Context An operator wants tools an agent can trust, and EYG separates an effect's *description* from its ... | human | 2026-11-19 |
 | ADR-003-doc-delegation | ## Context A new user of this package needs two different things: how to get an EYG CLI onto their machine, and what ... | human | 2026-11-19 |
 | ADR-004-doc-shape-for-two-readers | ## Context Three readers, and each needs a different thing from this tree: 1. | human | 2026-11-19 |
-| runbook.check-a-change | 1. | delegate | 2026-11-19 |
+| runbook.check-a-change | Costs are in `AGENTS.md`'s command table, dated where each was measured; they are not repeated here. | delegate | 2026-11-19 |
 | runbook.next-milestone | Each row is a claim whose `verify` still passes, which means the hole is still open. | delegate | 2026-11-19 |
 
 ## Where to look for a claim
 
-- entities: 11 · invariants: 4 · decisions: 5 · runbooks: 2 · traps: 24
-- suspect right now: none
+- entities: 11 · invariants: 4 · decisions: 5 · runbooks: 2 · traps: 25
+- suspect right now: ADR-002-handler-seam
 - re-check everything: `npm run world` · checks: `npm run world:lint` · regenerate this index: `npm run world:map`
 <!-- END GENERATED -->

@@ -135,6 +135,10 @@ Reader 2 (the model that writes EYG):
 
 + Reader 1 reaches a first effect call in one page and knows, at the top of the README, that the
   release published today cannot answer for an effect.
++ Filled on 2026-11-19: `guides/first-session.md` is the tutorial, the four `guides/how-to-*.md`
+  pages are the how-tos, and `guides/tool-reference.md` carries the reference this package's README
+  used to hold; `guides/PURPOSE` names the two sets in `guides/`, and two claim verifies moved from
+  `README.md` to that page (`ADR-002-handler-seam`, `traps.md` trap-04).
 + The model's skill stays short and pointer-shaped, so it costs the same reads it costs today.
 + The audit's findings are records: an ADR a later session can re-read, gap claims with commands
   that prove the hole is still open, and a runbook that names what to do next.

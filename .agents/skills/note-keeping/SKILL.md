@@ -25,7 +25,7 @@ description: one sentence
 date: YYYY-MM-DD
 ---
 ```
-`invariant.notes-frontmatter` carries the check, and `node pi-simple-world-model/bin/world_verify.mjs --all` runs it (0.37 s wall, measured 2026-11-18).
+`invariant.notes-frontmatter` carries the check, and `node pi-simple-world-model/bin/world_verify.mjs --all` runs it; its cost is in `AGENTS.md`'s command table.
 
 ## Write a note only when
 - a design trade-off was made and the reasoning is not visible in the code;

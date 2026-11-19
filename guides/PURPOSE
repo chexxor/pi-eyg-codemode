@@ -1,1 +1,4 @@
-Prose guides read before writing EYG: surface syntax, builtins, the CLI effect reference, and running a policy-checked codemode session.
+Prose guides read before writing EYG, in two sets: the language reference copied from the
+website (`syntax.md`, `builtins_reference.md`, `cli_effects_reference.md`, `pi_codemode_agent.md`,
+the two install pages), and this package's own tutorial (`first-session.md`), how-tos
+(`how-to-*.md`) and reference (`tool-reference.md`).
