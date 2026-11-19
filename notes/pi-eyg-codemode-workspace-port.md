@@ -168,3 +168,28 @@ preset does at run time stay **UNVERIFIED** here, and say so wherever they appea
 presets parse, carry all 18 policy fields, and type-check; that the package's extension
 resolves its own policy, library and render helpers from inside itself; and that the
 language workspace keeps its own copy of everything.
+
+## Completion audit, re-read against the contract, `@measured 2026-11-18`
+
+Run from this workspace root after the first commit (`git log` shows it; this is the
+commit that carries the audit).
+
+| the contract asks | the command | the answer |
+| --- | --- | --- |
+| workspace root is the package | `ls` | `package.json` (name `pi-eyg-codemode`, `pi` manifest `extensions`/`skills`/`changelogPath`, host `peerDependencies` at `"*"`, plus this workspace's `scripts`) beside `extensions/ lib/ libraries/ policies/ skills/ test/ README.md CHANGELOG.md PURPOSE` |
+| relative imports resolve inside the tree | `grep -rn '\.\./' extensions lib libraries policies package.json test` | exactly `../lib/render-helpers.mjs` in `extensions/eyg-codemode.ts:67` and in `test/render-helpers.test.mjs:14`; `policies/*.eyg` and `libraries/*.eyg` carry no import at all |
+| no out-of-workspace import in the presets | `grep -n 'let .* = import' policies/*.eyg` | no output |
+| the sweeps | `grep -rn "Git/eyg-lang" . --exclude-dir=.git --exclude-dir=.pi` / same for `eyg_packages` | 69 and 47 lines, 18 files, every one a labelled historical record or a sentence naming the language workspace (the classification, file by file, is above in this note) |
+| the test | `node --test test/render-helpers.test.mjs` | exit 0, `pass 1 fail 0` |
+| registration | `pi list` | `..` → `/home/chexxor/Git/pi-eyg-codemode`, `../pi-simple-world-model` → the vendored copy, `npm:@woksin/pi-context-budget` → `.pi/npm/...`, `../../pi-eyg-expressions` → `/home/chexxor/Git/pi-eyg-expressions` |
+| the vendored world model gate sees it as a session does | `pi --world-model-check` | exit 0, ends `tool registered: yes (22 tools active in this session)` |
+| local commit only | `git status --porcelain` / `git remote -v` | 0 lines / 0 lines; `git log` shows the local commits, no remote exists |
+| the language workspace is untouched | `cd ~/Git/eyg-lang && git diff \| wc -l` | `0` tracked diffs; `git status --porcelain` prints only the pre-existing `?? .ai-work/` |
+
+Still **UNVERIFIED**, and named as such wherever it appears: that a preset actually refuses
+or allows an effect at run time. The CLI on PATH (`/home/chexxor/.local/bin/eyg`, `eyg v0.1.0`)
+has no `--policy` (`grep -c -- '--policy' <<< "$(eyg --help 2>&1)"` → `0`), so both gated probes
+print `error: no such file: <this workspace>/run` and exit 1 without starting a program. What the
+presets' semantics rest on here is the recorded preset source, `eyg check` on both modules, the
+18-field comparison against `test/fixtures/rule_mapping.gleam`, and the unit test - not an
+observed refusal.
