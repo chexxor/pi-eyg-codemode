@@ -1,0 +1,168 @@
+// A search helper for a codemode program: find files by name under one root.
+//
+// This is not an effect and it is not part of the language. It is a program
+// written with the effects the policy already gates - `ReadDirectory` - so
+// every directory it looks at is checked by the policy before the host reads
+// it, and a directory the policy refuses simply ends that branch (`Error(_)`)
+// rather than failing the search. A search is therefore no more and no less
+// reachable than a hand written walk, which is the point: the effect set says
+// what exists, the policy says what runs.
+//
+// Pattern semantics, deliberately narrow and stated here rather than
+// discovered by reading the code:
+//   * at most one `*` per pattern; the text before it is a prefix and the
+//     text after it is a suffix, matched against the path relative to the
+//     searched root, so `*.eyg`, `README*` and `src/*.gleam` all work;
+//   * `**/` is removed first, which makes `src/**/*.gleam` mean the same
+//     thing as `src/*.gleam` - the walk is recursive, so a name pattern
+//     matches at any depth already;
+//   * matching is case sensitive and never crosses nothing: there is no
+//     character class, no alternation and no `{n}` repetition.
+//
+// `limit` is a budget for the walk, not a slice taken from a finished list:
+// once it is reached the walk stops, so a program asking for five names does
+// not read a whole filesystem tree. `ignore` names directories to skip at any
+// depth (`.git` by default), the same way the language workspace's `fs` package walk does (that package is not vendored here).
+//
+// `ReadDirectory` takes a bare path and answers
+// `Result(List({name: String, type: Directory({}) | File({size: Int})}), String)`
+// as documented in guides/cli_effects_reference.md; the shapes here are that
+// shape, not a guess.
+// There is no `!list_length`; a count is a fold, so it is named once here.
+let length = (items) -> {
+  !list_fold(items, 0, (item, n) -> { !int_add(n, 1) })
+}
+
+// `..` spreads once, at the tail of a list literal, so joining two lists is a
+// named step: reverse the first, then prepend onto the second.
+let reverse = (items) -> {
+  !list_fold(items, [], (item, acc) -> { [item, ..acc] })
+}
+
+let append_lists = (first, second) -> {
+  !list_fold(reverse(first), second, (item, acc) -> { [item, ..acc] })
+}
+
+let contains = (items, wanted) -> {
+  !list_fold(items, False({}), (item, found) -> {
+    match found {
+      True({}) -> { True({}) }
+      False({}) -> { !equal(item, wanted) }
+    }
+  })
+}
+
+let matches = (path, pattern) -> {
+  let pattern = !string_replace(pattern, "**/", "")
+  match !string_split_once(pattern, "*") {
+    // No `*` in the pattern: the path has to be that exact name.
+    Error({}) -> { !equal(path, pattern) }
+    Ok({pre, post}) -> {
+      match !string_starts_with(path, pre) {
+        True({}) -> { !string_ends_with(path, post) }
+        False({}) -> { False({}) }
+      }
+    }
+  }
+}
+
+// One step of the join: `root` is absolute, `relative` is not.
+let under = (root, relative) -> {
+  !string_append(!string_append(root, "/"), relative)
+}
+
+// Walk `root` breadth first. `pending` holds paths relative to the root, so a
+// pattern is always written against the same shape it is matched against,
+// while the reported paths are absolute and can be handed to `ReadFile`.
+// A directory that cannot be read is skipped: the branch ends, the walk goes
+// on with the rest of the queue.
+let walk = ({root, pattern, limit, ignore}) -> {
+  !fix(
+    (self, pending, found) -> {
+      match !int_compare(length(found), limit) {
+        // `Gt` and `Eq` both mean the budget is spent; `Lt` keeps walking.
+        Gt(_) -> { found }
+        Eq(_) -> { found }
+        Lt(_) -> {
+          match !list_pop(pending) {
+            Error({}) -> { found }
+            Ok({head, tail}) -> {
+              let absolute = match !equal(head, "") {
+                True({}) -> { root }
+                False({}) -> { under(root, head) }
+              }
+              match perform ReadDirectory(absolute) {
+                Error({}) -> { self(tail, found) }
+                Ok(entries) -> {
+                  // Two folds over the same entries, each with a plain list as
+                  // its accumulator: the names to walk next, and the matches
+                  // taken here. One fold carrying a record would do the same
+                  // work and read worse.
+                  let relative = (entry) -> {
+                    match !equal(head, "") {
+                      True({}) -> { entry.name }
+                      False({}) -> { under(head, entry.name) }
+                    }
+                  }
+                  let next = !list_fold(
+                    entries,
+                    [],
+                    (entry, acc) -> {
+                      match entry.type {
+                        Directory(_) -> {
+                          match contains(ignore, entry.name) {
+                            True({}) -> { acc }
+                            False({}) -> { [relative(entry), ..acc] }
+                          }
+                        }
+                        File(_) -> { acc }
+                      }
+                    }
+                  )
+                  let hit = !list_fold(
+                    entries,
+                    [],
+                    (entry, acc) -> {
+                      match entry.type {
+                        File(_) -> {
+                          match matches(relative(entry), pattern) {
+                            True({}) -> { [under(root, relative(entry)), ..acc] }
+                            False({}) -> { acc }
+                          }
+                        }
+                        Directory(_) -> { acc }
+                      }
+                    }
+                  )
+                  self(append_lists(next, tail), append_lists(hit, found))
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    [""],
+    []
+  )
+}
+
+// `search` answers a question a program can actually ask: the absolute paths
+// of the files under `root` whose relative path matches `pattern`, at most
+// `limit` of them, in the order the walk found them.
+let search = ({root, pattern, limit}) -> {
+  walk({root: root, pattern: pattern, limit: limit, ignore: [".git"]})
+}
+
+// What the registry reads: one metadata record for the function-set, so
+// `list_functions` can print the description, the signature and the effects
+// this module performs. The names in `effects` are cross-checked against the
+// `perform` names in the text above, so an annotation cannot go stale quietly.
+let metadata = {
+  name: "search",
+  description: "Absolute paths of the files under `root` whose path relative to it matches `pattern` (`*.eyg`, `README*`, one `*` at most), at most `limit` of them, in the order the walk found them. Every directory it opens is checked by the policy, so it reaches no further than a hand written walk over the same roots.",
+  signature: "search_lib.search({root, pattern, limit}) -> List(String)",
+  effects: ["ReadDirectory"]
+}
+
+{contains, matches, under, walk, search}

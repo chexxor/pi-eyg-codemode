@@ -1,0 +1,1 @@
+pi-eyg-codemode/: a pi package that gives a pi agent EYG instead of JavaScript as its coding tool, so its only channel to the outside world is the EYG effects the host policy gate allows.

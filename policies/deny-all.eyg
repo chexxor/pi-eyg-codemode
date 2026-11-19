@@ -1,0 +1,74 @@
+// A session that may compute and print, but may not touch the outside world.
+// Every file, directory, network and environment effect is refused with an EYG
+// reason naming the effect; time, randomness and process output are passed
+// because they cannot change anything the agent did not already have.
+//
+// This module is self-contained: the preset is written out here rather than
+// imported, so the package carries no code from outside itself and a policy can
+// be read in full where it is used. `notes/pi-codemode-preset-inlining.md`
+// records where the preset came from and how it was checked.
+//
+// Decision, one row per effect the CLI can name (the 23 in `rule_mapping`; 18 of
+// them are policy fields, 4 are never gated). The names below are the effect
+// names; the field name is the lower-cased one used in this record.
+//
+//   PERFORMED (passed through unchanged)
+//     Now, Random, Sleep              - observe or wait, they change nothing the
+//                                       agent did not already have
+//     StandardOut, StandardError      - output of the program itself
+//     Flip                            - a coin flip: a value, no outside world
+//     Exit                            - ends the program; its policy may rewrite
+//                                       the status with Pass, it cannot Mock it
+//                                       (Exit has no return value)
+//   REFUSED, with an Error naming the effect
+//     ReadFile, ReadDirectory, WriteFile, AppendFile, MakeDirectory, DeleteFile
+//     Fetch                           - the network
+//     StandardIn                      - the input meant for the chat
+//     CreateKey                       - a fresh opaque key
+//   REFUSED, with a shape the effect's own type requires
+//     Env                             - Mock(None({})): Env returns Option, so an
+//                                       unset variable is the honest answer
+//     CWD                             - Mock(Error({})): CWD returns a Result
+//   NEVER GATED (not policy fields, available under every preset)
+//     DecodeJSON, EYGParse, Hash, Sign - deterministic over values they were given
+//
+// `Search` is not in this record: the CLI gates it as the `read_file` field, so
+// whatever decides `ReadFile` decides a search.
+//
+// See guides/pi_codemode_agent.md for the presets that open hosts, and
+// policies/agent-roots.eyg for the default that lets a session work in one
+// directory.
+
+let deny = (reason) -> {
+  (_) -> { Mock(Error(reason)) }
+}
+
+let append = (a, b) -> {
+  !string_append(a, b)
+}
+
+// Deny an effect, naming it in the error the program receives.
+let refuse = (effect) -> {
+  deny(append(effect, " denied by policy"))
+}
+
+{
+  append_file: refuse("append_file"),
+  create_key: refuse("create_key"),
+  cwd: (_) -> { Mock(Error({})) },
+  delete_file: refuse("delete_file"),
+  env: (_) -> { Mock(None({})) },
+  exit: (value) -> { Pass(value) },
+  fetch: refuse("fetch"),
+  flip: (value) -> { Pass(value) },
+  make_directory: refuse("make_directory"),
+  now: (value) -> { Pass(value) },
+  random: (value) -> { Pass(value) },
+  read_directory: refuse("read_directory"),
+  read_file: refuse("read_file"),
+  sleep: (value) -> { Pass(value) },
+  standard_error: (value) -> { Pass(value) },
+  standard_in: refuse("standard_in"),
+  standard_out: (value) -> { Pass(value) },
+  write_file: refuse("write_file")
+}

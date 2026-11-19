@@ -1,0 +1,33 @@
+{
+  "name": "pi-eyg-codemode",
+  "version": "1.5.0",
+  "scripts": {
+    "test": "node --test 'test/*.mjs'",
+    "world": "node pi-simple-world-model/bin/world_verify.mjs --all",
+    "world:lint": "node pi-simple-world-model/bin/world_lint.mjs",
+    "world:map": "node pi-simple-world-model/bin/world_map.mjs"
+  },
+  "description": "Codemode for pi agents written in EYG: the agent's only channel to the outside world is an EYG program, and every effect it performs is decided by a host-side policy module before the host performs it.",
+  "license": "Apache-2.0",
+  "keywords": [
+    "pi-package",
+    "codemode",
+    "eyg",
+    "policy",
+    "permissions"
+  ],
+  "pi": {
+    "changelogPath": "./CHANGELOG.md",
+    "extensions": [
+      "./extensions/eyg-codemode.ts"
+    ],
+    "skills": [
+      "./skills"
+    ]
+  },
+  "peerDependencies": {
+    "@earendil-works/pi-coding-agent": "*",
+    "@earendil-works/pi-ai": "*",
+    "typebox": "*"
+  }
+}

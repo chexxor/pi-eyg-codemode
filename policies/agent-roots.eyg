@@ -1,0 +1,175 @@
+// Policy module for a codemode agent: files under the roots named in the
+// environment, nothing else. The agent's program cannot change this decision
+// and cannot reach it: the runner hands it to the host before the program runs.
+//
+// EYG_ALLOWED_ROOTS is a comma separated list of absolute paths, no spaces.
+// Unset or empty means no roots, so every file effect is refused - name the
+// roots you want, or use the `deny-all.eyg` preset in this directory when you
+// mean none. The pi tool (`pi-eyg-codemode`) supplies the session working
+// directory through this variable when nothing is configured, which is why a
+// first pi session can read and write its own workspace and nothing else.
+// Secret files (`.env.eyg` by convention) are never readable, even under a root.
+// Network access is refused; see guides/pi_codemode_agent.md for the presets that
+// open hosts with a `fetch` rule or inject a token with a header rule.
+//
+// This module is self-contained: the preset is written out here rather than
+// imported, so the package carries no code from outside itself and the whole
+// decision is readable where it is used. `notes/pi-codemode-preset-inlining.md`
+// records where the preset came from and how it was checked.
+//
+// The decision, one rule for each of the 18 fields the CLI gates (the 23 effects
+// in `rule_mapping` less the 4 that are never gated). `roots` is the list built
+// from EYG_ALLOWED_ROOTS below.
+//
+//   UNDER THE ROOTS (path checked against `roots`, absolute, no `.` or `..`)
+//     ReadFile, ReadDirectory, WriteFile, AppendFile, MakeDirectory, DeleteFile
+//     Search                              - the CLI gates Search as the read_file
+//                                            field, so a search is walked under the
+//                                            same rule: every directory it looks at
+//                                            is checked before the host reads it
+//   READ, but never a secret file
+//     read_file also rejects anything ending `.env.eyg`, under a root or not
+//   PERFORMED
+//     CWD                                 - where the program is, it changes nothing
+//     Now, Random, Sleep, Flip            - values the program already could have
+//     StandardOut, StandardError          - output of the program itself
+//     Exit                                - ends the program; Pass may rewrite the
+//                                            status, Mock cannot (no return value)
+//   REFUSED
+//     Fetch                               - the network
+//     StandardIn                          - the input meant for the chat
+//     CreateKey                           - a fresh opaque key
+//   ANSWERED AS UNSET, not refused
+//     Env                                 - Mock(None({})): Env returns Option, so the
+//                                            program cannot read the caller's
+//                                            environment (which holds the tokens)
+//
+// Anything outside `roots` gets `Error("<effect> denied by policy: <path>")`, and
+// a program that ignores that value carries on with what it got - a denial is a
+// value, not a crash.
+
+// Perform the effect with the value the program asked for, unchanged.
+let pass = (value) -> {
+  Pass(value)
+}
+
+// Refuse with an Error, naming the effect.
+let deny = (reason) -> {
+  (_) -> { Mock(Error(reason)) }
+}
+
+let append = (a, b) -> {
+  !string_append(a, b)
+}
+
+let refuse = (effect) -> {
+  deny(append(effect, " denied by policy"))
+}
+
+// Is the absolute path equal to or inside the absolute root. Paths given to
+// policies are already resolved, so they contain no `.` or `..` segments.
+let is_under = (root, path) -> {
+  let root = match !string_ends_with(root, "/") {
+    True(_) -> { root }
+    False(_) -> { append(root, "/") }
+  }
+  match !equal(append(path, "/"), root) {
+    True(_) -> { True({}) }
+    False(_) -> { !string_starts_with(path, root) }
+  }
+}
+
+let any_under = (roots, path) -> {
+  !list_fold(roots, False({}), (root, found) -> {
+    match found {
+      True(_) -> { True({}) }
+      False(_) -> { is_under(root, path) }
+    }
+  })
+}
+
+// The refusal names the effect and the path, which is what makes a denial
+// readable to the program that asked.
+let denied = (effect, path) -> {
+  append(effect, append(" denied by policy: ", path))
+}
+
+// Allow a file effect only for paths under one of the absolute roots.
+// `path_of` takes the path out of the effect's value, which differs by effect.
+let under = (effect, roots, path_of) -> {
+  (value) -> {
+    let path = path_of(value)
+    match any_under(roots, path) {
+      True(_) -> { Pass(value) }
+      False(_) -> { Mock(Error(denied(effect, path))) }
+    }
+  }
+}
+
+// The value of DeleteFile, MakeDirectory and ReadDirectory is the path itself.
+let path_of_value = (path) -> {
+  path
+}
+
+// ReadFile, WriteFile and AppendFile are given a record with a `path` field.
+let request_path = (request) -> {
+  request.path
+}
+
+// Files that hold secrets, by convention `.env.eyg`, are never readable.
+let is_secret = (path) -> {
+  !string_ends_with(path, ".env.eyg")
+}
+
+// Wrap a read_file rule so a secret file is refused before the root is consulted.
+let hide_secrets = (read_file) -> {
+  (request) -> {
+    match is_secret(request.path) {
+      True(_) -> { Mock(Error(denied("read_file", request.path))) }
+      False(_) -> { read_file(request) }
+    }
+  }
+}
+
+// Split a comma separated string into a list; `!string_split` returns one head
+// and a flat tail, and the empty string would give one empty root.
+let split_roots = (text) -> {
+  let {head, tail} = !string_split(text, ",")
+  [head, ..tail]
+}
+
+// The roots the session is allowed to work in. Read here, at the top of the
+// policy module, which the runner evaluates outside the gate - the agent's own
+// program still cannot read the environment, see the `env` rule below.
+let raw_roots = match perform Env("EYG_ALLOWED_ROOTS") {
+  Some(text) -> { text }
+  None({}) -> { "" }
+}
+
+// `!equal` is True when the two strings are the same, so an unset or empty
+// environment value takes the `True` branch and gives no roots.
+let roots = match !equal(raw_roots, "") {
+  True(_) -> { [] }
+  False(_) -> { split_roots(raw_roots) }
+}
+
+{
+  append_file: under("append_file", roots, request_path),
+  create_key: refuse("create_key"),
+  cwd: pass,
+  delete_file: under("delete_file", roots, path_of_value),
+  env: (_) -> { Mock(None({})) },
+  exit: pass,
+  fetch: refuse("fetch"),
+  flip: pass,
+  make_directory: under("make_directory", roots, path_of_value),
+  now: pass,
+  random: pass,
+  read_directory: under("read_directory", roots, path_of_value),
+  read_file: hide_secrets(under("read_file", roots, request_path)),
+  sleep: pass,
+  standard_error: pass,
+  standard_in: refuse("standard_in"),
+  standard_out: pass,
+  write_file: under("write_file", roots, request_path)
+}

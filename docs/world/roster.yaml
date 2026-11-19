@@ -1,0 +1,12 @@
+# roster.yaml - who may write which page
+#
+# Every `owner` named in a record's front-matter must appear here, or the lint stops
+# the write. Add a row per agent; every entity id is owned by exactly one.
+version: 1
+librarian: rotating
+
+human:
+  human: [invariants, 00-map, decisions]
+
+agents:
+  delegate: [entities, traps, proposed, ADR-001-world-model-import]

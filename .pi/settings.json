@@ -1,0 +1,22 @@
+{
+  "packages": [
+    "..",
+    "../pi-simple-world-model",
+    "npm:@woksin/pi-context-budget",
+    "../../pi-eyg-expressions"
+  ],
+  "extensions": [
+    "-builtin:codemode"
+  ],
+  "compaction": {
+    "enabled": false
+  },
+  "defaultTools": [
+    "read",
+    "edit",
+    "write",
+    "bash",
+    "codemode",
+    "grep"
+  ]
+}

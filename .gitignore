@@ -1,0 +1,12 @@
+# Pi keeps its per-project work state in .pi/: active and archived goals, the
+# goal event log, ledger checkpoints and lock files. That is the state of one
+# session on one machine, not repository material, so it stays out of the tree.
+# .pi/settings.json is deliberately tracked: it declares this package (`..`) and
+# the vendored ./pi-simple-world-model, without which a clone of this workspace
+# has no world model gate and no `eyg` tool.
+.pi/goals/
+.pi/.goals-pool-snapshot.json
+
+# pi installs project-local packages under .pi/npm/: an install artefact of this
+# machine (the npm tree of the declarations in .pi/settings.json), not source.
+.pi/npm/

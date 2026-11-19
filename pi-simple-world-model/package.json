@@ -1,0 +1,14 @@
+{
+  "name": "pi-simple-world-model",
+  "version": "1.0.0",
+  "description": "A cited, verifiable project world model in docs/world/: tier-0 map, entity pages, invariants, traps, ADRs, runbooks, plus the lint, verify and map CLIs and a Pi tool that returns claim records instead of prose.",
+  "license": "Apache-2.0",
+  "keywords": ["pi-package", "world-model", "documentation", "knowledge", "agent"],
+  "pi": {
+    "changelogPath": "./CHANGELOG.md"
+  },
+  "peerDependencies": {
+    "@earendil-works/pi-coding-agent": "*",
+    "typebox": "*"
+  }
+}
