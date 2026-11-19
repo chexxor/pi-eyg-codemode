@@ -21,25 +21,39 @@ repository, read it as the operator's path, never as something to find on your o
 
 ## What you need before it does anything
 
-An EYG CLI that accepts `--policy`. **Check yours before you install anything** - three
-commands, on any machine:
+**The EYG CLI is not in this package** - nothing here builds or ships it, and the gate lives in
+it: the tool spawns a runner started with `--policy <module.eyg>`, and only that runner can
+answer for an effect. Install the CLI yourself, following the directions in this tree -
+`guides/install_prebuilt.md` (a prebuilt release) or `guides/install_from_source.md` (Gleam
+>= 1.7 and Bun). They are copies of the language workspace's guides; the paths either one names
+inside the source belong to that workspace, not to this tree.
 
-```bash
-command -v eyg                                                     # is there an EYG CLI at all?
-eyg --version                                                      # which release?
-eyg --help 2>&1 | grep -c -- --policy                              # 0 => no gate flag => this tool refuses
-```
+Then the tool has to find what you installed. It looks in exactly three places, in this order
+(`extensions/eyg-codemode.ts:387-390`, `resolveRunner` at `:219`):
 
-If `--policy` is missing from the help, the prebuilt release predates the gate flag and the
-tool will refuse every call: the tool probes its runner rather than assuming one, and refuses
-instead of running ungated. Either point `EYG_CODEMODE_RUNNER` at a build that accepts `--policy`
-(built in the language workspace, `guides/install_from_source.md` is the copy of that guide
-here), or read this package as documentation only - with no gated runner the tool refuses, so
-installing it and getting nothing is the honest outcome, not a bug to chase. On the host this workspace was developed on, 2026-11-18,
-those commands answered `v0.1.0` and `0` - so **end-to-end policy behaviour in this tree is
-UNVERIFIED** (`docs/world/entities/cli.prebuilt-binary.md`): what holds the presets here is
-`eyg check` and the drift guard, never an observed refusal. Your machine may already have a
-newer CLI; the check above is the answer, not this paragraph.
+1. **`EYG_CODEMODE_RUNNER`** - the absolute path to the runner. Set it and nothing else is
+   probed, so installing the compiler somewhere off `PATH` is fine as long as you name it here.
+2. **`eyg` on `PATH`** - whatever `command -v eyg` finds.
+3. **`<cwd>/packages/gleam_cli/dist/eyg`** - the language workspace's own layout, which only
+   helps if you run pi sessions inside a checkout of that repository.
+
+A candidate counts only when `<candidate> --help` mentions `--policy` - the probe runs once per
+session and the refusal names the remedy, so a tool that assumed a path or a version would be a
+tool with no gate (`notes/pi_codemode_runner_probe.md`). Check the candidate, not merely that a
+binary exists:
+
+    <the eyg you installed> --help 2>&1 | grep -c -- --policy   # 0 => every call will be refused
+
+**The prebuilt route is not enough on this host.** On the machine this workspace was developed
+on, 2026-11-18, the release found by `command -v eyg` answers `v0.1.0` and that check printed
+`0` - it predates the gate flag, and it mis-parses the argv this tool passes. So until a release
+with `--policy` is published: build from source (the other guide) and point `EYG_CODEMODE_RUNNER`
+at that binary, or read this package as documentation - installing the tool and getting a
+refusal for every call is the honest outcome, not a bug to chase. Until such a runner runs here,
+**end-to-end policy behaviour in this tree is UNVERIFIED**
+(`docs/world/entities/cli.prebuilt-binary.md`, `notes/pi_codemode_runner_probe.md`): what holds
+the presets is `eyg check` on the modules and the drift guard against
+`test/fixtures/rule_mapping.gleam`, never an observed refusal.
 
 ## What you get, and what it costs
 
