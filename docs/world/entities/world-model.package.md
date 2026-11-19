@@ -20,10 +20,10 @@ settings file; `pi list` on 2026-11-18 resolves it to
 loads the `world_model` tool, the `project-world-model` skill, the `/world` command and
 the tier-0 injection of `docs/world/00-map.md`.
 
-The three CLIs run from this workspace root: `node pi-simple-world-model/bin/world_lint.mjs`
-(0.06 s), `world_map.mjs` (`--check`, `--init`; 0.04 s) and `world_verify.mjs` (`--all`,
-`--changed-from <ref>`; 0.37 s wall over 24 claims on 2026-11-18). All are offline; `verify`
-caps each claim's command at 20 s.
+The three CLIs run from this workspace root: `node pi-simple-world-model/bin/world_lint.mjs`,
+`world_map.mjs` (`--check`, `--init`) and `world_verify.mjs` (`--all`, `--changed-from <ref>`);
+their costs are in `AGENTS.md`'s command table. All are offline; `verify` caps each claim's
+command at 20 s and prints how many claims it checked.
 
 ## Not this
 

@@ -84,7 +84,7 @@ shell commands; a policy module decides each effect before the host performs it.
 | `for f in policies/*.eyg libraries/*.eyg; do eyg check "$f"; done` | 0.43 s wall | 2026-11-18 |
 | `node pi-simple-world-model/bin/world_lint.mjs` | 0.06 s wall | 2026-11-18 |
 | `node pi-simple-world-model/bin/world_map.mjs --check` | 0.04 s wall | 2026-11-18 |
-| `node pi-simple-world-model/bin/world_verify.mjs --all` | 0.37 s wall, 24 claims | 2026-11-18 |
+| `node pi-simple-world-model/bin/world_verify.mjs --all` | 0.65 s wall, prints how many claims it checked | 2026-11-19 |
 | `pi --world-model-check` | 1.14 s wall | 2026-11-18 |
 | `pi list` | registers the four project packages by absolute path | 2026-11-18 |
 
@@ -148,9 +148,9 @@ never put a workspace fact in a guide - a fact in two places drifts.
 
 1. Write a note in `notes/` for any trade-off the code does not show, with `name:`,
    `description:`, `date:` front-matter - and delete a note the code or a guide now covers.
-2. Verify the claims you touched: `node pi-simple-world-model/bin/world_verify.mjs --all`
-   (0.37 s), or `--changed-from <baseline commit>` for the claims the diff moved - after
-   committing, since it diffs a ref to `HEAD` and selects 0 claims from uncommitted edits.
+2. Verify the claims you touched: `node pi-simple-world-model/bin/world_verify.mjs --all`, or
+   `--changed-from <baseline commit>` for the claims the diff moved - after
+   committing, since it diffs a ref to `HEAD` and selects no claims from uncommitted edits.
    A claim whose command fails is `status: suspect` with the date it was caught.
 3. Append to `docs/world/traps.md` every obstacle this session hit: the wrong path taken,
    the command that fixes it, the time it costs - three lines at most, and an entry without

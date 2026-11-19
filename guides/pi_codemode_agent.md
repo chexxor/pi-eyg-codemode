@@ -173,14 +173,14 @@ and may read the environment, the program may not.
 
 ## Proving it
 
-From this workspace root, in this order (`@measured 2026-11-18`):
+From this workspace root, in this order (costs are in `AGENTS.md`'s command table):
 
 ```bash
-node --test 'test/*.mjs'                              # the shapes, and the drift guard  49 ms
-for f in policies/*.eyg libraries/*.eyg; do eyg check "$f"; done   # the modules parse and type-check  0.43 s
-node pi-simple-world-model/bin/world_verify.mjs --all  # every claim, re-run  0.37 s
-node pi-simple-world-model/bin/world_lint.mjs          # the records themselves  0.06 s
-pi --world-model-check                                 # the same checks as a pi session sees them  1.14 s
+node --test 'test/*.mjs'                              # the shapes, and the drift guard
+for f in policies/*.eyg libraries/*.eyg; do eyg check "$f"; done   # the modules parse and type-check
+node pi-simple-world-model/bin/world_verify.mjs --all  # every claim, re-run
+node pi-simple-world-model/bin/world_lint.mjs          # the records themselves
+pi --world-model-check                                 # the same checks as a pi session sees them
 ```
 
 What is **not** provable here, and stays UNVERIFIED: that an effect is actually refused

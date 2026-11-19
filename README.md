@@ -77,15 +77,15 @@ the presets is `eyg check` on the modules and the drift guard against
   `Search` takes a `limit` spent while walking, so a big knowledge base or instruction set can
   live under a root and a session pulls the slice it needs - the store costs the runner
   (0.06-0.07 s a call), the window costs whatever the slice is. This tree is the working
-  example: 35 claims in `docs/world/`, all re-run in 0.37 s, and no lines in the prompt until
+  example: every claim in `docs/world/` re-runs in 0.65 s, and no lines are in the prompt until
   a session asks for one. What that does **not** buy you: a read is not free, and a claim
   whose verify command fails moves to `status: suspect` with the date it was caught, so stale
   context is visible rather than silently trusted.
 - **Costs**, measured where a `--policy` runner exists (the language workspace,
   `@measured 2026-11-15`): one run under a policy 0.06-0.07 s (runner start-up dominates), one
   effect listing 1.15-1.62 s (16 spawns), one live one-shot session
-  `pi --print --mode json` 44-142 s - an event, not a loop. This workspace's own checks
-  cost 0.10 s (test) and 0.43 s (type-check); `AGENTS.md` carries the full table.
+  `pi --print --mode json` 44-142 s - an event, not a loop. This workspace's own costs are in
+  `AGENTS.md`'s command table.
 - **When not to use it:** a workspace whose agent must run arbitrary host commands -
   builds, git, a compiler - or a session whose job is editing this package's own source.
 
