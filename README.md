@@ -17,19 +17,18 @@ operator's machine and referred to here as the *language workspace* - and the pr
 **EYG website, <https://eyg.run>** (guides, references, the policy vocabulary). This package is
 the tool in front of that gate; it decides nothing about what an effect may do, reads nothing
 from that repository at run time, and **replicates no install steps** - the next section says
-what has to be true on your machine, the website says how to make it true.
+what has to be true on your machine.
 
 ## What you need before it does anything
 
-**The EYG CLI is not in this package** - nothing here builds or ships it, and the gate lives in
+**The EYG CLI is not in this package** - nothing here builds it, and the gate lives in
 it: the tool spawns a runner started with `--policy <module.eyg>`, and only that runner can
-answer for an effect. **Install the CLI from the EYG documentation, not from this README:**
-<https://eyg.run/guides/install-a-prebuilt-binary> (a prebuilt release) or
-<https://eyg.run/guides/install-from-source> (Gleam >= 1.7 and Bun). The website is the source.
-This tree keeps offline copies of some of those pages under `guides/`, including those two, for
-a session that cannot load a page - a copy is stale the day the site changes, and the paths
-inside the source-building one (`packages/...`, `eyg_packages/...`) belong to the language
-workspace, not to this tree.
+answer for an effect. Install it from
+<https://eyg.run/guides/install-a-prebuilt-binary> or
+<https://eyg.run/guides/install-from-source> (Gleam >= 1.7 and Bun).
+`guides/install_prebuilt.md` and `guides/install_from_source.md` are copies of those two
+pages, taken 2026-11-18, for a session that cannot load a page; the paths inside the second
+belong to the language workspace, not to this tree.
 
 Then the tool has to find what you installed. It looks in exactly three places, in this order
 (`extensions/eyg-codemode.ts:387-390`, `resolveRunner` at `:219`):

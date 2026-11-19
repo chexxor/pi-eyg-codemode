@@ -56,7 +56,7 @@ nothing here reads that repository at run time, and this tree never writes to it
 
 ## Where to look for a claim
 
-- entities: 7 · invariants: 4 · decisions: 4 · runbooks: 1 · traps: 21
+- entities: 7 · invariants: 4 · decisions: 4 · runbooks: 1 · traps: 22
 - suspect right now: none
 - re-check everything: `npm run world` · gate: `npm run world:lint` · regenerate this index: `npm run world:map`
 <!-- END GENERATED -->

@@ -123,6 +123,11 @@ never put a workspace fact in a guide - a fact in two places drifts.
 - **Nothing tracked may contain credentials.** `.env.eyg` files are denied by both presets
   and must stay out of the tree; do not copy a token into a note, a claim, a commit message
   or a guide.
+- **Say each fact once.** A sentence carries one new fact; when a neighbour only restates
+  it - in other words, as emphasis, or as a gloss under a link whose URL already says it -
+  delete the restatement and keep the link. `install from <url>`, not `install from the
+  docs, not from this README, the website is the source`. Check it by hand: name the
+  paragraph's key noun, grep the paragraph, a hit in two sentences is one too many.
 - **EYG reaches the outside world only through effects**, and the gate is host-side: a
   program cannot opt out of it by writing different code. Do not loosen a preset to get
   past a boundary - name the boundary, and if a preset must change, say why in a note and
