@@ -58,6 +58,18 @@ Three readers, and each needs one thing from this tree:
 
 ## What you need before it does anything
 
+Install the package itself first, from wherever it sits on your machine:
+
+```bash
+pi install <the path to this package> -l   # installed from inside it, the declaration pi writes is ".."
+pi list                                    # prints the absolute path every declaration resolves to
+```
+
+A local declaration is written relative to `.pi/settings.json`, which lives one level down, so
+it reads as `..` (`docs/world/traps.md`). The same command installed *inside* a copy of this
+repository also declares the vendored `pi-simple-world-model/` package, which is what checks
+the claims in `docs/world/`.
+
 **The EYG CLI is not in this package** - nothing here builds it, and the check lives in it:
 the tool starts a runner begun with `--policy <module.eyg>`, and only that runner can answer
 for an effect. Install one from
