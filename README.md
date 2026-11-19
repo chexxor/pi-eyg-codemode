@@ -11,22 +11,25 @@ per call, before the host performs it. A refused effect is a value
 (`Error("write_file denied by policy: /abs/path")`), so the model reads the
 permission it was refused and acts on it; nothing happened on disk.
 
-The language itself, its compiler and its test suite live in a **separate repository** - the
-language repository, checked out somewhere on the operator's machine and referred to here as
-the *language workspace*. This package is the tool in front of that gate; it decides nothing
-about what an effect may do, and it reads nothing from that repository at run time, so this
-package works on any machine that has a suitable EYG CLI installed - see the next section for
-what "suitable" means. Where a file in this tree shows an absolute path into that other
-repository, read it as the operator's path, never as something to find on your own machine.
+The language itself, its compiler, its test suite and **its documentation** live elsewhere:
+the code is in a separate repository - the language repository, checked out somewhere on the
+operator's machine and referred to here as the *language workspace* - and the prose is on the
+**EYG website, <https://eyg.run>** (guides, references, the policy vocabulary). This package is
+the tool in front of that gate; it decides nothing about what an effect may do, reads nothing
+from that repository at run time, and **replicates no install steps** - the next section says
+what has to be true on your machine, the website says how to make it true.
 
 ## What you need before it does anything
 
 **The EYG CLI is not in this package** - nothing here builds or ships it, and the gate lives in
 it: the tool spawns a runner started with `--policy <module.eyg>`, and only that runner can
-answer for an effect. Install the CLI yourself, following the directions in this tree -
-`guides/install_prebuilt.md` (a prebuilt release) or `guides/install_from_source.md` (Gleam
->= 1.7 and Bun). They are copies of the language workspace's guides; the paths either one names
-inside the source belong to that workspace, not to this tree.
+answer for an effect. **Install the CLI from the EYG documentation, not from this README:**
+<https://eyg.run/guides/install-a-prebuilt-binary> (a prebuilt release) or
+<https://eyg.run/guides/install-from-source> (Gleam >= 1.7 and Bun). The website is the source.
+This tree keeps offline copies of some of those pages under `guides/`, including those two, for
+a session that cannot load a page - a copy is stale the day the site changes, and the paths
+inside the source-building one (`packages/...`, `eyg_packages/...`) belong to the language
+workspace, not to this tree.
 
 Then the tool has to find what you installed. It looks in exactly three places, in this order
 (`extensions/eyg-codemode.ts:387-390`, `resolveRunner` at `:219`):
@@ -65,8 +68,9 @@ the presets is `eyg check` on the modules and the drift guard against
   no window in which the tool trusted something that was not there.
 - **What you give up:** the model writes EYG instead of JavaScript and `bash`. The forms
   it needs are in `skills/eyg-codemode/SKILL.md` (loaded automatically); the surface
-  syntax is `guides/syntax.md` and the effect reference is
-  `guides/cli_effects_reference.md`, both copied into this workspace as reference; the
+  syntax is <https://eyg.run/guides/eyg-syntax-guide> and the effect reference is
+  <https://eyg.run/guides/cli-effects-reference> (offline copies of both live here as
+  `guides/syntax.md` and `guides/cli_effects_reference.md`); the
   language *skill* is the separate package `pi-eyg-expressions` (a sibling pi package, not in
   this tree; `pi list` prints the absolute path a declaration of it resolves to on your
   machine).
@@ -187,10 +191,27 @@ Four effects have no policy field at all - `DecodeJSON`, `EYGParse`, `Hash`, `Si
 preset, this package's or any other, can forbid them
 (`docs/world/traps.md`, `docs/world/entities/codemode.effect-surface.md`).
 
+Two vocabularies, and only one of them is this package's. The **host layer** is what the
+`--policy` module this tool loads builds: one record, one field per gated effect, rules that
+answer `Pass`/`Mock`. The **language layer** is documented on the website
+(<https://eyg.run/guides/effect-access-policies>, read 2026-11-18): an `overlay.access` package
+applied *inside* a program - `access.apply(policy, (_) -> { perform ... })` - whose fields
+answer `Allow({})` (perform), `Mock(value)` (resume with `Ok(value)`) or `Deny(reason)`
+(resume with `Error(reason)`), with helpers such as `access.read_file.allow_under(["data"])`,
+`max_bytes`, `access.fetch.allow_get_hosts`, and `access.write_file.mock_success` for dry runs.
+The website marks that package as "currently unpublished", and it manages six effects
+(`Fetch`, `ReadFile`, `ReadDirectory`, `WriteFile`, `AppendFile`, `DeleteFile"); the CLI's own
+gate covers the 19 fields above. Same idea, different reach: the access package wraps a
+computation you wrote; the policy record gates whatever the model writes.
+
 One seam this tree cannot check, and it is worth knowing rather than discovering: `guides/syntax.md:383`
 documents `handle EffectName` - a *program* taking the handler for an effect, "used to install
 custom effect handlers in advanced embedding scenarios", and those are the only two lines about
-it. Whether such a handler can shadow the host's policy decision is **UNVERIFIED from here**
+it. The website expands it (<https://eyg.run/guides/advanced-effects>, read 2026-11-18):
+`handle EffectName(handler_fn, fallback)` builds **stateful computations inside a program**, and
+every example handles an effect the program itself designed (`Increment`, `Update`, `State`,
+`Get`, `Increase`) - no example re-handles one of the CLI's computer effects, so whether such a
+handler can shadow the host's policy decision stays **UNVERIFIED from here**
 (`docs/world/traps.md`); nothing in this package relies on it, and a policy module is host-authored
 by construction - the tool spawns the runner with `--policy <module.eyg>` before the program runs.
 
@@ -207,9 +228,13 @@ This is the cheap shape of "think before you touch": the model writes the plan a
 (the renderer shows the effect names it may ask, in the collapsed row, before the source), the
 operator reads it, and the second call is the one that changes anything. A staged session is
 also the honest place for a `Mock` that simulates an effect: the plan preset may answer, the
-act preset may not. `docs/world/decisions/ADR-002-handler-seam.md` records why the seam sits in
-the policy module and what was rejected; `notes/pi-codemode-handler-seam.md` carries the
-trade-offs, including the one thing this workspace cannot check about it.
+act preset may not. The language's own docs name this pattern the same way
+(<https://eyg.run/guides/effect-access-policies>, read 2026-11-18: "Mock helpers are available
+for dry runs and tests", `access.write_file.mock_success`) - they dry-run inside a program with
+the access package; this package dry-runs the whole session by loading the narrower record.
+`docs/world/decisions/ADR-002-handler-seam.md` records why the seam sits in the policy module and
+what was rejected; `notes/pi-codemode-handler-seam.md` carries the trade-offs, including the one
+thing this workspace cannot check about it.
 
 ## The effect surface, answered by the gate rather than from memory
 

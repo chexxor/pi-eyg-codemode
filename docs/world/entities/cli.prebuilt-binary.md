@@ -31,7 +31,9 @@ Consequences for this workspace, stated as facts:
 
 ## Not this
 
-Not the install instructions for a user who wants the language: `guides/install_prebuilt.md`
-and `guides/install_from_source.md` are the two paths, and both belong to the language
-workspace's build. Vendoring a runner here is a decision with a trigger, recorded in
-`AGENTS.md` ("the gated runner is not in this workspace").
+Not the install instructions for a user who wants the language: those are on the EYG
+website (<https://eyg.run/guides/install-a-prebuilt-binary>,
+<https://eyg.run/guides/install-from-source>) and the README points there rather than
+repeating them; `guides/install_prebuilt.md` and `guides/install_from_source.md` are offline
+copies of those pages, belonging to the language workspace's build. Vendoring a runner here is
+a decision with a trigger, recorded in `AGENTS.md` ("the gated runner is not in this workspace").

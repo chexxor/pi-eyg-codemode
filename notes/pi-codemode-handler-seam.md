@@ -64,3 +64,32 @@ runner time.
 Trigger to revisit: the first session that installs a `--policy` runner here - then the
 `Mock` type behaviour and the `handle EffectName` question become answerable, and the claims
 labelled UNVERIFIED here should move with the output.
+
+## The two vocabularies, read off the EYG website on 2026-11-18
+
+<https://eyg.run/guides/effect-access-policies> documents a policy vocabulary that is **not**
+this package's: an `overlay.access` package applied inside a program - `access.apply(policy,
+(_) -> { perform ... })` - whose fields answer `Allow({})` (perform the original host effect),
+`Mock(value)` (resume with `Ok(value)`) or `Deny(reason)` (resume with `Error(reason)`), built
+from helpers (`access.read_file.allow_under`, `allow_exact`, `max_bytes`, `access.fetch.allow_get_hosts`,
+`access.write_file.mock_success` for dry runs) and composed with spreads (`..access.deny_all`).
+It manages six effects (`Fetch`, `ReadFile`, `ReadDirectory`, `WriteFile`, `AppendFile`,
+`DeleteFile`) and the page marks the package as **currently unpublished**.
+
+What that changes about this note, and what it does not:
+
+- It backs the staging decision. The docs name dry-run mocking as an intended pattern
+  (`write_file: access.write_file.mock_success`), the same shape as this package's plan preset -
+  a separate, named policy that answers instead of performing. The rule stays: never in the
+  record that acts.
+- It gives names this package's presets do not have: `max_bytes`, `allow_exact`, host allow-lists
+  for `Fetch`. Ours are `under(effect, roots, path_of)` and `hide_secrets`, inline, host-side.
+  Trigger to reconcile: once `overlay.access` is published and a `--policy` runner exists here,
+  decide once whether the presets should be written in that vocabulary, and record what the host
+  layer can express that it cannot (the 19 fields, `Env`, `Search` under `read_file`, `cwd`) -
+  rather than letting two vocabularies drift.
+- It narrows but does not close the `handle` question: <https://eyg.run/guides/advanced-effects>
+  shows `handle EffectName(handler_fn, fallback)` building stateful computations out of effects
+  the program itself designed (`Increment`, `Update`, `State`, `Get`, `Increase`); no page shows
+  a program re-handling one of the CLI's computer effects. "A program cannot replace the host
+  policy" is therefore still UNVERIFIED here and must not be written as proven.

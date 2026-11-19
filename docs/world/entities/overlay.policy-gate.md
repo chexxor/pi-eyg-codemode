@@ -41,6 +41,13 @@ snapshot of its rule table.
   (`deny-all.eyg` refuses `cwd` with `Mock(Error({}))` because `CWD` returns a `Result`), and
   `Mock` cannot answer `Exit` at all. A rule may take and return another rule, which is what
   `hide_secrets` does.
+- **Two vocabularies, one gate.** The host layer (this package's) is the record a `--policy`
+  module builds: one field per gated effect, rules answering `Pass`/`Mock`. The language layer,
+  documented on the website (<https://eyg.run/guides/effect-access-policies>, read 2026-11-18),
+  is an `overlay.access` package applied *inside* a program - `access.apply(policy, program)`,
+  fields answering `Allow({})` / `Mock(value)` / `Deny(reason)`, helpers like
+  `access.read_file.allow_under` and `max_bytes`, six managed effects - and the website marks it
+  "currently unpublished". Same idea, different reach; do not read one record as the other.
 - A plan-then-act session is the same program run under two of these records
   (`policies/deny-all.eyg` first, `policies/agent-roots.eyg` to act) - no new field, no new
   tool. `README.md` names the section; `docs/world/decisions/ADR-002-handler-seam.md` records

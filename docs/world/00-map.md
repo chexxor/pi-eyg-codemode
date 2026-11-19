@@ -51,11 +51,12 @@ nothing here reads that repository at run time, and this tree never writes to it
 | ADR-000-world-model | ## Context Agents rediscover the layout, act on stale assumptions, and re-litigate settled decisions. | human | 2026-11-19 |
 | ADR-001-world-model-import | ## Context The world model tool (`pi-simple-world-model`) is authored in `~/Git/social-event-publisher`. | delegate | 2026-11-19 |
 | ADR-002-handler-seam | ## Context An operator wants tools an agent can trust, and EYG separates an effect's *description* from its ... | human | 2026-11-19 |
+| ADR-003-doc-delegation | ## Context A new user of this package needs two different things: how to get an EYG CLI onto their machine, and what ... | human | 2026-11-19 |
 | runbook.check-a-change | 1. | delegate | 2026-11-19 |
 
 ## Where to look for a claim
 
-- entities: 7 · invariants: 4 · decisions: 3 · runbooks: 1 · traps: 20
+- entities: 7 · invariants: 4 · decisions: 4 · runbooks: 1 · traps: 21
 - suspect right now: none
 - re-check everything: `npm run world` · gate: `npm run world:lint` · regenerate this index: `npm run world:map`
 <!-- END GENERATED -->

@@ -10,3 +10,6 @@
 # pi installs project-local packages under .pi/npm/: an install artefact of this
 # machine (the npm tree of the declarations in .pi/settings.json), not source.
 .pi/npm/
+
+# session state: task STATE files and scratch, never tracked
+.ai-work/
