@@ -4,7 +4,7 @@ type: entity
 owner: delegate
 status: current
 verified_at: 2026-11-19
-verify: "test -f test/fixtures/rule_mapping.gleam && grep -q 'pub const rule_mapping' test/fixtures/rule_mapping.gleam && grep -q 'policy.Unchecked' test/fixtures/rule_mapping.gleam && grep -q 'hide_secrets' policies/agent-roots.eyg && grep -q 'Mock(Error' policies/deny-all.eyg"
+verify: "test -f test/fixtures/rule_mapping.gleam && grep -q 'pub const rule_mapping' test/fixtures/rule_mapping.gleam && grep -q 'policy.Unchecked' test/fixtures/rule_mapping.gleam && grep -q 'hide_secrets' policies/agent-roots.eyg && grep -q 'Mock(Error' policies/deny-all.eyg && grep -q 'Pass(value)' policies/agent-roots.eyg"
 confidence: high
 sources: [test/fixtures/rule_mapping.gleam, policies/agent-roots.eyg, policies/deny-all.eyg, README.md, guides/cli_effects_reference.md]
 supersedes: null
@@ -32,10 +32,27 @@ snapshot of its rule table.
   `Mock(Error(...))` refusal shape that carries the reason back to the program.
   See `notes/pi-codemode-preset-inlining.md` for what was inlined and what the language
   workspace's security suite no longer covers.
+- What a rule may answer is the contract that makes a handler re-implementable
+  (`policies/agent-roots.eyg` read 2026-11-18): `Pass(value)` performs with the value handed
+  back, so a handler may rewrite the argument the program asked for; `Mock(x)` answers the
+  program without the host performing anything - that is the refusal shape `Mock(Error(...))`
+  and also a re-implementation, since `env: (_) -> { Mock(None({})) }` makes `Env` answer
+  "unset" rather than refuse. `Mock` must return a value of the effect's own type
+  (`deny-all.eyg` refuses `cwd` with `Mock(Error({}))` because `CWD` returns a `Result`), and
+  `Mock` cannot answer `Exit` at all. A rule may take and return another rule, which is what
+  `hide_secrets` does.
+- A plan-then-act session is the same program run under two of these records
+  (`policies/deny-all.eyg` first, `policies/agent-roots.eyg` to act) - no new field, no new
+  tool. `README.md` names the section; `docs/world/decisions/ADR-002-handler-seam.md` records
+  why the seam sits in the policy module and not in a program or a new tool parameter.
 
 ## Not this
 
 Not the effect definitions - those are in the CLI harness and in
 `guides/cli_effects_reference.md`. Not the CLI's own `run`, `eval` or `script` commands:
 without `--policy` they reach the host ungated - see `docs/world/traps.md` - which is what
-`pi.codemode-gate` builds on.
+`pi.codemode-gate` builds on. Not a handler a program writes for itself: `handle EffectName`
+(`guides/syntax.md:383`) is the language's own route to a handler, documented in two lines as
+"advanced embedding scenarios", and whether it can shadow the host's rule is UNVERIFIED from
+here - `docs/world/traps.md` carries that question and the command that shows it is still
+unanswerable on this host.

@@ -50,11 +50,12 @@ nothing here reads that repository at run time, and this tree never writes to it
 | invariant.policy-self-contained | A policy module in this package imports nothing outside the package. | human | 2026-11-19 |
 | ADR-000-world-model | ## Context Agents rediscover the layout, act on stale assumptions, and re-litigate settled decisions. | human | 2026-11-19 |
 | ADR-001-world-model-import | ## Context The world model tool (`pi-simple-world-model`) is authored in `~/Git/social-event-publisher`. | delegate | 2026-11-19 |
+| ADR-002-handler-seam | ## Context An operator wants tools an agent can trust, and EYG separates an effect's *description* from its ... | human | 2026-11-19 |
 | runbook.check-a-change | 1. | delegate | 2026-11-19 |
 
 ## Where to look for a claim
 
-- entities: 7 · invariants: 4 · decisions: 2 · runbooks: 1 · traps: 19
+- entities: 7 · invariants: 4 · decisions: 3 · runbooks: 1 · traps: 20
 - suspect right now: none
 - re-check everything: `npm run world` · gate: `npm run world:lint` · regenerate this index: `npm run world:map`
 <!-- END GENERATED -->

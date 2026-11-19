@@ -78,6 +78,10 @@ files. Each one is classified here:
 
 **Kept verbatim (historical evidence, labelled as such):**
 
+*Line ranges below are the README as the port wrote it on 2026-11-18, before the same day's
+rewrite of that file (see "README rewritten" further down); the captures they name are
+unchanged in the surviving README.*
+
 - `README.md:32-34,58,63,73,78,80,87,104-114,273-276,281,286,304,305,526,531,536,541,543`
   — transcript blocks captured in the old workspace on 2026-11-16. Rewriting a path inside
   a transcript would make the claim un-verbatim, so the blocks stay byte-identical and each
@@ -128,7 +132,9 @@ Per file (`Git/eyg-lang` / `eyg_packages`): `README.md` 50/7 - inside blocks tag
 `guides/*` 2/12 - each guide carries a copied-from-the-language-workspace header;
 `docs/world/*` 3/3 - the entity pages and traps name the workspace in the sentence;
 `notes/*` 7/14 - the three ported notes carry a provenance line, the two written here
-state it; `.agents/skills/eyg-run/SKILL.md` 1/0 - the measured host facts;
+state it (`notes/pi-codemode-handler-seam.md`, written after the sweeps were next re-run, adds
+to these counts: measured 13/19 for `notes/*` and for the tree overall on 2026-11-18, in the
+section below); `.agents/skills/eyg-run/SKILL.md` 1/0 - the measured host facts;
 `test/fixtures/rule_mapping.PROVENANCE.md` 1/0 - the snapshot's own provenance;
 `policies/*.eyg`, `lib/*`, `extensions/*`, `package.json` - zero hits.
 
@@ -136,6 +142,44 @@ state it; `.agents/skills/eyg-run/SKILL.md` 1/0 - the measured host facts;
 (`extensions/eyg-codemode.ts`), `../../lib/world_model.mjs` inside the vendored
 `pi-simple-world-model/`, and prose paths; no `import` outside the package, in code or in
 `policies/*.eyg`.
+
+### README rewritten the same day, `2026-11-18`
+
+A reader who does not know EYG could not use the README as it stood: EYG was never defined,
+the prerequisite that a runner must accept `--policy` first appears 160 lines below "That is
+all", the boundary ("the gate is not in this package") was at line 638, and every example was
+a capture from the other workspace. The file was rewritten around those four facts and
+shortened from 662 lines to 288 (`wc -l README.md`, 2026-11-18):
+
+- **Kept as instructions:** install (`pi install . -l`), the knob/env tables, preset authoring
+  (the 18 fields and the three path shapes), the effect listing, both search routes and the
+  name-not-contents boundary, the registry, the renderer and the time knob, the install table.
+- **Kept verbatim, still tagged `*[2026-11-16 · ~/Git/eyg-lang]*`:** the read-inside/write-refused
+  program output, and the `.env.eyg` refused-read/named-by-`Search` pair - the two captures a
+  reader needs to understand what a refusal is.
+- **Dropped, not shortened:** the language workspace's `bin/agent/gate.sh` transcripts, the whole
+  `Search`-effect landing (files, manifest resolution, `gleam 1.19.2` notes), the 30-line
+  registry listing, the four `eyg run --policy` argv captures. They still live in the language
+  workspace's README, and their decisions are recorded here in `CHANGELOG.md`,
+  `docs/world/traps.md`, `docs/world/entities/overlay.policy-gate.md` and the `notes/` set. Each
+  dropped fact keeps a pointer in the rewritten README to the document that carries it.
+- **Re-measured here for the rewrite:** `node --test` 0.09 s wall either form (was quoted as
+  45 ms in process, 49 ms wall in `AGENTS.md`), `eyg check` over the three modules 0.43 s, and
+  the pasted test output is a fresh capture from this workspace (node's own 45.82 ms figure,
+  `duration_ms 58.49`) rather than the old one.
+- The two claims that grep README prose still hold after the rewrite
+  (`grep -q 'the language workspace' README.md && grep -q 'the language repository' README.md`,
+  `world_verify.mjs --all`: 33 claims, 0 failed), and `world_lint.mjs` stays clean.
+
+The package's own skill (`skills/eyg-codemode/SKILL.md`) is written for the model, not for a
+newcomer, and its trigger `description:` is what a session loads; the human-facing gap that the
+rewrite closes is deliberately not closed in the skill, since a model already knows which tool
+it has.
+
+- **Re-measured after the rewrite:** the sweeps return 28 and 42 lines over the same 18 files
+  (`README.md` 50/7 -> 6/1 - the dropped captures were the bulk of it); the test is 0.09 s wall
+  in either form, so the "49-55 ms" in the gate table above and the "69 and 47 lines" in the
+  audit below both describe the README before this rewrite.
 
 ### What the probes proved, and did not prove
 

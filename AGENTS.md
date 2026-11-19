@@ -67,6 +67,13 @@ shell commands; a policy module decides each effect before the host performs it.
   `POLICY_FIELDS` in `lib/render-helpers.mjs` against `test/fixtures/rule_mapping.gleam`
   (a recorded snapshot of the language workspace's `overlay.gleam`, md5
   `9cb5e8ace42e1df79083bab255ee9bb1` at capture).
+- A **policy rule is a function** the host calls with the value the program asked for, and it
+  answers `Pass(value)` (perform with what you hand back, so the argument may be rewritten) or
+  `Mock(x)` (answer the program, the host performs nothing - a refusal is
+  `Mock(Error("<effect> denied by policy: <path>"))`, and `Mock` must return a value of the
+  effect's own type: `env: Mock(None({}))`, `cwd: Mock(Error({}))`, and `Mock` cannot answer
+  `Exit`). Rules wrap each other (`hide_secrets(under(...))`), which is why one record is one
+  composed decision (`policies/agent-roots.eyg`, read 2026-11-18; `ADR-002-handler-seam`).
 - The tool's registry reads three scopes and never writes: `<cwd>/.pi/eyg-functions`
   (workspace), `$HOME/.pi/eyg-functions` (home), `<package>/libraries` (package).
 
@@ -74,7 +81,7 @@ shell commands; a policy module decides each effect before the host performs it.
 
 | Do this | cost | measured |
 | --- | --- | --- |
-| `node --test 'test/*.mjs'` | 49 ms wall, pass 1 fail 0 | 2026-11-18 |
+| `node --test 'test/*.mjs'` (or the single file) | 0.09 s wall, pass 1 fail 0 | 2026-11-18 |
 | `for f in policies/*.eyg libraries/*.eyg; do eyg check "$f"; done` | 0.43 s wall | 2026-11-18 |
 | `node pi-simple-world-model/bin/world_lint.mjs` | 0.06 s wall | 2026-11-18 |
 | `node pi-simple-world-model/bin/world_map.mjs --check` | 0.04 s wall | 2026-11-18 |
