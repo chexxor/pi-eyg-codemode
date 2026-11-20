@@ -21,6 +21,13 @@ A configuration surface is a feature decision, not a wording fix: name it and it
 
 Trigger: a user who runs sessions in more than one directory and gets refused because the roots followed the cwd rather than their intent.
 
+Being built as of 2026-11-20, on the operator's request: a project key that names the preset
+and the roots, read when the extension activates, and an in-session grant the operator agrees
+to for one call, a number of calls, or the rest of the session. The precedence then is: the
+`policy` argument of the call, a grant the operator made this session, the project config,
+`EYG_POLICY`, the preset in the package. While this page is `current` none of that exists;
+`guides/how-to-write-another-preset.md` states what does.
+
 ## Not this
 
 It is not about what the roots allow: a preset decides per effect under whatever roots are in

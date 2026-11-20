@@ -12,6 +12,20 @@ The steps are:
 4. [Check the module and point the tool at it](#check-the-module-and-point-the-tool-at-it)
 5. [Prove the preset answered](#prove-the-preset-answered)
 
+## Which preset a call gets
+
+| in order | where it comes from |
+| --- | --- |
+| 1 | the `policy` argument of this call, when it names a module |
+| 2 | `EYG_POLICY`, the environment variable of the pi process |
+| 3 | `policies/agent-roots.eyg`, the preset in the package, which is what you get if you set nothing |
+| if none exists | the tool refuses to run anything rather than run unchecked |
+
+The runner reads the preset at the start of each call, so an edited preset takes effect on
+the next call; `EYG_POLICY` is read when pi starts the extension, so changing it means
+restarting pi. There is no configuration file for it yet - see
+`docs/world/entities/gap.roots-have-no-config-file.md`.
+
 ## Learn what one record covers
 
 The record names 18 fields, and 19 effects share them: a `Search` is decided under the
