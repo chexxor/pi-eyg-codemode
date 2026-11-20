@@ -17,7 +17,7 @@ checked call has ever been seen" - is closed on this machine. Measured 2026-11-2
 
 - `<runner> --help 2>&1 | grep -c -- --policy` prints **3** (`run --policy <m> <src>`,
   `eval --policy <m>`, `script --policy <m> <file>`); `--version` answers `eyg dev`.
-- The runner is the language workspace's own build output: that repository's layout puts it at
+- The runner is a build of the language repository itself: that repository's layout puts it at
   `packages/gleam_cli/dist/eyg`, built 2026-11-16. Its `--version` says `dev`, not a release
   version, which is why `gap.runner-release-lacks-policy` still stands.
 - Provenance read without running `git` there: that checkout's `.git/HEAD` answers
