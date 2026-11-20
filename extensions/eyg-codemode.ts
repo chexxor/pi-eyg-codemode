@@ -62,6 +62,7 @@ import {
   prepareCallArguments,
   probeProgram,
   resultLines,
+  runnerCandidates,
   POLICY_FIELDS,
   UNPROBED_EFFECTS,
 } from "../lib/render-helpers.mjs";
@@ -208,9 +209,10 @@ function paint(theme: Theme, segments: { tone: string; text: string }[]) {
 }
 
 /// The runner: named by the environment, otherwise the first candidate that
-/// actually accepts the policy flag. `--policy` is the whole gate, so probing
-/// rather than assuming is the only way to know the gate exists. Cached: the
-/// probe is one process, and a session makes many tool calls.
+/// actually accepts the policy flag. `--policy` is the whole check, so probing
+/// rather than assuming is the only way to know the check exists. The candidate
+/// order lives in `runnerCandidates` in `lib/render-helpers.mjs`, where the tests
+/// read it. Cached: the probe is one process, and a session makes many tool calls.
 const runnerProbe: { candidates: string[]; runner: string | null } = {
   candidates: [],
   runner: null,
@@ -384,10 +386,7 @@ export default function (pi: ExtensionAPI) {
         return refuseToRun(`policy module not found: ${policy}`);
       }
 
-      const configured = process.env.EYG_CODEMODE_RUNNER;
-      const candidates = configured
-        ? [configured]
-        : ["eyg", join(cwd, "packages", "gleam_cli", "dist", "eyg")];
+      const candidates = runnerCandidates(cwd, process.env);
       const exec = async (binary: string, args: string[]) => {
         const result = await pi.exec(binary, args, { signal: null, timeout: PROBE_TIMEOUT_MS, cwd });
         return { stdout: result.stdout ?? "", stderr: result.stderr ?? "", code: result.code ?? 1 };
@@ -396,8 +395,9 @@ export default function (pi: ExtensionAPI) {
       if (runner === null) {
         return refuseToRun(
           `no runner that accepts \`--policy\` was found among ${candidates.join(", ")}. ` +
-            "Gating happens in the runner, so an older CLI cannot be used: build the current one " +
-            "(guides/install_from_source.md) or set EYG_CODEMODE_RUNNER to its absolute path.",
+            "Checking happens in the runner, so an older CLI cannot be used: build the current one " +
+            "(guides/install_from_source.md), put a checked runner at <cwd>/.local/eyg-checked, " +
+            "or set EYG_CODEMODE_RUNNER to its absolute path.",
         );
       }
 

@@ -1,10 +1,10 @@
 # pi-eyg-codemode
 
-**Status: a first draft.** The package is written, type-checked and measured call by call, but
-it has not been proved in use: no long-running session, no comparison against the built-in
-JavaScript codemode measured, and no checked call observed end to end on the machine it was
-developed on, because no runner there accepts `--policy`. Treat the design as settled and the
-behaviour as provisional (`docs/world/entities/pi.first-draft.md`).
+**Status: a first draft.** The package is written, type-checked and measured call by call, and a
+checked call has been observed end to end here (`docs/world/entities/cli.checked-runner-on-this-host.md`),
+but it has not been proved in use: no long-running session, and no comparison against the built-in
+JavaScript codemode measured. Treat the design as settled and the use as unproven
+(`docs/world/entities/pi.first-draft.md`).
 
 **EYG** is a small scripting language: everything is an expression, there are no statements,
 and the only route a program has to the outside world is a named effect -

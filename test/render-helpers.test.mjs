@@ -11,7 +11,7 @@
  */
 
 import assert from "node:assert/strict";
-import { callLines, checkDeclaredEffects, classifyProbeOutput, COLLAPSED_SOURCE_LINES, effectLine, effectsUsed, findMetadata, formatDuration, prepareCallArguments, probeArguments, probeProgram, POLICY_FIELDS, resultLines, ruleMappingEffects } from "../lib/render-helpers.mjs";
+import { callLines, checkDeclaredEffects, classifyProbeOutput, COLLAPSED_SOURCE_LINES, effectLine, effectsUsed, findMetadata, formatDuration, prepareCallArguments, probeArguments, probeProgram, POLICY_FIELDS, resultLines, ruleMappingEffects, runnerCandidates } from "../lib/render-helpers.mjs";
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
 
@@ -180,6 +180,26 @@ let metadata = {
   assert.equal(ruleMappingEffects(fixture).join(","), "AppendFile,DecodeJSON,WriteFile", "both halves of the mapping parse, in file order");
   assert.equal(effectLine("Search", "read_file", "allowed for the probe value"), "Search | read_file | allowed for the probe value", "one row per effect");
   assert.equal(effectLine("Hash", null, "unchecked (computes over values it was given)"), "Hash | none | unchecked (computes over values it was given)", "an unchecked effect names no field");
+
+  // Where the tool looks for a runner that checks effects. A named path ends the
+  // search; otherwise the order is the CLI on PATH, the language CLI's build output
+  // under the working directory, and `.local/eyg-checked` inside it - the place for a
+  // runner this machine has and PATH does not carry (`cli.checked-runner-on-this-host`).
+  assert.deepEqual(
+    runnerCandidates("/work", { EYG_CODEMODE_RUNNER: "/opt/eyg" }),
+    ["/opt/eyg"],
+    "a named runner is the only candidate",
+  );
+  assert.deepEqual(
+    runnerCandidates("/work", { EYG_CODEMODE_RUNNER: "" }),
+    ["eyg", join("/work", "packages", "gleam_cli", "dist", "eyg"), join("/work", ".local", "eyg-checked")],
+    "an empty variable names nothing, so the search order stands",
+  );
+  assert.deepEqual(
+    runnerCandidates("/work", {}),
+    ["eyg", join("/work", "packages", "gleam_cli", "dist", "eyg"), join("/work", ".local", "eyg-checked")],
+    "three candidates, in that order, when nothing is configured",
+  );
 
   // The drift guard. This workspace is the pi package on its own, so the runtime
   // that owns `rule_mapping` is not in this tree: the guard compares `POLICY_FIELDS`

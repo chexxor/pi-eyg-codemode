@@ -17,7 +17,7 @@ The latest release the language repository serves is `gleam_cli-v0.1.0` (read fr
 
 ## What to do about it
 
-The fix belongs to the language, not to this package: publish a release whose CLI accepts `--policy`, then move `cli.prebuilt-binary` and this record with the new output and re-run the effect probes. Until then this package cannot shorten the gap - it can only make the README state it where a new reader will hit it, which ADR-004 does.
+The fix belongs to the language, not to this package: publish a release whose CLI accepts `--policy`, then move `cli.prebuilt-binary` and this record with the new output and re-run the effect probes. Until then this package cannot shorten the gap - it can only make the README state it where a new reader will hit it, which ADR-004 does. A development build of the language CLI, named by `<cwd>/.local/eyg-checked`, is what lets this workspace see checked calls at all (`cli.checked-runner-on-this-host`); it changes nothing for a person who followed the installer.
 
 ## Not this
 

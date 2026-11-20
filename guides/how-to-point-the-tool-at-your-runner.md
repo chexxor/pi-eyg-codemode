@@ -27,9 +27,16 @@ export EYG_CODEMODE_RUNNER=<absolute path to the binary>
 ```
 
 That is the whole contract: when the variable is set, nothing else is probed. Without it,
-the tool tries `eyg` on your `PATH` and then `<the session directory>/packages/gleam_cli/dist/eyg`,
-and takes the first whose `--help` mentions `--policy`. The probe is one process per set of
-candidates, so a session pays it once.
+the tool tries three candidates in order and takes the first whose `--help` mentions
+`--policy`: `eyg` on your `PATH`, then `<the session directory>/packages/gleam_cli/dist/eyg`
+(the language repository's own build layout), then `<the session directory>/.local/eyg-checked`.
+The last one is where to put a runner this machine has and `PATH` does not carry - a symlink is
+enough, and `.local/` is gitignored so the tree stays free of machine paths. The probe is one
+process per set of candidates, so a session pays it once.
+
+On this machine the third candidate is what works: a dev build of the language CLI, symlinked at
+`.local/eyg-checked`, with how it was found and what it refused in
+`docs/world/entities/cli.checked-runner-on-this-host.md` and `notes/eyg-checked-runner-on-this-host.md`.
 
 A relative path is refused: the policy sees absolute paths, and a relative one resolves
 before the checks can read it.
@@ -47,6 +54,11 @@ no runner that accepts `--policy` was found among ...
 
 If you see that message, the binary is not where the name says it is, or its `--help` does
 not carry the flag. Re-run step 1 against the exact path you set.
+
+At the shell, one command proves both halves - the runner answers for an effect, and the
+preset answered: `test/fixtures/refusal-probe.eyg` asks for a `WriteFile` and prints what came
+back, so `<runner> run --policy <this package>/policies/deny-all.eyg test/fixtures/refusal-probe.eyg`
+prints `write_file denied by policy` and leaves no file behind (0.1 s wall, @measured 2026-11-20).
 
 ## Not this
 

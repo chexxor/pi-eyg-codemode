@@ -6,7 +6,7 @@ status: current
 verified_at: 2026-11-20
 verify: "test -f guides/install_prebuilt.md && test -f guides/install_from_source.md && ! $HOME/.local/bin/eyg --help 2>&1 | grep -q -- '--policy'"
 confidence: high
-sources: [guides/install_prebuilt.md, guides/install_from_source.md, notes/pi_codemode_runner_probe.md, guides/pi_codemode_agent.md]
+sources: [guides/install_prebuilt.md, guides/install_from_source.md, notes/pi_codemode_runner_probe.md, guides/pi_codemode_agent.md, docs/world/entities/cli.checked-runner-on-this-host.md]
 supersedes: null
 superseded_by: null
 ---
@@ -23,11 +23,12 @@ Consequences for this workspace, stated as facts:
 
 - the CLI can **type-check** this package's modules (`eyg check policies/agent-roots.eyg`
   and friends, 0.43 s for both presets plus the library);
-- the CLI **cannot check a run** from here, so the extension's runner probe refuses and the
-  tool answers that no runner accepting `--policy` was found;
-- every claim about what a preset allows *at run time* is therefore UNVERIFIED here. The
-  runner that checks effects is built in the language repository (`packages/gleam_cli/dist/eyg` after
-  `./bin/compile`) and is not vendored here.
+- the CLI **cannot check a run**, so it is never the candidate the tool picks; a checked run here
+  comes from a build that does carry the flag, named by `.local/eyg-checked`
+  (`cli.checked-runner-on-this-host`);
+- that is why the extension probes candidates instead of trusting `PATH`, and why a statement
+  about what a preset allows at run time names the runner it was measured with. The release build
+  on `PATH` answers for nothing: read its help (`gap.runner-release-lacks-policy` is that hole).
 
 ## Not this
 

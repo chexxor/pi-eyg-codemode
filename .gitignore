@@ -13,3 +13,7 @@
 
 # session state: task STATE files and scratch, never tracked
 .ai-work/
+
+# a checked runner this machine found, not repository material: a symlink to a
+# build of the language CLI that accepts `--policy`. How to make one: notes/eyg-checked-runner-on-this-host.md
+.local/

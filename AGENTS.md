@@ -52,14 +52,18 @@ shell commands; a policy module decides each effect before the host performs it.
 - Policy resolution order: the `policy` argument, then `EYG_POLICY`, then the package's own
   `policies/agent-roots.eyg`, and if none exists the tool refuses rather than running
   unchecked (`extensions/eyg-codemode.ts:372-377`).
-- The runner is probed, not assumed: candidates `eyg` on PATH and
-  `<cwd>/packages/gleam_cli/dist/eyg`, and a candidate only qualifies when its `--help`
-  mentions `--policy` (`extensions/eyg-codemode.ts:387-404`).
-- **On this host that probe fails.** `command -v eyg` answers `$HOME/.local/bin/eyg`,
-  `eyg --version` answers `eyg v0.1.0`, and `grep -c -- '--policy' <<< "$(eyg --help 2>&1)"`
-  printed `0` (measured 2026-11-18). So from this workspace the CLI type-checks but cannot
-  check a run, and any statement about what a preset *allows at runtime* is UNVERIFIED here -
-  never report it as PASS.
+- The runner is probed, not assumed: the candidates are `EYG_CODEMODE_RUNNER`, then `eyg` on
+  PATH, then `<cwd>/packages/gleam_cli/dist/eyg` (the language repository's own layout), then
+  `<cwd>/.local/eyg-checked`; a candidate qualifies only when its `--help` mentions `--policy`
+  (`runnerCandidates` in `lib/render-helpers.mjs`, used at `extensions/eyg-codemode.ts:387-404`).
+- **A checked runner is reachable from this tree, and a checked call was seen on 2026-11-20.** The
+  CLI on PATH still checks nothing (`eyg --version` answers `eyg v0.1.0`; `grep -c -- '--policy
+  <<< "$(eyg --help 2>&1)"` prints `0`), but a dev build of the language CLI is symlinked at
+  `.local/eyg-checked` (untracked; `notes/eyg-checked-runner-on-this-host.md`), and through it
+  `WriteFile` performed inside the roots and came back `write_file denied by policy: /tmp/...`
+  outside them (`docs/world/entities/cli.checked-runner-on-this-host.md`). So a statement about
+  what a preset allows at runtime is checkable here: run that claim's command and report what it
+  prints rather than reporting this sentence.
 - Env: `EYG_CODEMODE_RUNNER` (absolute runner path), `EYG_POLICY` (absolute module path),
   `EYG_ALLOWED_ROOTS` (comma-separated absolute roots, read by the default preset),
   `EYG_CODEMODE_TIMEOUT` (ms, default 30000, cap 120000); the tool's `timeout` parameter is
@@ -85,6 +89,8 @@ shell commands; a policy module decides each effect before the host performs it.
 | Do this | cost | measured |
 | --- | --- | --- |
 | `node --test 'test/*.mjs'` (or the single file) | 0.09 s wall, pass 1 fail 0 | 2026-11-18 |
+| `.local/eyg-checked run --policy policies/deny-all.eyg test/fixtures/refusal-probe.eyg` | 0.1 s wall, prints `write_file denied by policy` and writes nothing | 2026-11-20 |
+| `pi --print --mode json --tools eyg <prompt>` (one fresh session, one tool call) | 20-40 s wall; needs `--model`, the default model hangs | 2026-11-20 |
 | `for f in policies/*.eyg libraries/*.eyg; do eyg check "$f"; done` | 0.43 s wall | 2026-11-18 |
 | `node pi-simple-world-model/bin/world_lint.mjs` | 0.06 s wall | 2026-11-18 |
 | `node pi-simple-world-model/bin/world_map.mjs --check` | 0.04 s wall | 2026-11-18 |
@@ -173,10 +179,13 @@ never put a workspace fact in a guide - a fact in two places drifts.
 - **No CI, no check script.** There is no `bin/agent/audit.sh`, no `.github/workflows`, no
   `entry.eyg` here; the checks in the table above are all of it. Trigger: the first
   time a session has to re-derive the same check three times.
-- **The runner that checks effects is not in this workspace.** The type-checking CLI on PATH has no
-  `--policy`, so end-to-end check behaviour is UNVERIFIED from here. Trigger: the first
-  session that actually needs a run with checks in force - then vendor or build a `--policy` runner and
-  record what the presets then do.
+- **No release and no default branch carries the checked runner.** A runner that accepts
+  `--policy` is reachable here through the `.local/eyg-checked` symlink, and the language
+  repository's default branch and its published release both lack it
+  (`gap.policy-runner-not-on-main`, `gap.runner-release-lacks-policy`), so a fresh clone of this
+  package on another machine gets no checked runner until the language ships one. Trigger: a
+  release whose `--help` mentions `--policy` - then delete the symlink, re-capture
+  `test/fixtures/rule_mapping.gleam` and move those two records with it.
 - **Three copies of the world model tool.** This one, the language repository's, and the
   publisher's; drift between them is invisible. Revisit trigger: two `CHANGELOG.md`s differ,
   or a fourth workspace wants the same tool - then publish it as an npm or git package.

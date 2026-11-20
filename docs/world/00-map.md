@@ -37,6 +37,7 @@ nothing here reads it at run time, and this tree never writes outside itself.
 
 | id | one line | owner | verified_at |
 | --- | --- | --- | --- |
+| cli.checked-runner-on-this-host | The hole every other record in this tree pointed at - "no runner here accepts `--policy`, so no checked call has ever ... | delegate | 2026-11-20 |
 | cli.prebuilt-binary | `command -v eyg` answers `$HOME/.local/bin/eyg` and `eyg --version` answers `eyg v0.1.0` (measured 2026-11-18). | delegate | 2026-11-20 |
 | codemode.effect-surface | A running program reaches the host only through effects, and the set it may perform is an intersection of three files. | delegate | 2026-11-20 |
 | gap.install-guides-name-no-policy | Neither install route - the website's pages and this tree's mirrors, `guides/install_prebuilt.md` and ... | delegate | 2026-11-20 |
@@ -66,7 +67,7 @@ nothing here reads it at run time, and this tree never writes outside itself.
 
 ## Where to look for a claim
 
-- entities: 15 · invariants: 4 · decisions: 5 · runbooks: 2 · traps: 28
+- entities: 16 · invariants: 4 · decisions: 5 · runbooks: 2 · traps: 29
 - suspect right now: ADR-002-handler-seam, overlay.agent-harness, pi.policy-config
 - re-check everything: `npm run world` · checks: `npm run world:lint` · regenerate this index: `npm run world:map`
 <!-- END GENERATED -->

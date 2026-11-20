@@ -3,7 +3,7 @@ name: pi-codemode-runner-probe-and-roots
 description: Why pi-eyg-codemode probes its runner for --policy, why the preset refuses when roots are unset, and why the context-budget package is project-local here
 date: 2026-11-16
 ---
-*(Carried from the language repository, 2026-11-16: the runner probe and its costs were measured there. On this host the probe fails - the CLI on `PATH` has no `--policy` - so nothing in this note re-runs from this tree.)*
+*(Carried from the language repository, 2026-11-16: the runner probe and its costs were measured there. The CLI on `PATH` here still has no `--policy`; the probe succeeds through `<cwd>/.local/eyg-checked`, so the probe this note describes does run here - `cli.checked-runner-on-this-host` and `notes/eyg-checked-runner-on-this-host.md`.)*
 
 Three trade-offs that the code states but does not argue.
 

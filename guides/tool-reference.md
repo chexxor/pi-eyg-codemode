@@ -21,7 +21,7 @@ The sections:
 | --- | --- | --- |
 | policy module | `policies/agent-roots.eyg` inside the installed package, the path taken from `import.meta.url` | `extensions/eyg-codemode.ts` (`packageDir`, `defaultPolicy`) |
 | roots | the session working directory, exported as `EYG_ALLOWED_ROOTS` for the call and restored after it | `extensions/eyg-codemode.ts`; the preset reads the variable |
-| runner | first candidate whose `--help` advertises `--policy`: `eyg` on PATH, then `<cwd>/packages/gleam_cli/dist/eyg` (the language repository's layout) | `extensions/eyg-codemode.ts` (`resolveRunner`) |
+| runner | first candidate whose `--help` advertises `--policy`: `eyg` on PATH, then `<cwd>/packages/gleam_cli/dist/eyg` (the language repository's layout), then `<cwd>/.local/eyg-checked` | `lib/render-helpers.mjs` (`runnerCandidates`), used by `extensions/eyg-codemode.ts` (`resolveRunner`) |
 | mode | `run`; `eval` is pure and prints the value | `extensions/eyg-codemode.ts` |
 | timeout | 30 s default, 120 s cap; the parameter is `timeout` in **seconds** | `extensions/eyg-codemode.ts` |
 | argv | `[mode, "--policy", policy, "-c", code]`, spawned with no shell in between | `extensions/eyg-codemode.ts` |
