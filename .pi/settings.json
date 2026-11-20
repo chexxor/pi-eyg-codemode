@@ -8,6 +8,10 @@
   "extensions": [
     "-builtin:codemode"
   ],
+  "eyg": {
+    "policy": "agent-roots",
+    "roots": []
+  },
   "compaction": {
     "enabled": false
   },

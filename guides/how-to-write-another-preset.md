@@ -17,14 +17,27 @@ The steps are:
 | in order | where it comes from |
 | --- | --- |
 | 1 | the `policy` argument of this call, when it names a module |
-| 2 | `EYG_POLICY`, the environment variable of the pi process |
-| 3 | `policies/agent-roots.eyg`, the preset in the package, which is what you get if you set nothing |
+| 2 | `eyg.policy` in `.pi/settings.json` - a preset shipped in this package (`agent-roots`, `deny-all`) or an absolute path to a module of your own |
+| 3 | `EYG_POLICY`, the environment variable of the pi process |
+| 4 | `policies/agent-roots.eyg`, the preset in the package, which is what you get if you set nothing |
 | if none exists | the tool refuses to run anything rather than run unchecked |
 
-The runner reads the preset at the start of each call, so an edited preset takes effect on
-the next call; `EYG_POLICY` is read when pi starts the extension, so changing it means
-restarting pi. There is no configuration file for it yet - see
-`docs/world/entities/gap.roots-have-no-config-file.md`.
+The project file is the per-project knob, and it is the one to use: a session started in
+this directory gets this directory's policy. The same key names the roots:
+
+```json
+"eyg": { "policy": "agent-roots", "roots": ["<absolute path>", "<another absolute path>"] }
+```
+
+Roots are absolute paths and are tried in their own order - the project key, then
+`EYG_ALLOWED_ROOTS`, then the directory pi was started in - and a relative entry stops the
+call with `every eyg.roots entry must be an absolute path, got <entry>` rather than
+silently matching nothing. A preset name that is not one of the package's, or a roots entry
+of the wrong shape, is refused the same way, naming the key. pi reads the settings file when
+it starts, so a changed file takes effect in the next session; the tool re-reads the two
+keys on every call (`extensions/eyg-codemode.ts`, in `execute`). Measured 2026-11-20: a
+project file naming `deny-all` and one root produced `deny-all.eyg (project settings)` in
+the probe header, a write inside that root refused, and 16 probes in 0.94 s.
 
 ## Learn what one record covers
 

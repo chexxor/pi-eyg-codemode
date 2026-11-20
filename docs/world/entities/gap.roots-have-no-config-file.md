@@ -2,33 +2,38 @@
 id: gap.roots-have-no-config-file
 type: entity
 owner: delegate
-status: current
+status: superseded
 verified_at: 2026-11-20
-verify: "grep -q 'EYG_ALLOWED_ROOTS' extensions/eyg-codemode.ts && ! grep -q 'roots' .pi/settings.json"
+verify: "grep -q agent-roots .pi/settings.json && grep -q resolveRoots extensions/eyg-codemode.ts"
 confidence: high
-sources: [extensions/eyg-codemode.ts, .pi/settings.json, README.md, policies/agent-roots.eyg]
+sources: [extensions/eyg-codemode.ts, lib/render-helpers.mjs, .pi/settings.json, guides/how-to-write-another-preset.md, notes/pi-codemode-project-settings-key.md, docs/world/entities/pi.policy-config.md]
 supersedes: null
-superseded_by: null
+superseded_by: pi.policy-config
 ---
 
-# Gap: the roots a session may reach have no place to configure them per project
+# Gap closed: the roots and the preset have a per-project place to be named
 
-The roots in force are the session working directory, or `EYG_ALLOWED_ROOTS` read from the environment by the shipped preset (`extensions/eyg-codemode.ts` sets it for the call and restores it after). `.pi/settings.json` carries package declarations, extensions and tools - it has no roots key. So a person who wants a different root set per project has to export the variable per session, and nothing in the tree says which project owns which roots.
+This page recorded the hole: the roots in force were the session working directory or
+`EYG_ALLOWED_ROOTS`, `.pi/settings.json` carried no key for them, and a person who wanted a
+different root set per project had to export a variable per session, so nothing in the tree
+said which project owned which roots.
 
-## What to do about it
+It closed on 2026-11-20, on the operator's request. `.pi/settings.json` now carries an `eyg`
+key - `policy` (a preset name or an absolute module path) and `roots` (absolute paths) - the
+tool reads it on every call through `eygSettings`, `presetPath`, `resolvePolicy` and
+`resolveRoots` in `lib/render-helpers.mjs`, and the shape, both orders and the refusal
+messages are in `guides/how-to-write-another-preset.md`. The command above checks the opposite
+of what it used to: it passes because the key is there and the extension reads it.
 
-A configuration surface is a feature decision, not a wording fix: name it and its precedence before building it. The options are a `roots` key in `.pi/settings.json` (pi already reads that file per project), or a per-package default file this package resolves from `import.meta.url`. Recommendation: the settings-file key, since the file is already the per-project place and pi owns its shape.
-
-Trigger: a user who runs sessions in more than one directory and gets refused because the roots followed the cwd rather than their intent.
-
-Being built as of 2026-11-20, on the operator's request: a project key that names the preset
-and the roots, read when the extension activates, and an in-session grant the operator agrees
-to for one call, a number of calls, or the rest of the session. The precedence then is: the
-`policy` argument of the call, a grant the operator made this session, the project config,
-`EYG_POLICY`, the preset in the package. While this page is `current` none of that exists;
-`guides/how-to-write-another-preset.md` states what does.
+Two things this does not settle. A session cannot widen its own boundary while it runs - the
+in-session grant the operator agrees to for one call, N calls or the rest of the session is
+still open, and `docs/world/decisions/ADR-002-handler-seam.md` explains why the widening has to
+be operator-authored. And the key is read from pi's *effective* settings, so a key in the
+global file applies to every project; the reasoning and the cost of that choice are in
+`notes/pi-codemode-project-settings-key.md`.
 
 ## Not this
 
 It is not about what the roots allow: a preset decides per effect under whatever roots are in
-force, and that behaviour is `overlay.policy-rules`. The gap is where those roots come from.
+force, and that behaviour is `overlay.policy-rules`. The knob and its orders are
+`pi.policy-config`.

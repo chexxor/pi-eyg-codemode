@@ -11,7 +11,7 @@
  */
 
 import assert from "node:assert/strict";
-import { callLines, checkDeclaredEffects, classifyProbeOutput, COLLAPSED_SOURCE_LINES, effectLine, effectsUsed, findMetadata, formatDuration, prepareCallArguments, probeArguments, probeProgram, POLICY_FIELDS, resultLines, ruleMappingEffects, runnerCandidates } from "../lib/render-helpers.mjs";
+import { callLines, checkDeclaredEffects, classifyProbeOutput, COLLAPSED_SOURCE_LINES, effectLine, effectsUsed, eygSettings, findMetadata, formatDuration, prepareCallArguments, presetPath, probeArguments, probeProgram, POLICY_FIELDS, resolvePolicy, resolveRoots, resultLines, ruleMappingEffects, runnerCandidates } from "../lib/render-helpers.mjs";
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
 
@@ -200,6 +200,48 @@ let metadata = {
     ["eyg", join("/work", "packages", "gleam_cli", "dist", "eyg"), join("/work", ".local", "eyg-checked")],
     "three candidates, in that order, when nothing is configured",
   );
+
+  // The config surface: what the project's `eyg` key says, and which of the five
+  // names wins for the policy and for the roots. Every step of both orders is
+  // pinned, because the whole point of the key is that a project can say "this
+  // directory, this preset" and mean it (`pi.policy-config`).
+  assert.deepEqual(eygSettings(undefined), { policy: null, roots: [] }, "no settings is no configuration");
+  assert.deepEqual(eygSettings({ eyg: { policy: "deny-all", roots: ["/a", "", 5, "/b"] } }), { policy: "deny-all", roots: ["/a", "/b"] }, "a named preset and absolute roots, junk dropped");
+  assert.deepEqual(eygSettings({ eyg: { roots: "/only" } }), { policy: null, roots: ["/only"] }, "one root may be written without a list");
+  assert.deepEqual(eygSettings({ eyg: "nonsense" }), { policy: null, roots: [] }, "a key of the wrong shape is no configuration");
+  assert.equal(presetPath("deny-all", "/pkg"), join("/pkg", "policies", "deny-all.eyg"), "a bare name resolves inside the package");
+  assert.equal(presetPath("/srv/my.eyg", "/pkg"), "/srv/my.eyg", "an absolute path is taken as given");
+  assert.equal(presetPath("../outside.eyg", "/pkg"), null, "a relative path names nothing, so the caller can say which key is wrong");
+  assert.deepEqual(
+    resolvePolicy({ argument: "/a", grant: "/g", project: "/p", env: "/e", packageDefault: "/d" }),
+    { policy: "/a", source: "argument" },
+    "the argument of the call wins",
+  );
+  assert.deepEqual(
+    resolvePolicy({ grant: "/g", project: "/p", env: "/e", packageDefault: "/d" }),
+    { policy: "/g", source: "session grant" },
+    "then the grant the operator made this session",
+  );
+  assert.deepEqual(
+    resolvePolicy({ project: "/p", env: "/e", packageDefault: "/d" }),
+    { policy: "/p", source: "project settings" },
+    "then the project's eyg.policy",
+  );
+  assert.deepEqual(
+    resolvePolicy({ env: "/e", packageDefault: "/d" }),
+    { policy: "/e", source: "EYG_POLICY" },
+    "then the environment",
+  );
+  assert.deepEqual(
+    resolvePolicy({ packageDefault: "/d" }),
+    { policy: "/d", source: "package default" },
+    "then the preset shipped in the package",
+  );
+  assert.deepEqual(resolvePolicy({}), { policy: null, source: "none" }, "and nothing to run at all if none of them names a module");
+  assert.deepEqual(resolvePolicy({ grant: "", project: "/p" }), { policy: "/p", source: "project settings" }, "an empty name names nothing");
+  assert.equal(resolveRoots({ project: ["/p1", "/p2"], env: "/e", cwd: "/c" }), "/p1,/p2", "the project roots win, as a list the preset parses");
+  assert.equal(resolveRoots({ project: [], env: "/e", cwd: "/c" }), "/e", "then EYG_ALLOWED_ROOTS");
+  assert.equal(resolveRoots({ project: [], env: null, cwd: "/c" }), "/c", "then the working directory");
 
   // The drift guard. This workspace is the pi package on its own, so the runtime
   // that owns `rule_mapping` is not in this tree: the guard compares `POLICY_FIELDS`

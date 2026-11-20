@@ -62,7 +62,11 @@ import {
   prepareCallArguments,
   probeProgram,
   resultLines,
+  resolvePolicy,
+  resolveRoots,
   runnerCandidates,
+  eygSettings,
+  presetPath,
   POLICY_FIELDS,
   UNPROBED_EFFECTS,
 } from "../lib/render-helpers.mjs";
@@ -366,17 +370,35 @@ export default function (pi: ExtensionAPI) {
         return refuseToRun(`action must be one of ${ACTIONS.join(", ")}, got ${action}`);
       }
 
-      // The policy: the call, then the environment, then the package's own
-      // preset. A program is never run without one - an ungated run performs
-      // every effect the host can reach, and a registry availability probe is
-      // answered by the same policy that will run the program.
-      const fromPackage = defaultPolicy();
-      const policy = params.policy ?? process.env.EYG_POLICY ?? fromPackage ?? "";
-      const policySource =
-        params.policy !== undefined ? "argument" : process.env.EYG_POLICY ? "EYG_POLICY" : fromPackage ? "package default" : "none";
+      // The policy: the argument of this call, a grant the operator made this
+      // session, the project's `eyg.policy` key, `EYG_POLICY`, the preset shipped
+      // in this package - `resolvePolicy` in `lib/render-helpers.mjs` holds that
+      // order and the tests read it. A program is never run without one: an
+      // unchecked run performs every effect the host can reach, and a registry
+      // availability probe is answered by the same policy that will run the program.
+      const settings = eygSettings(typeof pi.getSettings === "function" ? pi.getSettings() : {});
+      const projectPreset = settings.policy === null ? null : presetPath(settings.policy, dir);
+      if (settings.policy !== null && projectPreset === null) {
+        return refuseToRun(
+          `eyg.policy in the project settings must name a shipped preset or an absolute module path, got ${settings.policy}`,
+        );
+      }
+      const relativeRoot = settings.roots.find((root) => !root.startsWith("/"));
+      if (relativeRoot !== undefined) {
+        return refuseToRun(`every eyg.roots entry must be an absolute path, got ${relativeRoot}`);
+      }
+      const chosen = resolvePolicy({
+        argument: params.policy ?? null,
+        grant: null, // the session's grant store fills this slot: see /eyg-grant and notes/pi-codemode-session-grants.md
+        project: projectPreset,
+        env: process.env.EYG_POLICY ?? null,
+        packageDefault: defaultPolicy(),
+      });
+      const policy = chosen.policy ?? "";
+      const policySource = chosen.source;
       if (policy === "") {
         return refuseToRun(
-          "no policy module was configured and this package ships no preset. Set EYG_POLICY to an absolute path, or pass policy. A program is never run ungated.",
+          "no policy module was configured and this package ships no preset. Set eyg.policy in the project settings, set EYG_POLICY to an absolute path, or pass policy. A program is never run ungated.",
         );
       }
       if (!policy.startsWith("/")) {
@@ -404,12 +426,12 @@ export default function (pi: ExtensionAPI) {
       // One spawned program: the mode, the source and the wall-time cap. The
       // roots the default policy reads from `EYG_ALLOWED_ROOTS` are set for the
       // call and restored after it, since a spawned child inherits `process.env`.
-      const namedRoots = process.env.EYG_ALLOWED_ROOTS;
-      const roots = namedRoots && namedRoots !== "" ? namedRoots : cwd;
+      // The project's `eyg.roots` win over an inherited `EYG_ALLOWED_ROOTS`, and
+      // both over the working directory - `resolveRoots` holds that order.
+      const roots = resolveRoots({ project: settings.roots, env: process.env.EYG_ALLOWED_ROOTS ?? null, cwd });
       const spawn = async (mode: string, source: string, timeoutMs: number) => {
-        if (namedRoots === undefined) {
-          process.env.EYG_ALLOWED_ROOTS = roots;
-        }
+        const previousRoots = process.env.EYG_ALLOWED_ROOTS;
+        process.env.EYG_ALLOWED_ROOTS = roots;
         const startedAt = Date.now();
         try {
           const result = await pi.exec(runner, [mode, "--policy", policy, "-c", source], { signal, timeout: timeoutMs, cwd });
@@ -419,8 +441,10 @@ export default function (pi: ExtensionAPI) {
             durationMs: Date.now() - startedAt,
           };
         } finally {
-          if (namedRoots === undefined) {
+          if (previousRoots === undefined) {
             delete process.env.EYG_ALLOWED_ROOTS;
+          } else {
+            process.env.EYG_ALLOWED_ROOTS = previousRoots;
           }
         }
       };
