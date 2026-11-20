@@ -11,6 +11,7 @@ The sections:
 - [What a preset rule answers with](#what-a-preset-rule-answers-with)
 - [Plan first, then act, with the same program](#plan-first-then-act-with-the-same-program)
 - [The effect surface, answered rather than remembered](#the-effect-surface-answered-rather-than-remembered)
+- [The language surface, answered rather than remembered](#the-language-surface-answered-rather-than-remembered)
 - [How a call is shown, and how long it took](#how-a-call-is-shown-and-how-long-it-took)
 - [A refusal, as it looked](#a-refusal-as-it-looked)
 - [Captures, and how they are marked](#captures-and-how-they-are-marked)
@@ -25,7 +26,7 @@ The sections:
 | widening for the rest of the session | nothing widened: a refusal stays a refusal | the operator's `/eyg-grant` command (`extensions/eyg-codemode.ts`), whose record `replayGrants` in `lib/render-helpers.mjs` reads back off the session branch; the order is in `guides/how-to-write-another-preset.md` |
 | a second session | none started | the `eyg_subagent` tool (`extensions/eyg-codemode.ts`): `pi --print --mode json --tools eyg` built as argv, its boundary from `childEnvOverrides` and checked by `rootsInside`, its report parsed by `childCalls`/`childAnswer`; `guides/how-to-spawn-a-subagent.md` |
 | runner | first candidate whose `--help` advertises `--policy`: `eyg` on PATH, then `<cwd>/packages/gleam_cli/dist/eyg` (the language repository's layout), then `<cwd>/.local/eyg-checked` | `lib/render-helpers.mjs` (`runnerCandidates`), used by `extensions/eyg-codemode.ts` (`resolveRunner`) |
-| mode | `run`; `eval` is pure and prints the value | `extensions/eyg-codemode.ts` |
+| mode | `run`; `eval` is pure and prints the value | `extensions/eyg-codemode.ts`. `action` selects what the call does - `run`, `eval`, `effects`, `reference`, `list_functions`, `describe_function` (`ACTIONS`) - and `prepareCallArguments` in `lib/render-helpers.mjs` maps `mode` from sessions resumed before the rename |
 | timeout | 30 s default, 120 s cap; the parameter is `timeout` in **seconds** | `extensions/eyg-codemode.ts` |
 | argv | `[mode, "--policy", policy, "-c", code]`, spawned with no shell in between | `extensions/eyg-codemode.ts` |
 
@@ -157,6 +158,26 @@ section of `guides/cli_effects_reference.md`.
 the language repository's own rules. What this package does when the language lands one is follow
 the mapping: `Search` was landed on 2026-11-16 and mapped to `read_file`, so no new policy field
 exists here. `docs/world/entities/overlay.policy-rules.md` carries the claim over the whole mapping.
+
+## The language surface, answered rather than remembered
+
+`action: "reference"` (`code: ""`) answers the other question a session asks twice: what may I call,
+and what may I ask for. Its first line counts what it prints - `eyg reference: 29 builtins, 23
+effects, nothing performed` - then one line per builtin with its signature and notes, grouped under
+the sections of `guides/builtins_reference.md`, then one line per effect with the policy field that
+decides it (`none` for the four no preset can forbid). It spawns no process and asks the policy
+nothing, so it answers on a machine where no runner was found; the builtins come from the shipped
+copy, so the answer says the compiler is the source, and it names `action: "effects"` as the call
+that asks the preset what it decides.
+
+A program that named a builtin the runtime does not have gets the same pointer in its rows. The
+runner prints `error: builtin undefined: !str_len` with a hint that names no path; the tool adds
+`no such builtin: !str_len`, the path of the builtins guide and of the syntax guide, `action
+"reference"` as the way to print them without leaving the tool, and that pi's own `read` tool is not
+policy-gated while `ReadFile` reaches only the roots. `builtinErrors` and `builtinHintRows` in
+`lib/render-helpers.mjs` build those rows and the unit test pins them;
+`notes/reference-answer-shape.md` carries why the answer reads the shipped copy rather than asking
+the runner, and `docs/world/entities/pi.reference-action.md` carries what one run measured.
 
 ## How a call is shown, and how long it took
 

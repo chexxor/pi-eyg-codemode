@@ -61,6 +61,9 @@ import { basename, dirname, join } from "node:path";
 import {
   argumentPolicyPath,
   buildRegistry,
+  builtinErrors,
+  builtinHintRows,
+  builtinRows,
   callLines,
   childAnswer,
   childArgv,
@@ -77,8 +80,10 @@ import {
   formatDuration,
   grantEvents,
   GRANT_ENTRY,
+  GUIDE_BUILTINS,
   prepareCallArguments,
   probeProgram,
+  referenceLines,
   refusalHints,
   replayGrants,
   resultLines,
@@ -116,7 +121,7 @@ const SUBAGENT_DEFAULT_TIMEOUT_S = 120;
 const SUBAGENT_MAX_TIMEOUT_S = 300;
 const MIN_TIMEOUT_MS = 100;
 const PROBE_TIMEOUT_MS = 5_000;
-const ACTIONS = ["run", "eval", "effects", "list_functions", "describe_function"];
+const ACTIONS = ["run", "eval", "effects", "reference", "list_functions", "describe_function"];
 
 /// What a call in this session gets from everything except the call's own argument:
 /// the project settings, and the grants on this session's branch. `error` names what
@@ -345,6 +350,9 @@ export default function (pi: ExtensionAPI) {
       "EYG has no infix operators - add integers with `!int_add(a, b)`; a bare `WriteFile(...)` is a function call and fails to parse.",
       "action selects what the call does: `run` (default) performs effects, `eval` is pure,",
       "`effects` answers what the policy in force decides for every effect the CLI can name,",
+      "`reference` prints every builtin the package's reference guide lists and the effect",
+      "surface with the field that gates each one - it performs nothing and asks the policy",
+      "nothing, so it answers even where no runner was found,",
       "`list_functions` lists the registry of re-usable EYG functions (pass code: \"\"), and",
       "`describe_function` describes one of them by name. Pass `timeout` in SECONDS for the wall",
       "time of one call (default 30, at most 120); every result says how long the run took",
@@ -373,6 +381,7 @@ export default function (pi: ExtensionAPI) {
       "On a runtime without the `Search` effect, ask for the package's library instead of writing a walk: `libraries: [\"search\"]` and `search_lib.search({root, pattern, limit})`.",
       "Before writing a helper, call `action: \"list_functions\"` - the registry names re-usable EYG functions with their signature, description and required effects; a function you need may already exist.",
       "When a capability question is in the air, call `action: \"effects\"` once instead of probing effects one program at a time: it runs one probe per effect under the policy in force and answers effect | policy field | decision. Read `guides/cli_effects_reference.md` in the repository for the gate classes.",
+      "When a run answers `builtin undefined`, do not guess another name: the result rows name `guides/builtins_reference.md` and `guides/syntax.md`, and `action: \"reference\"` prints the builtins and the effect surface in one call without performing an effect. pi's own `read` tool is not policy-gated, so a session that has it can open those guides directly; `ReadFile` reaches only the roots.",
       "Pass `timeout` in seconds when a run is longer than 30 s; the result says how long it took in wall time, so a timeout is visible rather than guessed.",
       "The effects listed for a registry function are advisory: availability is re-probed at each listing and the policy can change mid-session, and a run whose effect is refused simply gets the ordinary Error value.",
       "When an effect is refused, report what was refused and ask the operator for the grant the result names (/eyg-grant: one call, N calls, or the rest of the session), recommending the narrowest one that retries the refused program; then retry it. Never write a policy module of your own and never look for another channel.",
@@ -380,12 +389,12 @@ export default function (pi: ExtensionAPI) {
 
     parameters: Type.Object({
       code: Type.String({
-        description: "EYG source. The last expression is the value; use Exit or the record `script` field for a status. Pass \"\" for action list_functions or describe_function.",
+        description: "EYG source. The last expression is the value; use Exit or the record `script` field for a status. Pass \"\" for action list_functions, describe_function or reference.",
       }),
       action: Type.Optional(
         Type.String({
           description:
-            "`run` (default, effects allowed by the policy), `eval` (pure, prints the value), `effects` (one probe per effect the CLI can name, answered by the policy in force), `list_functions` (the registry of re-usable functions) or `describe_function` (one of them by name).",
+            "`run` (default, effects allowed by the policy), `eval` (pure, prints the value), `effects` (one probe per effect the CLI can name, answered by the policy in force), `reference` (every builtin the shipped guide lists, plus the effect surface), `list_functions` (the registry of re-usable functions) or `describe_function` (one of them by name).",
         }),
       ),
       function: Type.Optional(
@@ -495,6 +504,34 @@ export default function (pi: ExtensionAPI) {
       }
       if (!existsSync(policy)) {
         return refuseToRun(`policy module not found: ${policy}`);
+      }
+
+      // `reference` answers the two questions a session whose only channel is effects
+      // keeps asking - which builtins exist, and what the effect surface is - from the
+      // reference guide this package ships and from `POLICY_FIELDS`. It spawns no process,
+      // performs no effect and asks the policy no question, so it answers on a machine with
+      // no runner as well; `action: effects` is the call that asks the preset what it
+      // decides for each effect, and it is offered in the last line of the answer.
+      if (action === "reference") {
+        const guide = dir === null ? null : join(dir, GUIDE_BUILTINS);
+        const markdown = guide !== null && existsSync(guide) ? readFileSync(guide, "utf8") : "";
+        const lines = referenceLines(markdown, { policy, policySource });
+        if (markdown === "") {
+          lines.unshift(`this package carries no ${GUIDE_BUILTINS}: <https://eyg.run/guides> does`);
+        }
+        return {
+          content: [{ type: "text", text: [`eyg reference: ${builtinRows(markdown).length} builtins, ${Object.keys(POLICY_FIELDS).length} effects, nothing performed`, ...lines].join("\n") }],
+          details: {
+            gated: true,
+            ran: true,
+            action,
+            policy,
+            policySource,
+            builtinCount: builtinRows(markdown).length,
+            effectCount: Object.keys(POLICY_FIELDS).length,
+            ...grantDetails,
+          },
+        };
       }
 
       const candidates = runnerCandidates(cwd, process.env);
@@ -791,7 +828,12 @@ export default function (pi: ExtensionAPI) {
           if (!asks.includes(line)) asks.push(line);
         }
       }
-      const text = [`eyg ${mode}: ${status}`, out, asks.join("\n")].filter((part) => part !== "").join("\n");
+      // An invented builtin is the other failure this tool can answer: the runner's own
+      // hint says "check the builtin name against the builtins reference" and names no
+      // path, which a session that cannot read outside its roots cannot act on.
+      const invented = builtinErrors(out);
+      const hints = builtinHintRows(invented).map((row) => row.map((segment) => segment.text).join(""));
+      const text = [`eyg ${mode}: ${status}`, out, asks.join("\n"), hints.join("\n")].filter((part) => part !== "").join("\n");
       return {
         content: [{ type: "text", text }],
         details: {
@@ -811,6 +853,7 @@ export default function (pi: ExtensionAPI) {
           roots,
           ...grantDetails,
           refusals,
+          builtins: invented,
           prelude: prelude.map((line) => line.trim()),
         },
       };

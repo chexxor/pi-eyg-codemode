@@ -44,8 +44,15 @@ answer away, so the call looks like success while nothing was written: bind a na
 on its value, as the last two lines above do.
 
 - `action` selects what the call does: `run` (default, effects allowed by the policy), `eval` (pure,
-  prints the value), `list_functions` (the registry of re-usable functions - pass `code: ""`) or
-  `describe_function` (one of them by `function: "<name>"`).
+  prints the value), `effects` (what the policy in force decides, one probe per effect - pass
+  `code: ""`), `reference` (every builtin with its signature, plus the effect surface and the field
+  that gates each effect - pass `code: ""`, performs nothing), `list_functions` (the registry of
+  re-usable functions - pass `code: ""`) or `describe_function` (one of them by `function: "<name>"`).
+- never guess a builtin name: `action: "reference"` prints all of them with their signatures in one
+  call that performs nothing, and a run that named one answers `builtin undefined: !name` with rows
+  naming `guides/builtins_reference.md` and `guides/syntax.md`. pi's own `read` tool is not
+  policy-gated, so a session that has it can open those guides directly; `ReadFile` reaches only the
+  roots, and asking for a grant over this package's documentation is rarely the right ask.
 - `timeout` is in SECONDS as the bash tool spells it: `timeout: 90` is ninety seconds, default 30, at
   most 120. A run that hits it reports elapsed wall time rather than hanging.
 - `code` is EYG source and the last expression is the value. In `run` mode nothing is printed unless the

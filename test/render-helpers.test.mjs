@@ -11,7 +11,7 @@
  */
 
 import assert from "node:assert/strict";
-import { argumentPolicyPath, callLines, checkDeclaredEffects, classifyProbeOutput, COLLAPSED_SOURCE_LINES, childAnswer, childArgv, childCalls, childEnvOverrides, childRefusalRows, describeGrant, effectLine, effectsUsed, eygSettings, findMetadata, formatDuration, grantEvents, GRANT_ENTRY, isUnder, outsideRoot, prepareCallArguments, presetPath, probeArguments, probeProgram, POLICY_FIELDS, refusalHints, replayGrants, resolvePolicy, resolveRoots, resultLines, ruleMappingEffects, rootsInside, runnerCandidates, sessionDepth, spawnerPolicy, spawnerRoots, subagentCallLines, subagentResultRows, suggestGrant } from "../lib/render-helpers.mjs";
+import { argumentPolicyPath, builtinErrors, builtinHintRows, builtinRows, callLines, checkDeclaredEffects, classifyProbeOutput, COLLAPSED_SOURCE_LINES, childAnswer, childArgv, childCalls, childEnvOverrides, childRefusalRows, describeGrant, effectLine, effectsUsed, eygSettings, findMetadata, formatDuration, grantEvents, GRANT_ENTRY, GUIDE_BUILTINS, GUIDE_EFFECTS, GUIDE_SYNTAX, isUnder, outsideRoot, prepareCallArguments, presetPath, probeArguments, probeProgram, POLICY_FIELDS, referenceLines, refusalHints, replayGrants, resolvePolicy, resolveRoots, resultLines, ruleMappingEffects, rootsInside, runnerCandidates, sessionDepth, spawnerPolicy, spawnerRoots, subagentCallLines, subagentResultRows, suggestGrant } from "../lib/render-helpers.mjs";
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
 
@@ -432,4 +432,66 @@ let metadata = {
   }
   const unchecked = Object.keys(POLICY_FIELDS).filter((name) => POLICY_FIELDS[name] === null).join(",");
   assert.equal(unchecked, "DecodeJSON,EYGParse,Hash,Sign", "exactly four effects carry no policy field and are available under every preset");
+}
+
+// --- the reference answer: the builtins the shipped guide lists, and the effect surface ---
+
+{
+  const guide = readFileSync(join(import.meta.dirname, "..", "guides", "builtins_reference.md"), "utf8");
+  const rows = builtinRows(guide);
+  assert.ok(rows.length >= 25, `the shipped guide yields its builtin rows, got ${rows.length}`);
+  for (const row of rows) {
+    assert.match(row.name, /^![a-z0-9_]+$/, `${row.name} is a builtin name`);
+    assert.ok(row.signature !== "", `${row.name} carries its signature and notes`);
+  }
+  const byName = new Map(rows.map((row) => [row.name, row]));
+  for (const name of ["!int_add", "!string_split_once", "!binary_size", "!list_pop", "!never"]) {
+    assert.ok(byName.has(name), `${name} is listed`);
+  }
+  assert.equal(byName.get("!int_add").section, "Integers", "the section heading travels with the row");
+  assert.match(byName.get("!equal").signature, /True\(\{\}\) \| False/, "a signature containing | survives a row that is itself |-delimited");
+  assert.ok(!rows.some((row) => row.section === "Common idioms"), "a prose section adds no rows");
+  assert.ok(!byName.get("!int_add").signature.endsWith("|"), "an empty notes cell leaves no dangling |");
+
+  const lines = referenceLines(guide, { policy: "/pkg/policies/agent-roots.eyg", policySource: "project settings" });
+  assert.match(lines[0], new RegExp(`builtins: ${rows.length}, from ${GUIDE_BUILTINS}`), "the count and the file it came from");
+  for (const name of Object.keys(POLICY_FIELDS)) {
+    assert.ok(lines.some((line) => line.startsWith(`  ${name} | `)), `${name} is in the effect surface`);
+  }
+  assert.ok(lines.some((line) => line.includes("DecodeJSON | none")), "an unchecked effect says no preset can forbid it");
+  assert.ok(lines.some((line) => line.includes('policy in force: /pkg/policies/agent-roots.eyg (project settings)')), "the preset in force is named");
+  assert.ok(lines.some((line) => line.includes('action "effects"')), "and the call that asks it what it decides, effect by effect");
+  assert.ok(lines.some((line) => line.includes("read tool is not policy-gated")), "the harness read tool's standing is stated");
+  assert.ok(!/\| (allowed|refused|unavailable|unknown)/.test(lines.join("\n")), "it reports no verdict, so it asked the policy nothing");
+}
+
+// --- the rows a failed run adds when it named a builtin the runtime does not have ---
+
+{
+  const out = "error: builtin undefined: !str_len\nhint: check the builtin name against the builtins reference\n\n\u2192 in <inline>:1";
+  assert.deepEqual(builtinErrors(out), ["!str_len"], "the runner's own error text is what is scanned");
+  assert.deepEqual(
+    builtinErrors("builtin undefined: !inspect\nbuiltin undefined: !inspect\nbuiltin undefined: unwrap"),
+    ["!inspect", "!unwrap"],
+    "deduplicated, and normalised with a leading !",
+  );
+  assert.deepEqual(builtinErrors("ran fine"), [], "no such error, nothing to say");
+
+  const rows = builtinHintRows(builtinErrors(out));
+  const shown = flat(rows);
+  assert.match(shown, /no such builtin: !str_len/, "the name is repeated back");
+  assert.ok(shown.includes(GUIDE_BUILTINS), "the row names the guide path");
+  assert.match(shown, /action "reference"/, "and the action that prints the list without leaving the tool");
+  assert.ok(shown.includes("read tool is not policy-gated"), "and says pi's own read tool is not policy-gated");
+  assert.ok(shown.includes(GUIDE_SYNTAX), "the syntax guide is named too, since invented syntax is the other failure");
+  assert.equal(builtinHintRows([]).length, 0, "no invented builtin, no lecture");
+
+  const result = {
+    content: [{ type: "text", text: "eyg run: exit 1 in 0.10 s wall\nerror: builtin undefined: !str_len" }],
+    details: { ran: true, exit: 1, builtins: ["!str_len"] },
+  };
+  const collapsed = flat(resultLines(result, false, 100));
+  assert.match(collapsed, /no such builtin: !str_len/, "the hint shows collapsed, where the model reads it");
+  const clean = flat(resultLines({ content: [{ type: "text", text: "eyg run: ran in 0.10 s wall\n2" }], details: { ran: true, exit: 0 } }, false, 100));
+  assert.ok(!clean.includes("no such builtin"), "a run that named no invented builtin gets no hint row");
 }

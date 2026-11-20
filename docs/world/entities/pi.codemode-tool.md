@@ -4,7 +4,7 @@ type: entity
 owner: delegate
 status: current
 verified_at: 2026-11-20
-verify: "test -f extensions/eyg-codemode.ts && grep -q -- '\"--policy\"' extensions/eyg-codemode.ts && grep -q 'join(dir, \"policies\", \"agent-roots.eyg\")' extensions/eyg-codemode.ts && grep -q 'renderCall:' extensions/eyg-codemode.ts && grep -q 'prepareArguments' extensions/eyg-codemode.ts && grep -q 'DEFAULT_TIMEOUT_S' extensions/eyg-codemode.ts && grep -q 'list_functions' extensions/eyg-codemode.ts && grep -q 'buildRegistry' extensions/eyg-codemode.ts && test -f lib/render-helpers.mjs && grep -q 'export function callLines' lib/render-helpers.mjs && grep -q 'defaultTools' .pi/settings.json && grep -q '\"-builtin:codemode\"' .pi/settings.json && test -f libraries/search.eyg && test -f notes/pi_codemode_registry_probe.md && ! grep -q 'import \"' policies/agent-roots.eyg"
+verify: "test -f extensions/eyg-codemode.ts && grep -q -- '\"--policy\"' extensions/eyg-codemode.ts && grep -q 'join(dir, \"policies\", \"agent-roots.eyg\")' extensions/eyg-codemode.ts && grep -q 'renderCall:' extensions/eyg-codemode.ts && grep -q 'prepareArguments' extensions/eyg-codemode.ts && grep -q 'DEFAULT_TIMEOUT_S' extensions/eyg-codemode.ts && grep -q 'list_functions' extensions/eyg-codemode.ts && grep -q '\"reference\", \"list_functions\"' extensions/eyg-codemode.ts && grep -q 'buildRegistry' extensions/eyg-codemode.ts && test -f lib/render-helpers.mjs && grep -q 'export function callLines' lib/render-helpers.mjs && grep -q 'defaultTools' .pi/settings.json && grep -q '\"-builtin:codemode\"' .pi/settings.json && test -f libraries/search.eyg && test -f notes/pi_codemode_registry_probe.md && ! grep -q 'import \"' policies/agent-roots.eyg"
 confidence: high
 sources: [extensions/eyg-codemode.ts, policies/agent-roots.eyg, policies/deny-all.eyg, package.json, lib/render-helpers.mjs, README.md, .pi/settings.json, guides/pi_codemode_agent.md, notes/pi_codemode_host_gate.md, notes/pi_codemode_registry_probe.md, notes/pi-codemode-preset-inlining.md]
 supersedes: null
@@ -56,8 +56,8 @@ program whose every effect is decided by the policy in force before the host per
   function-set with a `let metadata = {name, description, signature, effects}` record,
   read from three scopes in order - workspace `<cwd>/.pi/eyg-functions`, home
   `$HOME/.pi/eyg-functions`, package `<pkg>/libraries` - first match wins and a shadow is
-  reported. `action` selects `run` (default), `eval`, `list_functions` or
-  `describe_function`; the same `libraries` parameter resolves a name through that scope
+  reported. `action` selects `run` (default), `eval`, `effects`, `reference`,
+  `list_functions` or `describe_function`; the same `libraries` parameter resolves a name through that scope
   order, so `libraries: ["search"]` is unchanged. Declared effects are cross-checked
   against the `perform` names in the module in both directions. Effect availability is
   re-probed at every query with no-op-safe arguments and is advisory only - running a
