@@ -15,6 +15,16 @@ one of those records, not reading a library somewhere else; the renderer, the ti
 the registry scopes are in `README.md`, presets and security in `guides/pi_codemode_agent.md`,
 surface syntax in `guides/syntax.md`.
 
+## Before writing EYG
+
+Open the language reference with the harness `read` tool, which is not policy-gated: `guides/syntax.md`
+for the forms and `guides/builtins_reference.md` for the complete builtin set. Do not try to read them
+through an effect - the roots cover your working directory, not this package, so `perform ReadFile` on a
+`guides/` path answers `read_file denied by policy`, and a grant is the operator's to give, not yours to
+assume. Guessing instead costs the session: measured 2026-11-20, a session that opened the two files first
+used 11 tool calls and hit no `builtin undefined`; one that did not used 41-93 calls and 16-57 of those
+errors (`docs/world/entities/usability.without-language-skill.md`).
+
 ## Calling the tool
 
 An effect is performed with `perform` and takes one argument record; copy this shape.

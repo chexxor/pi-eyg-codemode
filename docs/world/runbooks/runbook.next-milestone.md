@@ -33,7 +33,14 @@ same rule as every other claim: a command that answers while the hole is open.
 One parked decision sits here rather than in the table, because no command answers it and the
 operator wants it reviewed later: **should the EYG language-skill package stay a separate
 package declared from outside this tree, or live inside this one?** It is the only line of
-this tree that reaches outside it (`pi list`, 2026-11-20). Both options and their costs are in
-`notes/pi-codemode-language-skill-packaging.md`. Trigger to decide: the first session rooted
-here that cannot load the language reference - for anyone without this operator's checkout,
-that is the first session - or the first release of either package.
+this tree that reaches outside it (`pi list`, 2026-11-20). It moved on 2026-11-20 with a
+measurement and a recommendation: measured over eight one-shot sessions, the declaration loads
+no skill at all (that package's `SKILL.md` front matter is invalid YAML, so pi never advertises
+it), and even a loadable copy of the skill was opened by one session in six - while the same
+sessions reading this package's own `guides/` mirrors first finished in 11 calls and 89 s with no
+invented builtin. Recommendation: keep it outside, do not vendor it, ask for the one-line
+front-matter fix in the other workspace, and point the agent at the mirrors from this package's
+own skill. Both options, the costs and the new trigger (the fix lands and a re-run beats the
+mirrors, or a release lets the declaration be written by name) are in
+`notes/pi-codemode-language-skill-packaging.md`; the measurement is
+`docs/world/entities/usability.without-language-skill.md`.
