@@ -22,7 +22,7 @@
 // `limit` is a budget for the walk, not a slice taken from a finished list:
 // once it is reached the walk stops, so a program asking for five names does
 // not read a whole filesystem tree. `ignore` names directories to skip at any
-// depth (`.git` by default), the same way the language workspace's `fs` package walk does (that package is not vendored here).
+// depth (`.git` by default), the same way the language's own `fs` package walk does (that package is not vendored here).
 //
 // `ReadDirectory` takes a bare path and answers
 // `Result(List({name: String, type: Directory({}) | File({size: Int})}), String)`
