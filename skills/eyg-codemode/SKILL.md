@@ -79,3 +79,12 @@ the whole walk under its `read_file` rule; matching and `limit` semantics are in
 A search reports **names**, including the name of a path a read of would be refused for, so a listed path is
 not permission to read it and contents never come through. Without the `Search` effect, pass `libraries:
 ["search"]` and call `search_lib.search({root, pattern, limit})`: the same policy, one decision per directory.
+
+## Delegating a chunk of work
+
+`eyg_subagent` starts one pi session in the same directory with only the `eyg` tool: it performs its
+effects through a policy module like you do, and returns its final message, one row per call and every
+refusal it got. It can be given a preset this package ships and roots **inside** the roots you have, and
+nothing wider: no root you lack, no module you wrote, no grant this session holds, and a session that is
+itself a subagent gets no children. Use it for work you can state completely in `task`; do not use it to get
+past a refusal. `guides/how-to-spawn-a-subagent.md` is the how-to.

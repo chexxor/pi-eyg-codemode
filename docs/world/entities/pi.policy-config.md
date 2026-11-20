@@ -17,12 +17,15 @@ you set nothing, and where to go to change it.
   `policies/deny-all.eyg` (the narrowest). README.md names both in its preset table.
 - The order a call's preset comes from is stated once, in
   `guides/how-to-write-another-preset.md`: the `policy` argument of the call (a preset the
-  package ships, so it can only narrow), a grant the operator made in this session,
-  `eyg.policy` in `.pi/settings.json`, `EYG_POLICY`, the preset in the package, and if none
-  exists the tool refuses to run anything rather than run unchecked. The order is one
+  package ships, so it can only narrow), a grant the operator made in this session, the policy a
+  spawner named for a child session (`EYG_SUBAGENT_POLICY`, read only when `EYG_CODEMODE_DEPTH`
+  says this package started the process), `eyg.policy` in `.pi/settings.json`, `EYG_POLICY`, the
+  preset in the package, and if none exists the tool refuses to run anything rather than run
+  unchecked. The order is one
   function, `resolvePolicy` in `lib/render-helpers.mjs`, and the unit test pins every step of
-  it. The same page states the roots order - `eyg.roots`, then `EYG_ALLOWED_ROOTS`, then the
-  working directory, plus the roots of a grant in force - which is `resolveRoots`.
+  it. The same page states the roots order - the roots a spawner narrowed the session to, then
+  `eyg.roots`, then `EYG_ALLOWED_ROOTS`, then the working directory, plus the roots of a grant in
+  force - which is `resolveRoots`.
   `guides/tool-reference.md` carries the knobs and links there for the orders.
 - The project key is the per-project knob: `"eyg": { "policy": ..., "roots": [...] }`, where
   the policy is a preset name (`agent-roots`, `deny-all`) or an absolute module path, and the
@@ -55,5 +58,5 @@ What is **not** configurable per call:
 @measured 2026-11-20 by `grep -c 'Which preset a call gets' guides/how-to-write-another-preset.md` (1),
 `grep -c 'eyg.policy' guides/how-to-write-another-preset.md` (2), `grep -q agent-roots .pi/settings.json`
 and `grep -q resolvePolicy extensions/eyg-codemode.ts` (both found), the scratch-project session
-above, and `node --test 'test/*.mjs'` (pass 1, fail 0, 0.05 s: the five-step precedence, both
+above, and `node --test 'test/*.mjs'` (pass 1, fail 0, 0.05 s: the six-step precedence, both
 roots orders, the preset-name rules and the settings shaping are asserted).

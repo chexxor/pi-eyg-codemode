@@ -52,6 +52,7 @@ Three readers, and each needs one thing from this tree:
 | to change what a session may reach: roots, one host, secrets | `guides/how-to-write-another-preset.md` |
 | to read a file bigger than one result | `guides/how-to-read-in-slices.md` |
 | to reuse a function rather than write a helper | `guides/how-to-share-functions.md` |
+| to hand a chunk of work to a second session that cannot reach more than you can | `guides/how-to-spawn-a-subagent.md` |
 | the tool's knobs, rows, probes, limits and the seam it cannot check | `guides/tool-reference.md` |
 | the language itself: surface syntax, builtins, every effect | <https://eyg.run/guides>, mirrored offline in `guides/syntax.md`, `guides/builtins_reference.md`, `guides/cli_effects_reference.md` |
 | to run a whole pi agent in EYG rather than one call | `guides/pi_codemode_agent.md`, with `skills/eyg-codemode/SKILL.md` loaded for the model |
@@ -142,7 +143,7 @@ the drift guard against `test/fixtures/rule_mapping.gleam`, never an observed re
 
 | path | what it is |
 | --- | --- |
-| `extensions/eyg-codemode.ts` | the one pi extension: registers `eyg` and the operator's `/eyg-grant`, resolves policy/roots/runner from inside the package, starts the runner that checks every effect through argv, renders the rows, reads the registry scopes |
+| `extensions/eyg-codemode.ts` | the one pi extension: registers `eyg`, the `eyg_subagent` spawner and the operator's `/eyg-grant`, resolves policy/roots/runner from inside the package, starts the runner that checks every effect through argv, renders the rows, reads the registry scopes |
 | `policies/agent-roots.eyg` | the default preset: files under `EYG_ALLOWED_ROOTS`, nothing else, `.env.eyg` never readable |
 | `policies/deny-all.eyg` | the narrowest preset: a session that may only compute |
 | `libraries/search.eyg` | the search helper bound as `search_lib` by the `libraries` parameter; carries the `metadata` record the registry reads |

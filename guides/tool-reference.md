@@ -21,8 +21,9 @@ The sections:
 | --- | --- | --- |
 | policy module | `policies/agent-roots.eyg` inside the installed package, the path taken from `import.meta.url` | `lib/render-helpers.mjs` (`resolvePolicy`), used by `extensions/eyg-codemode.ts`; the order is stated in `guides/how-to-write-another-preset.md` |
 | project key | nothing set: the package default and the working directory | `eyg.policy` (a preset name such as `agent-roots`, or an absolute module path) and `eyg.roots` (absolute paths) in `.pi/settings.json`; pi merges global and project settings and keeps keys it does not know, and the tool re-reads both keys on every call |
-| roots | the session working directory, exported as `EYG_ALLOWED_ROOTS` for the call and restored after it | `lib/render-helpers.mjs` (`resolveRoots`): `eyg.roots`, then `EYG_ALLOWED_ROOTS`, then the working directory, plus the roots of a grant in force; the preset reads the variable |
+| roots | the session working directory, exported as `EYG_ALLOWED_ROOTS` for the call and restored after it | `lib/render-helpers.mjs` (`resolveRoots`): the roots a spawner narrowed this session to, then `eyg.roots`, then `EYG_ALLOWED_ROOTS`, then the working directory, plus the roots of a grant in force; the preset reads the variable |
 | widening for the rest of the session | nothing widened: a refusal stays a refusal | the operator's `/eyg-grant` command (`extensions/eyg-codemode.ts`), whose record `replayGrants` in `lib/render-helpers.mjs` reads back off the session branch; the order is in `guides/how-to-write-another-preset.md` |
+| a second session | none started | the `eyg_subagent` tool (`extensions/eyg-codemode.ts`): `pi --print --mode json --tools eyg` built as argv, its boundary from `childEnvOverrides` and checked by `rootsInside`, its report parsed by `childCalls`/`childAnswer`; `guides/how-to-spawn-a-subagent.md` |
 | runner | first candidate whose `--help` advertises `--policy`: `eyg` on PATH, then `<cwd>/packages/gleam_cli/dist/eyg` (the language repository's layout), then `<cwd>/.local/eyg-checked` | `lib/render-helpers.mjs` (`runnerCandidates`), used by `extensions/eyg-codemode.ts` (`resolveRunner`) |
 | mode | `run`; `eval` is pure and prints the value | `extensions/eyg-codemode.ts` |
 | timeout | 30 s default, 120 s cap; the parameter is `timeout` in **seconds** | `extensions/eyg-codemode.ts` |
@@ -34,6 +35,9 @@ The sections:
 | `EYG_ALLOWED_ROOTS` | comma-separated absolute roots, replacing the session directory |
 | `EYG_CODEMODE_RUNNER` | absolute path to a runner that accepts `--policy` |
 | `EYG_CODEMODE_TIMEOUT` | milliseconds for one call (the variable keeps its unit; the parameter does not) |
+| `EYG_CODEMODE_PI` | absolute path to the `pi` CLI, for the session `eyg_subagent` starts; default `pi` on PATH |
+| `EYG_SUBAGENT_POLICY` | the policy a spawner chose for a child session, read only when the depth marker says this package started the process |
+| `EYG_CODEMODE_DEPTH` | set by `eyg_subagent` for the child: `1` in a child, and a child at depth 1 is refused a child of its own |
 
 The orders - which preset a call gets, and which roots it reads - are stated once, in
 `guides/how-to-write-another-preset.md`. Both are printed in every expanded row, and a refused

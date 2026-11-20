@@ -18,9 +18,10 @@ The steps are:
 | --- | --- |
 | 1 | the `policy` argument of this call, which may only name a preset this package ships - it narrows a call and cannot widen one |
 | 2 | a grant the operator made in this session with `/eyg-grant`, for one tool call, N calls or the rest of the session |
-| 3 | `eyg.policy` in `.pi/settings.json` - a preset shipped in this package (`agent-roots`, `deny-all`) or an absolute path to a module of your own |
-| 4 | `EYG_POLICY`, the environment variable of the pi process |
-| 5 | `policies/agent-roots.eyg`, the preset in the package, which is what you get if you set nothing |
+| 3 | the policy the spawner of a subagent session named (`EYG_SUBAGENT_POLICY`), read only when `EYG_CODEMODE_DEPTH` says this package started the process - so a spawner can narrow a child in a project that names its own preset |
+| 4 | `eyg.policy` in `.pi/settings.json` - a preset shipped in this package (`agent-roots`, `deny-all`) or an absolute path to a module of your own |
+| 5 | `EYG_POLICY`, the environment variable of the pi process |
+| 6 | `policies/agent-roots.eyg`, the preset in the package, which is what you get if you set nothing |
 | if none exists | the tool refuses to run anything rather than run unchecked |
 
 A grant is the operator answering a refusal, so the widening is a human act: the tool has no
@@ -38,8 +39,9 @@ this directory gets this directory's policy. The same key names the roots:
 "eyg": { "policy": "agent-roots", "roots": ["<absolute path>", "<another absolute path>"] }
 ```
 
-Roots are absolute paths and are tried in their own order - the project key, then
-`EYG_ALLOWED_ROOTS`, then the directory pi was started in, plus any root a grant in force
+Roots are absolute paths and are tried in their own order - the roots a spawner narrowed the
+session to, then the project key, then `EYG_ALLOWED_ROOTS`, then the directory pi was started
+in, plus any root a grant in force
 adds - and a relative entry stops the
 call with `every eyg.roots entry must be an absolute path, got <entry>` rather than
 silently matching nothing. A preset name that is not one of the package's, or a roots entry
