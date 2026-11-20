@@ -13,6 +13,7 @@ nothing here reads it at run time, and this tree never writes outside itself.
 
 | directory | purpose |
 | --- | --- |
+| bin/ | The shell scripts a human runs outside this package. Today one: `agent/build-checked-runner.sh`, which builds an EYG CLI that answers for an effect and proves the artifact before naming it. Nothing in this tree runs them - the package has no effect that starts a shell command, and a build of the language repository is not this tree's work. |
 | docs/ | The world model records for this workspace: docs/world/00-map.md (tier-0 index), the entity, decision and runbook pages, invariants.md, traps.md and roster.yaml. The lint, map and verify CLIs that check them live in pi-simple-world-model/. |
 | extensions/ | The one pi extension: it registers the `eyg` tool, resolves the policy, the roots and the runner from inside the package, and spawns the runner that checks every effect through argv. |
 | guides/ | Prose guides read before writing EYG, in two sets: the language reference copied from the |
@@ -41,6 +42,7 @@ nothing here reads it at run time, and this tree never writes outside itself.
 | cli.prebuilt-binary | `command -v eyg` answers `$HOME/.local/bin/eyg` and `eyg --version` answers `eyg v0.1.0` (measured 2026-11-18). | delegate | 2026-11-20 |
 | codemode.effect-surface | A running program reaches the host only through effects, and the set it may perform is an intersection of three files. | delegate | 2026-11-20 |
 | gap.install-guides-name-no-policy | Neither install route - the website's pages and this tree's mirrors, `guides/install_prebuilt.md` and ... | delegate | 2026-11-20 |
+| gap.language-skill-home-undecided | `.pi/settings.json` declares the EYG language-skill pi package by path, one directory above this one (`@measured ... | delegate | 2026-11-20 |
 | gap.policy-runner-not-on-main | The one-shot checked runner this package starts — `eyg run --policy <module.eyg>` — is not in the language repository's ... | delegate | 2026-11-20 |
 | gap.roots-have-no-config-file | This page recorded the hole: the roots in force were the session working directory or `EYG_ALLOWED_ROOTS`, ... | delegate | 2026-11-20 |
 | gap.runner-release-lacks-policy | The latest release the language repository serves is `gleam_cli-v0.1.0` (read from its release feed on 2026-11-19), and ... | delegate | 2026-11-20 |
@@ -70,7 +72,7 @@ nothing here reads it at run time, and this tree never writes outside itself.
 
 ## Where to look for a claim
 
-- entities: 19 · invariants: 4 · decisions: 5 · runbooks: 2 · traps: 37
+- entities: 20 · invariants: 4 · decisions: 5 · runbooks: 2 · traps: 40
 - suspect right now: ADR-002-handler-seam, overlay.agent-harness
 - re-check everything: `npm run world` · checks: `npm run world:lint` · regenerate this index: `npm run world:map`
 <!-- END GENERATED -->

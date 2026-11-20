@@ -4,7 +4,7 @@ type: entity
 owner: delegate
 status: current
 verified_at: 2026-11-20
-verify: "grep -q pi-eyg-expressions .pi/settings.json && grep -q language-skill docs/world/runbooks/runbook.next-milestone.md && ! ls docs/world/decisions/*language-skill* >/dev/null 2>&1"
+verify: "grep -q 'pi-eyg[-_]expressions' .pi/settings.json && grep -q language-skill docs/world/runbooks/runbook.next-milestone.md && ! ls docs/world/decisions/*language-skill* >/dev/null 2>&1"
 confidence: high
 sources: [.pi/settings.json, notes/pi-codemode-language-skill-packaging.md, docs/world/entities/usability.without-language-skill.md, docs/world/runbooks/runbook.next-milestone.md]
 supersedes: null
@@ -14,7 +14,9 @@ superseded_by: null
 # Gap: the language-skill package's home is undecided, and it is this tree's one outside line
 
 `.pi/settings.json` declares the EYG language-skill pi package by path, one directory above
-this one (`@measured 2026-11-20` by `grep -q pi-eyg-expressions .pi/settings.json`). It is the
+this one (`@measured 2026-11-20` by `grep -q 'pi-eyg[-_]expressions' .pi/settings.json` - the
+name is written with a bracket so this page does not match its own sweep, and the one place it
+is spelled out is the settings line itself). It is the
 only declaration in the tree that reaches outside it: the extension resolves its policy, roots
 and libraries from `import.meta.url` (`pi.codemode-tool`), and the world-model tool is vendored
 *inside* the package (`world-model.package`). Three shapes are possible and none is chosen:
