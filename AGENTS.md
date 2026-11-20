@@ -27,8 +27,9 @@ another workspace at run time.**
   only reason a session here can see the language reference. `pi list` prints where each
   declared package resolves. A session that needs the language reference loads that
   package; a session that needs the effect reference reads `guides/` here. Whether that
-  skill belongs inside this package or out as its own release is an open question,
-  tracked in `docs/world/runbooks/runbook.next-milestone.md`.
+  skill belongs inside this package or out as its own release is an open question, with its
+  evidence and its two triggers in
+  `docs/world/entities/gap.language-skill-home-undecided.md`.
 
 ## The layout, and what each directory is for
 
@@ -191,6 +192,13 @@ never put a workspace fact in a guide - a fact in two places drifts.
   package on another machine gets no checked runner until the language ships one. Trigger: a
   release whose `--help` mentions `--policy` - then delete the symlink, re-capture
   `test/fixtures/rule_mapping.gleam` and move those two records with it.
+- **No decision on where the language-skill package lives.** `.pi/settings.json` declares it from
+  outside this tree - the one line here that reaches outside - and the three shapes (leave it, vendor
+  it as `pi-simple-world-model/` is vendored, publish it and declare it by name) are unwritten down as
+  a decision (`gap.language-skill-home-undecided`; options and costs in
+  `notes/pi-codemode-language-skill-packaging.md`). It is the next milestone's first row. Trigger: the
+  upstream `SKILL.md` front-matter fix lands and a re-run beats the `guides/` mirrors, or the first
+  release of either package lets the declaration be written by name.
 - **Three copies of the world model tool.** This one, the language repository's, and the
   publisher's; drift between them is invisible. Revisit trigger: two `CHANGELOG.md`s differ,
   or a fourth workspace wants the same tool - then publish it as an npm or git package.

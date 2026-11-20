@@ -32,20 +32,17 @@ declared the way a dependency is normally declared, a new user installs it from 
 place they install this package from, and this tree keeps no copy. The cost: someone must
 own a release, and until that release exists the declaration cannot be written that way.
 
-**Measured 2026-11-20, and the recommendation: keep it outside, and do not vendor it.** The
-trigger has already fired here. With the declaration present the model's skill list is
-byte-identical to without it, because that package's `SKILL.md` front matter is one unquoted
-scalar with a colon inside and pi advertises only skills whose front matter parses; quoted in a
-scratch copy, the same declaration lists a fourth skill. Even listed, it changed little: 5 of 6
-measured sessions never opened it, and the one that did could not follow its own pointer -
-`guides/builtins_reference.md` relative to that skill does not exist in the skill package, the
-read answered `ENOENT` - because the prose it names lives in the language repository. Vendoring
-would copy a skill that points outside itself and a second copy of the language's prose, and buy
-nothing the `guides/` mirrors do not already buy. So: keep the declaration as the operator's
-convenience, ask for the one-line front-matter fix in the other workspace (not this tree's to
-edit), and rely on `skills/eyg-codemode/SKILL.md` pointing at this package's own mirrors
-(`notes/pi-codemode-language-reference-reachability.md`). Numbers:
-`docs/world/entities/usability.without-language-skill.md`.
+**The recommendation, measured 2026-11-20: keep it outside, and do not vendor it.** The first
+trigger has already fired - with the declaration present the model's skill list is
+byte-identical to without it, because that package's `SKILL.md` front matter does not parse. The
+numbers, and what a session can reach today without that package, are recorded once in
+`docs/world/entities/usability.without-language-skill.md` and
+`notes/pi-codemode-language-reference-reachability.md`; they are not repeated here. What they buy
+for this decision: vendoring would copy a skill that points outside itself and a second copy of
+the language's prose, and buy nothing the `guides/` mirrors do not already buy. So: keep the
+declaration as the operator's convenience, ask for the one-line front-matter fix in the other
+workspace (not this tree's to edit), and rely on `skills/eyg-codemode/SKILL.md` pointing at this
+package's own mirrors.
 
 **Not chosen, and why.** 2026-11-20: the operator asked for this to be reviewed later rather
 than answered now, and the choice is theirs - it is a publishing decision, and publishing is
@@ -58,5 +55,7 @@ language-skill package (front matter, not the path - the path resolves, the skil
 Reopen the decision when either of two things happens: the front-matter fix lands and a re-run of
 the same A/B shows the loaded skill beating the `guides/` mirrors by more than the mirror read
 costs; or the first `npm` or git release of either package, which lets the declaration be written
-by name. Until then `README.md` and `AGENTS.md` say the skill is a separate package and `pi list`
-prints where the declaration resolves.
+by name. Both are written on the record that tracks the hole,
+`docs/world/entities/gap.language-skill-home-undecided.md`, whose `verify` fails once a decision
+record exists. Until then `README.md` and `AGENTS.md` say the skill is a separate package and
+`pi list` prints where the declaration resolves.

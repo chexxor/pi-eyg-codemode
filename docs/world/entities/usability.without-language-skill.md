@@ -72,4 +72,4 @@ outside this tree.
 - the grant loop the sessions above asked for: `docs/world/entities/pi.session-grants.md`
 - where the `guides/` prose comes from: `docs/world/entities/guides.index.md`
 - whether the language-skill package stays a separate package:
-  `notes/pi-codemode-language-skill-packaging.md`
+  `docs/world/entities/gap.language-skill-home-undecided.md`

@@ -34,7 +34,8 @@ item is naming the guide path inside the hint text itself (`lib/render-helpers.m
 error rows); trigger: the first session that reads the hint and still asks for a grant over the
 package's own docs.
 
-**What this is not evidence for.** A vendored or published language-skill package: in six sessions
-the listed skill was opened once, and the reference it points at (`guides/builtins_reference.md`
-relative to that skill) does not exist inside that package - the read answered `ENOENT`. See
-`notes/pi-codemode-language-skill-packaging.md`.
+**What this is not evidence for.** Whether the language-skill package should be vendored or
+published: that decision, its two options and its triggers are
+`notes/pi-codemode-language-skill-packaging.md`, and the hole is tracked as
+`docs/world/entities/gap.language-skill-home-undecided.md`. This page measures only what a
+session can reach from inside the tree.

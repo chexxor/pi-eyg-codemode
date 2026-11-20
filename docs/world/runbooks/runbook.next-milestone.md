@@ -6,7 +6,7 @@ status: current
 verified_at: 2026-11-20
 verify: "test -f docs/world/runbooks/runbook.next-milestone.md && grep -q 'gap.runner-release-lacks-policy' docs/world/runbooks/runbook.next-milestone.md && grep -q 'gap.policy-runner-not-on-main' docs/world/runbooks/runbook.next-milestone.md"
 confidence: high
-sources: [docs/world/entities/gap.runner-release-lacks-policy.md, docs/world/entities/gap.install-guides-name-no-policy.md, docs/world/entities/gap.roots-have-no-config-file.md, docs/world/entities/gap.windows-is-undocumented.md, docs/world/entities/gap.policy-runner-not-on-main.md, docs/world/decisions/ADR-004-doc-shape-for-two-readers.md]
+sources: [docs/world/entities/gap.runner-release-lacks-policy.md, docs/world/entities/gap.install-guides-name-no-policy.md, docs/world/entities/gap.roots-have-no-config-file.md, docs/world/entities/gap.windows-is-undocumented.md, docs/world/entities/gap.policy-runner-not-on-main.md, docs/world/entities/gap.language-skill-home-undecided.md, docs/world/decisions/ADR-004-doc-shape-for-two-readers.md]
 supersedes: null
 superseded_by: null
 ---
@@ -24,23 +24,17 @@ the new evidence rather than leaving it suspect.
 | `gap.roots-have-no-config-file` | a per-project place for the roots, so a session does not inherit the cwd by surprise | decide the shape (a `roots` key in `.pi/settings.json`), then implement it in the extension and its test |
 | `gap.windows-is-undocumented` | anything at all about Windows beyond the release asset's name | run one Windows session and record the rows; fix the environment hand-off if it fails |
 | `gap.policy-runner-not-on-main` | the checked one-shot runner in the language's default branch, not only in a branch of it | land it there and publish it (the row above), then re-capture `test/fixtures/rule_mapping.gleam` and re-run the live guard against that source |
+| `gap.language-skill-home-undecided` | a decision about where the EYG language-skill package lives: the sibling checkout declared by path, a copy inside this package, or a published package declared by name | read `notes/pi-codemode-language-skill-packaging.md`; if the upstream `SKILL.md` front-matter fix has landed, re-run the A/B recorded in `usability.without-language-skill`; then write the choice as a decision record in `docs/world/decisions/` named for the topic, which retires the row |
 
 The audit that produced this list is `ADR-004-doc-shape-for-two-readers`. Two further gaps are
 documentation, not functionality, and were fixed in the same milestone as this record: the
 missing tutorial and the missing how-to guides. Anything added to this list goes through the
 same rule as every other claim: a command that answers while the hole is open.
 
-One parked decision sits here rather than in the table, because no command answers it and the
-operator wants it reviewed later: **should the EYG language-skill package stay a separate
-package declared from outside this tree, or live inside this one?** It is the only line of
-this tree that reaches outside it (`pi list`, 2026-11-20). It moved on 2026-11-20 with a
-measurement and a recommendation: measured over eight one-shot sessions, the declaration loads
-no skill at all (that package's `SKILL.md` front matter is invalid YAML, so pi never advertises
-it), and even a loadable copy of the skill was opened by one session in six - while the same
-sessions reading this package's own `guides/` mirrors first finished in 11 calls and 89 s with no
-invented builtin. Recommendation: keep it outside, do not vendor it, ask for the one-line
-front-matter fix in the other workspace, and point the agent at the mirrors from this package's
-own skill. Both options, the costs and the new trigger (the fix lands and a re-run beats the
-mirrors, or a release lets the declaration be written by name) are in
-`notes/pi-codemode-language-skill-packaging.md`; the measurement is
-`docs/world/entities/usability.without-language-skill.md`.
+One parked decision now sits in the table rather than only in prose: where the EYG language-skill
+package lives (`gap.language-skill-home-undecided`). It is the only line of this tree that
+reaches outside it (`pi list`, 2026-11-20). The measurement and the recommendation - keep it
+outside, do not vendor it, ask for the one-line `SKILL.md` front-matter fix in that package - are
+recorded once in `notes/pi-codemode-language-skill-packaging.md` and
+`docs/world/entities/usability.without-language-skill.md`; the decision itself is the operator's,
+and the two events that reopen it are on the gap record.
