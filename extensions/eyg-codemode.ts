@@ -60,27 +60,36 @@ import { fileURLToPath } from "node:url";
 import { basename, dirname, join } from "node:path";
 import {
   argumentPolicyPath,
+  budgetRefusal,
   buildRegistry,
   builtinErrors,
   builtinHintRows,
   builtinRows,
+  callBudget,
   callLines,
+  CHILD_TOOL_ALLOWLIST,
   childAnswer,
   childArgv,
   childCalls,
   childEnvOverrides,
   childRefusalRows,
+  childTools,
   checkDeclaredEffects,
   classifyProbeOutput,
   DEPTH_ENV,
   describeGrant,
+  EFFECT_ALLOWLIST_ENV,
+  effectFieldsFor,
   effectLine,
   effectsUsed,
+  eygCallCount,
+  fieldsOutside,
   findMetadata,
   formatDuration,
   grantEvents,
   GRANT_ENTRY,
   GUIDE_BUILTINS,
+  MAX_CALLS_ENV,
   prepareCallArguments,
   probeProgram,
   referenceLines,
@@ -100,6 +109,8 @@ import {
   eygSettings,
   presetPath,
   POLICY_FIELDS,
+  SPAWNER_PRESET_NEVER,
+  SPAWNER_PRESET_NOOP,
   UNPROBED_EFFECTS,
 } from "../lib/render-helpers.mjs";
 
@@ -122,6 +133,11 @@ const SUBAGENT_MAX_TIMEOUT_S = 300;
 const MIN_TIMEOUT_MS = 100;
 const PROBE_TIMEOUT_MS = 5_000;
 const ACTIONS = ["run", "eval", "effects", "reference", "list_functions", "describe_function"];
+/// The preset a spawner's effect allowlist is enforced by, and the preset it is a
+/// narrowing of. Both live inside this package, so the two paths are resolved here
+/// rather than written out.
+const NARROWING_PRESET = "spawner-effects";
+const BASE_PRESET = "agent-roots";
 
 /// What a call in this session gets from everything except the call's own argument:
 /// the project settings, and the grants on this session's branch. `error` names what
@@ -220,14 +236,20 @@ function shippedPresets(dir: string | null): string[] {
   return listModules(join(dir, "policies")).map((file) => file.replace(/\.eyg$/, ""));
 }
 
+/// The entries on the branch this call is being made on, in the shape `grantEvents`
+/// and `eygCallCount` read. One place reads the session store, so a grant and a call
+/// budget are counted off the same records.
+function sessionBranch(ctx: { sessionManager?: { getBranch?: () => unknown[] } }): unknown[] {
+  return ctx.sessionManager && typeof ctx.sessionManager.getBranch === "function" ? ctx.sessionManager.getBranch() : [];
+}
+
 /// The grants in force for the branch this call is being made on. There is no grant
 /// variable in this file: the records `/eyg-grant` appended and the eyg calls already
 /// on the branch say what is in force now, so `/tree` and a fork replay a grant and a
 /// truncated branch un-spends the calls it dropped. The current call is not on the
 /// branch yet, so it is not counted against its own grant.
 function grantState(ctx: { sessionManager?: { getBranch?: () => unknown[] } }) {
-  const branch = ctx.sessionManager && typeof ctx.sessionManager.getBranch === "function" ? ctx.sessionManager.getBranch() : [];
-  return replayGrants(grantEvents(branch as never[]));
+  return replayGrants(grantEvents(sessionBranch(ctx)));
 }
 
 /// The registry scopes that exist, in scope order. The scope order is the
@@ -471,6 +493,23 @@ export default function (pi: ExtensionAPI) {
       const chain = policyChain(pi, ctx, dir);
       if (chain.error !== null) {
         return refuseToRun(chain.error);
+      }
+
+      // A child session spends the call budget the session that spawned it set. The
+      // count comes from this session's own records, the same scan a grant is spent
+      // by, so a call that never reached a policy spends nothing and a forked or
+      // resumed session cannot forget what it already spent. The budget is the
+      // spawner's to set: no parameter of a call can raise it, and a grant the
+      // operator made never reaches a child session.
+      const budget = callBudget(process.env, chain.depth);
+      if (budget !== null) {
+        const spent = eygCallCount(sessionBranch(ctx));
+        if (spent >= budget) {
+          return {
+            content: [{ type: "text", text: `eyg refused: ${budgetRefusal(budget, spent)}` }],
+            details: { gated: true, ran: false, budget, callsMade: spent, depth: chain.depth },
+          };
+        }
       }
       const settings = chain.settings;
       const projectPreset = chain.projectPreset;
@@ -870,25 +909,31 @@ export default function (pi: ExtensionAPI) {
     label: "EYG subagent",
     description: [
       "Spawn one pi subagent session in this working directory and report what it did.",
-      "The child has only the eyg tool: every effect it performs is decided by a host policy",
-      "module before the host performs it, exactly as yours are, and it has no bash, read,",
-      "edit or write. It sees this project's files and none of this conversation, so `task`",
-      "must carry the paths, what to do and what to report.",
-      "The child's policy is the one this session's settings name, or one you name with",
-      "`policy` - only a preset this package ships, never a module of your own. Its roots",
-      "must be inside the roots this session has: name `roots` to narrow it to a slice.",
-      "A subagent narrows your reach and never widens it. It is not a route around a",
-      "refusal: it cannot be given a root you do not have, and a grant the operator made",
-      "with /eyg-grant covers the session the operator is in, not a child session.",
+      "The child works only through the tools you name: `eyg` always, plus `read` if you",
+      "give it. Every effect it performs is decided by a host policy module before the",
+      "host performs it, exactly as yours are, and it has no bash, edit or write. It sees",
+      "this project's files and none of this conversation, so `task` must carry the paths,",
+      "what to do and what to report.",
+      "You bound it in three places: `roots` to a slice of the roots this session has;",
+      "`effects` to the effects it may perform, enforced by the `spawner-effects` preset,",
+      "which is the agent-roots preset narrowed to those fields, so a name you omit is",
+      "refused; and `max_calls` to the eyg calls it may spend, after which it is refused",
+      "and told to report what it has. `policy` may only be a preset this package ships.",
+      "A subagent narrows your reach and never widens it: it cannot be given a root, an",
+      "effect or a tool you do not have, and a grant the operator made with /eyg-grant",
+      "covers the session the operator is in, not a child session.",
       "You get back the child's final message, one line per eyg call it made, and every",
       "refusal its policy answered - the refusals are how you learn where its boundary was.",
       "A session that is itself a subagent cannot spawn one: the tree is one level deep.",
       `Pass \`timeout\` in SECONDS for the whole child session (default ${SUBAGENT_DEFAULT_TIMEOUT_S}, at most ${SUBAGENT_MAX_TIMEOUT_S}).`,
     ].join(" "),
-    promptSnippet: "Spawn one pi subagent that works only through the eyg tool, under a policy you name",
+    promptSnippet: "Spawn one pi subagent bounded in tools, effects, roots and calls",
     promptGuidelines: [
       "Use eyg_subagent for a self-contained chunk of work - a search over many files, a mechanical edit set - that you can state completely in `task`; the child sees no part of this conversation.",
       "Name the child's roots inside the roots this session has; expect the call to be refused and the outside root named back when you do not.",
+      "Name `effects` as the shortest list the task needs, and include StandardOut if you want the child to print anything; `Search` is the same field as `ReadFile`, so a child that can search can read.",
+      "Do not grant the child `read` to give it reach: `read` is pi's own tool, no policy gates it, and it hands the child this session's read reach. The default child tool list is `eyg` alone.",
+      "Give `max_calls` when the task is a survey rather than a task with a known end; a child stopped by its budget reports what it found.",
       "Never spawn a subagent to get past a refusal: the child is bounded by your reach, and a grant you hold does not reach it. Ask the operator for the grant and do the work yourself.",
       "Read the child's refusals in the result before deciding what to do next; they name the field, the path and the policy that refused it.",
       "A subagent session costs a model run of its own: one spawn per chunk of work, not one per question.",
@@ -900,7 +945,26 @@ export default function (pi: ExtensionAPI) {
       }),
       policy: Type.Optional(
         Type.String({
-          description: "Name a preset this package ships (`agent-roots`, `deny-all`) for the child. An absolute module path is refused: it must be a policy this package authored, not one you wrote.",
+          description: "Name a preset this package ships (`agent-roots`, `deny-all`) for the child. An absolute module path is refused: it must be a policy this package authored, not one you wrote. An `effects` list is enforced by the `spawner-effects` preset, which is agent-roots narrowed, so it combines only with agent-roots.",
+        }),
+      ),
+      tools: Type.Optional(
+        Type.Array(
+          Type.String({
+            description: "Tools the child session gets. Only `eyg` and `read` may be named and `eyg` must be among them: a child whose only tool is `read` would be a session no policy module decides. `read` is pi's own tool and is not policy-gated, so granting it hands the child this session's read reach. Default: `eyg` alone.",
+          }),
+        ),
+      ),
+      effects: Type.Optional(
+        Type.Array(
+          Type.String({
+            description: 'Effect names the child may perform, e.g. ["ReadFile","Search","StandardOut"]. Each must be an effect the policy in force already performs for this session, and the list is enforced by the spawner-effects preset - agent-roots narrowed to those fields - so every name you omit is refused and no name can open the network. `Search` shares the `read_file` field with `ReadFile`. DecodeJSON, EYGParse, Hash and Sign are not policy fields and no preset can forbid them, so naming or omitting them changes nothing. Omit the list to leave the child its policy\'s whole surface.',
+          }),
+        ),
+      ),
+      max_calls: Type.Optional(
+        Type.Number({
+          description: "How many eyg calls the child may make before it is refused and told to report what it has. 0 means think and report, do not call. No limit by default.",
         }),
       ),
       roots: Type.Optional(
@@ -995,6 +1059,150 @@ export default function (pi: ExtensionAPI) {
         );
       }
       const childRoots = requested;
+
+      // The child's tools: the allowlist, `eyg` required, and never a tool this
+      // session does not have itself. `read` is pi's own tool and no policy gates it,
+      // so granting it hands the child this session's read reach - which is why the
+      // default is one tool and the allowlist is two names.
+      const parentTools = typeof pi.getActiveTools === "function" ? pi.getActiveTools() : null;
+      const given = childTools(params.tools === undefined ? ["eyg"] : params.tools, parentTools);
+      if (given.unknown.length > 0) {
+        return refuseToRun(
+          `the child's tools may only be ${CHILD_TOOL_ALLOWLIST.join(", ")}; these are not: ${given.unknown.join(", ")}. ` +
+            "A child with bash, edit or write is a session this package does not gate.",
+        );
+      }
+      if (given.withoutEyg) {
+        return refuseToRun(`the child's tools must include eyg: with only ${given.tools.join(", ") || "nothing"} the child would work through tools no policy module decides.`);
+      }
+      if (given.parentMissing.length > 0) {
+        return refuseToRun(
+          `a child cannot be given a tool this session does not have: ${given.parentMissing.join(", ")} is not active here. ` +
+            "A subagent narrows your reach, it does not hand out tools you were not given.",
+        );
+      }
+
+      // The effect allowlist. Effect names come in; policy fields go out to the
+      // preset. Two names share one field (`Search` is gated as `read_file`), the four
+      // unchecked effects are outside every preset, and three names are refused here
+      // rather than left for the child to discover, because the narrowing preset keeps
+      // the plain refusals its base preset gives them.
+      const requestedEffects = params.effects === undefined ? [] : params.effects;
+      const mapped = effectFieldsFor(requestedEffects);
+      if (mapped.unknown.length > 0) {
+        return refuseToRun(
+          `effects must be effects the CLI can name: not ${mapped.unknown.join(", ")}. ` +
+            'The `eyg` tool\'s action "reference" prints the whole surface with the field that decides each one.',
+        );
+      }
+      const namedNever = requestedEffects.filter((name) => SPAWNER_PRESET_NEVER.includes(name));
+      if (namedNever.length > 0) {
+        return refuseToRun(
+          `an effect allowlist removes reach, it does not add it: policies/${NARROWING_PRESET}.eyg keeps the plain refusals ${BASE_PRESET}.eyg gives ${SPAWNER_PRESET_NEVER.join(", ")}, allowlist or not. ` +
+            `Names it cannot grant: ${namedNever.join(", ")}. Ask the operator for a policy that has them (/eyg-grant, eyg.policy, EYG_POLICY) instead.`,
+        );
+      }
+      const namedNoop = requestedEffects.filter((name) => SPAWNER_PRESET_NOOP.includes(name) || mapped.unchecked.includes(name));
+      const checkedEffects = requestedEffects.filter((name) => !SPAWNER_PRESET_NOOP.includes(name) && !mapped.unchecked.includes(name));
+      const effectFields = effectFieldsFor(checkedEffects).fields;
+
+      // An allowlist is enforced by the narrowing preset this package ships, which is
+      // the base preset with a gate over its fields. It may only replace the base
+      // preset: replacing a policy this project made narrower would widen it.
+      const narrowingPreset = dir === null ? null : presetPath(NARROWING_PRESET, dir);
+      const basePreset = dir === null ? null : presetPath(BASE_PRESET, dir);
+      if (checkedEffects.length > 0) {
+        if (narrowingPreset === null || !existsSync(narrowingPreset)) {
+          return refuseToRun(`this package ships no policies/${NARROWING_PRESET}.eyg, so an effect allowlist could not be enforced: omit effects, or restore the preset.`);
+        }
+        if (childPolicy !== basePreset) {
+          return refuseToRun(
+            `an effect allowlist is enforced by policies/${NARROWING_PRESET}.eyg, the ${BASE_PRESET} preset with a gate over its fields, and this child's policy resolves to ${childPolicy} (${child.source}). ` +
+              `Replacing a policy the project made narrower with the narrowing preset would widen it, so effects combines with ${BASE_PRESET} only: omit effects to let the child run under ${childPolicy}, or ask the operator for eyg.policy ${BASE_PRESET}.`,
+          );
+        }
+      }
+
+      // The list is then checked against the reach this session actually has, with the
+      // same probe `action: effects` answers with. A field this session's own policy
+      // refuses would not widen the child - the preset can only take fields away - but
+      // naming it would spend the child's calls on a refusal nobody could act on.
+      const effectNotes: string[] = [];
+      if (checkedEffects.length > 0) {
+        const parent = resolvePolicy({
+          grant: chain.grants.policy,
+          spawner: spawnerPolicy(process.env, chain.depth),
+          project: chain.projectPreset,
+          env: process.env.EYG_POLICY ?? null,
+          packageDefault: defaultPolicy(),
+        });
+        const parentPolicy = parent.policy ?? "";
+        const reachableRoots = resolveRoots({ grant: chain.grants.roots, project: chain.settings.roots, env: process.env.EYG_ALLOWED_ROOTS ?? null, cwd });
+        const candidates = runnerCandidates(cwd, process.env);
+        // The preset reads its roots from the environment, so a probe is run with this
+        // session's roots set for the call and restored after it, exactly as a checked
+        // run does. Probing without them would ask the preset what it allows with no
+        // roots at all, and answer that - which is what this call used to report.
+        const exec = async (binary: string, args: string[]) => {
+          const previousRoots = process.env.EYG_ALLOWED_ROOTS;
+          process.env.EYG_ALLOWED_ROOTS = reachableRoots;
+          try {
+            const probed = await pi.exec(binary, args, { signal: null, timeout: PROBE_TIMEOUT_MS, cwd });
+            return { stdout: probed.stdout ?? "", stderr: probed.stderr ?? "", code: probed.code ?? 1 };
+          } finally {
+            if (previousRoots === undefined) {
+              delete process.env.EYG_ALLOWED_ROOTS;
+            } else {
+              process.env.EYG_ALLOWED_ROOTS = previousRoots;
+            }
+          }
+        };
+        const runner = await resolveRunner(candidates, exec);
+        if (runner === null) {
+          return refuseToRun(
+            `an effect allowlist is checked by asking the policy in force what it performs, and no runner that accepts \`--policy\` was found among ${candidates.join(", ")}. ` +
+              "Omit effects to spawn the child under its policy un-narrowed, or put a checked runner where this package can find it (guides/how-to-get-a-checked-runner.md).",
+          );
+        }
+        const probeRoot = reachableRoots.split(",")[0].trim();
+        const performed: string[] = [];
+        for (const name of checkedEffects) {
+          const field = POLICY_FIELDS[name];
+          if (typeof field !== "string") continue;
+          if (UNPROBED_EFFECTS[name] !== undefined) {
+            effectNotes.push(`${name}: not probed (${UNPROBED_EFFECTS[name]}), so the preset's own rule for it stands`);
+            if (!performed.includes(field)) performed.push(field);
+            continue;
+          }
+          const program = probeProgram(name, probeRoot);
+          if (program === null) {
+            effectNotes.push(`${name}: no probe argument is defined, so its availability was not checked`);
+            continue;
+          }
+          const probed = await exec(runner, ["run", "--policy", parentPolicy, "-c", program]);
+          if (classifyProbeOutput(probed.stdout + "\n" + probed.stderr) === "refused") continue;
+          if (!performed.includes(field)) performed.push(field);
+        }
+        const outside = fieldsOutside(effectFields, performed);
+        if (!outside.ok) {
+          return refuseToRun(
+            `this session's own policy (${parentPolicy}, ${parent.source}) refuses ${outside.outside.join(", ")} for the roots it has, so naming it in a child's allowlist asks the child for reach you do not have. ` +
+              `Fields it performs for those roots: ${performed.join(", ") || "none"}. A wider policy is the operator's to give: /eyg-grant here, eyg.policy in the project settings, or EYG_POLICY.`,
+          );
+        }
+      }
+      if (namedNoop.length > 0) {
+        effectNotes.push(`${namedNoop.join(", ")}: no preset can forbid it (DecodeJSON, EYGParse, Hash, Sign) or the answer is the same named or not (Env), so naming it changes nothing`);
+      }
+
+      // The call budget, passed to the child as a marker and spent there by the
+      // child's own copy of this tool, because pi has no flag that caps a session's
+      // calls and only the session knows how many it has made.
+      const maxCalls = params.max_calls === undefined || params.max_calls === null ? null : params.max_calls;
+      if (maxCalls !== null && (!Number.isInteger(maxCalls) || maxCalls < 0)) {
+        return refuseToRun(`max_calls must be a whole number of eyg calls (0 means the child may not call at all), got ${params.max_calls}`);
+      }
+
       // The child is a pi session like this one. `pi` on PATH is the assumption,
       // `EYG_CODEMODE_PI` names it when PATH does not carry it.
       const binary = typeof process.env.EYG_CODEMODE_PI === "string" && process.env.EYG_CODEMODE_PI !== "" ? process.env.EYG_CODEMODE_PI : "pi";
@@ -1004,13 +1212,17 @@ export default function (pi: ExtensionAPI) {
         task,
         model: ctx.model && typeof ctx.model.id === "string" ? ctx.model.id : null,
         trusted: typeof ctx.isProjectTrusted === "function" ? ctx.isProjectTrusted() : false,
+        tools: given.tools,
       });
 
       // `pi.exec` takes no `env`, so the child's boundary is set on this process for
       // the spawn and restored after it, as a checked run does for the roots. The depth
-      // marker is what makes the child read `EYG_SUBAGENT_POLICY` and those roots as a
-      // spawner's word rather than its project's.
-      const overrides: Record<string, string> = childEnvOverrides({ policy: childPolicy, roots: childRoots.join(","), depth: chain.depth + 1 });
+      // marker is what makes the child read `EYG_SUBAGENT_POLICY`, those roots, the
+      // effect allowlist and the call budget as a spawner's word rather than its
+      // project's.
+      const runPolicy = checkedEffects.length > 0 && narrowingPreset !== null ? narrowingPreset : childPolicy;
+      const policySource = checkedEffects.length > 0 ? `${child.source} narrowed to the fields named` : child.source;
+      const overrides: Record<string, string> = childEnvOverrides({ policy: runPolicy, roots: childRoots.join(","), depth: chain.depth + 1, effects: effectFields, maxCalls });
       const previous: Record<string, string | undefined> = {};
       for (const key of Object.keys(overrides)) {
         previous[key] = process.env[key];
@@ -1055,8 +1267,15 @@ export default function (pi: ExtensionAPI) {
         depth: chain.depth,
         childDepth: chain.depth + 1,
         task,
-        policy: childPolicy,
-        policySource: child.source,
+        policy: runPolicy,
+        policySource,
+        basePolicy: checkedEffects.length > 0 ? childPolicy : null,
+        tools: given.tools,
+        parentTools,
+        effects: checkedEffects,
+        effectFields,
+        effectNotes,
+        maxCalls,
         roots: childRoots.join(","),
         parentRoots: parentRoots.join(","),
         binary,
@@ -1073,12 +1292,15 @@ export default function (pi: ExtensionAPI) {
       };
       const asks = childRefusalRows(details).map((row) => row.map((segment) => segment.text).join(""));
       const stderr = (result.stderr ?? "").trim();
+      const budgetLine = maxCalls === null ? "call budget: none" : `call budget: ${maxCalls}${calls.some((call) => call.budget !== null) ? ", spent" : ", not spent"}`;
       const text = [
         `eyg_subagent: ${status}`,
-        `child under ${childPolicy} (${child.source}), roots ${childRoots.join(", ")}, tools: eyg only. Its policy comes from this session's settings or a shipped preset; a grant made here does not reach it.`,
+        `child under ${runPolicy} (${policySource}), roots ${childRoots.join(", ")}, tools ${given.tools.join(", ")}, ${budgetLine}. Its policy comes from this session's settings or a shipped preset; a grant made here does not reach it.`,
         `child's final message:\n${answer === "" ? "(the child left no final message)" : answer}`,
         `child eyg calls: ${calls.length}${calls.length === 0 && stderr !== "" ? ` (stderr: ${stderr.split("\n").slice(-5).join(" | ")})` : ""}`,
-        ...calls.map((call, index) => `  ${index + 1}. under ${call.policy ?? "?"} (${call.policySource ?? "?"}) roots ${call.roots ?? "?"} exit ${call.exit ?? "?"}${call.refusals.length > 0 ? ` refused ${call.refusals.map((hint) => `${hint.field} at ${hint.path}`).join(", ")}` : ""}`),
+        ...calls.map((call, index) => `  ${index + 1}. under ${call.policy ?? "?"} (${call.policySource ?? "?"}) roots ${call.roots ?? "?"} exit ${call.exit ?? "?"}${call.budget !== null ? ` out of calls (budget ${call.budget})` : ""}${call.refusals.length > 0 ? ` refused ${call.refusals.map((hint) => `${hint.field} at ${hint.path}`).join(", ")}` : ""}`),
+        ...(effectFields.length > 0 ? [`effects the child was given: ${effectFields.join(", ")}`] : []),
+        ...effectNotes.map((note) => `note: ${note}`),
         ...asks,
       ].join("\n");
       return { content: [{ type: "text", text }], details };

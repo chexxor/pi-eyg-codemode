@@ -37,7 +37,7 @@ Three readers, and each needs one thing from this tree:
 | word | what it means here |
 | --- | --- |
 | runner | the EYG CLI this package starts; it is the only thing that can answer for an effect |
-| preset | the EYG program the runner loads first, with one rule per effect it decides; this package ships `policies/agent-roots.eyg` and `policies/deny-all.eyg` |
+| preset | the EYG program the runner loads first, with one rule per effect it decides; this package ships `policies/agent-roots.eyg`, `policies/deny-all.eyg`, and `policies/spawner-effects.eyg` for a child session whose spawner named an effect allowlist |
 | roots | the directories a session may reach; the shipped preset reads them from `EYG_ALLOWED_ROOTS` |
 | the checks | a preset's decision for one effect, made before the host performs it |
 | checked, unchecked | an effect a preset answers for, and an effect no preset can forbid |
@@ -156,6 +156,7 @@ run of it.
 | `extensions/eyg-codemode.ts` | the one pi extension: registers `eyg`, the `eyg_subagent` spawner and the operator's `/eyg-grant`, resolves policy/roots/runner from inside the package, starts the runner that checks every effect through argv, renders the rows, reads the registry scopes |
 | `policies/agent-roots.eyg` | the default preset: files under `EYG_ALLOWED_ROOTS`, nothing else, `.env.eyg` never readable |
 | `policies/deny-all.eyg` | the narrowest preset: a session that may only compute |
+| `policies/spawner-effects.eyg` | `agent-roots` with an allowlist over each of its fields, for a child session: `EYG_SUBAGENT_EFFECTS` names the fields it may perform, unset refuses every gateable one |
 | `libraries/search.eyg` | the search helper bound as `search_lib` by the `libraries` parameter; carries the `metadata` record the registry reads |
 | `lib/render-helpers.mjs` | the pure shapes the tool and its test share (plain JS: jiti does not transform a `.mjs`, so annotations in it are a parse error at load) |
 | `test/render-helpers.test.mjs` | the unit test over those shapes and the drift guard |

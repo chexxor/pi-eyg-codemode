@@ -11,7 +11,7 @@
  */
 
 import assert from "node:assert/strict";
-import { argumentPolicyPath, builtinErrors, builtinHintRows, builtinRows, callLines, checkDeclaredEffects, classifyProbeOutput, COLLAPSED_SOURCE_LINES, childAnswer, childArgv, childCalls, childEnvOverrides, childRefusalRows, describeGrant, effectLine, effectsUsed, eygSettings, findMetadata, formatDuration, grantEvents, GRANT_ENTRY, GUIDE_BUILTINS, GUIDE_EFFECTS, GUIDE_SYNTAX, isUnder, outsideRoot, prepareCallArguments, presetPath, probeArguments, probeProgram, POLICY_FIELDS, referenceLines, refusalHints, replayGrants, resolvePolicy, resolveRoots, resultLines, ruleMappingEffects, rootsInside, runnerCandidates, sessionDepth, spawnerPolicy, spawnerRoots, subagentCallLines, subagentResultRows, suggestGrant } from "../lib/render-helpers.mjs";
+import { argumentPolicyPath, budgetRefusal, builtinErrors, builtinHintRows, builtinRows, callBudget, callLines, checkDeclaredEffects, CHILD_TOOL_ALLOWLIST, classifyProbeOutput, COLLAPSED_SOURCE_LINES, childAnswer, childArgv, childCalls, childEnvOverrides, childRefusalRows, childTools, describeGrant, EFFECT_ALLOWLIST_ENV, effectFieldsFor, effectLine, effectsUsed, eygCallCount, eygSettings, findMetadata, fieldsOutside, formatDuration, grantEvents, GRANT_ENTRY, GUIDE_BUILTINS, GUIDE_EFFECTS, GUIDE_SYNTAX, isUnder, MAX_CALLS_ENV, outsideRoot, prepareCallArguments, presetPath, probeArguments, probeProgram, POLICY_FIELDS, referenceLines, refusalHints, replayGrants, resolvePolicy, resolveRoots, resultLines, ruleMappingEffects, rootsInside, runnerCandidates, sessionDepth, spawnerPolicy, spawnerRoots, subagentCallLines, subagentResultRows, suggestGrant } from "../lib/render-helpers.mjs";
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
 
@@ -334,6 +334,36 @@ let metadata = {
   );
   assert.deepEqual(childArgv({ task: "t" }), ["--print", "--mode", "json", "--tools", "eyg", "t"], "no model, no trust, no --approve");
   assert.deepEqual(
+    childArgv({ task: "t", tools: ["eyg", "read"] }),
+    ["--print", "--mode", "json", "--tools", "eyg,read", "t"],
+    "the tools a spawner named reach argv, comma separated, no shell",
+  );
+  assert.equal(CHILD_TOOL_ALLOWLIST.join(","), "eyg,read", "the child's tool allowlist is these two names and no more");
+  assert.equal(EFFECT_ALLOWLIST_ENV, "EYG_SUBAGENT_EFFECTS", "the environment name the narrowing preset reads");
+  assert.deepEqual(childTools(["read", "eyg"]).tools, ["read", "eyg"], "requested order, deduplicated");
+  assert.equal(childTools(["eyg"]).ok, true, "the default is the whole channel and nothing else");
+  assert.equal(childTools(["eyg", "bash"]).ok, false, "a shell tool is refused: this package spawns no session that has one");
+  assert.deepEqual(childTools(["eyg", "bash"]).unknown, ["bash"], "and the name outside the allowlist is the answer");
+  assert.equal(childTools(["read"]).ok, false, "a child with no eyg is a session no policy gates");
+  assert.equal(childTools(["read"]).withoutEyg, true, "named that way");
+  assert.deepEqual(childTools(["eyg", "read"], ["eyg", "eyg_subagent"]).parentMissing, ["read"], "a tool the parent session does not have is named back");
+  assert.equal(childTools(["eyg", "read"], ["eyg", "read"]).ok, true, "and granting one the parent has is fine");
+  assert.equal(childTools(["read"], null).parentChecked, false, "when the harness does not say what the parent has, that half of the check is skipped and says so");
+  assert.deepEqual(
+    effectFieldsFor(["ReadFile", "Search", "StandardOut", "NoSuchEffect", "Hash"]).fields,
+    ["read_file", "standard_out"],
+    "effect names map to policy fields, and Search shares read_file with ReadFile, so the field list deduplicates",
+  );
+  assert.deepEqual(effectFieldsFor(["NoSuchEffect"]).unknown, ["NoSuchEffect"], "an effect the CLI does not have is named back");
+  assert.deepEqual(effectFieldsFor(["Hash"]).unchecked, ["Hash"], "an effect no preset can forbid is reported, not enforced");
+  assert.deepEqual(fieldsOutside(["write_file", "read_file"], ["read_file"]), { ok: false, outside: ["write_file"] }, "a field the policy in force refuses is named back");
+  assert.equal(fieldsOutside(["read_file"], ["read_file"]).ok, true, "a field it performs is not");
+  assert.deepEqual(
+    childEnvOverrides({ policy: "/p/spawner-effects.eyg", roots: "/a,/b", depth: 1, effects: ["read_file", "standard_out"], maxCalls: 2 }),
+    { EYG_POLICY: "/p/spawner-effects.eyg", EYG_SUBAGENT_POLICY: "/p/spawner-effects.eyg", EYG_ALLOWED_ROOTS: "/a,/b", EYG_CODEMODE_DEPTH: "1", EYG_SUBAGENT_EFFECTS: "read_file,standard_out", EYG_SUBAGENT_MAX_CALLS: "2" },
+    "the effect allowlist and the call budget travel to the child the way the roots do",
+  );
+  assert.deepEqual(
     childEnvOverrides({ policy: "/p/wide.eyg", roots: "/a,/b", depth: 1 }),
     { EYG_POLICY: "/p/wide.eyg", EYG_SUBAGENT_POLICY: "/p/wide.eyg", EYG_ALLOWED_ROOTS: "/a,/b", EYG_CODEMODE_DEPTH: "1" },
     "the policy, the roots and the depth the child runs at",
@@ -350,6 +380,9 @@ let metadata = {
   ].join("\n");
   assert.deepEqual(childCalls(childRecords).map((call) => call.policySource), ["spawner"], "the child's calls, read out of its JSON records");
   assert.deepEqual(childCalls(childRecords)[0].refusals, [{ field: "write_file", path: "/tmp/x" }], "and its refusals reach the parent");
+  assert.equal(childCalls(childRecords)[0].budget, null, "a call that merely ran carries no budget");
+  const budgetRecord = JSON.stringify({ type: "tool_execution_end", toolName: "eyg", result: { details: { ran: false, budget: 2, callsMade: 2 } } });
+  assert.equal(childCalls(budgetRecord)[0].budget, 2, "a call the budget refused carries the budget, which is how the spawner knows the child ran out");
   assert.equal(childAnswer(childRecords), "wrote it, /tmp was refused", "and its last words");
   assert.deepEqual(childCalls(undefined), [], "no output is no calls, not a crash");
 
@@ -383,6 +416,24 @@ let metadata = {
   assert.equal(resolveRoots({ spawner: ["/work/sub"], project: ["/p1"], env: "/e", cwd: "/c" }), "/work/sub", "a spawner's roots replace the project's, which is how it hands over a slice");
   assert.equal(resolveRoots({ grant: ["/tmp"], spawner: ["/work/sub"], cwd: "/c" }), "/work/sub,/tmp", "and a grant in that session still adds on top");
 
+  // The call budget is the spawner's word, read only under the depth marker, and is
+  // spent by the calls the child's own session records.
+  assert.equal(callBudget({ [MAX_CALLS_ENV]: "2" }, 1), 2, "a spawner's budget in a session this package started");
+  assert.equal(callBudget({ [MAX_CALLS_ENV]: "2" }), null, "a project that sets the variable itself gets no budget");
+  assert.equal(callBudget({ [MAX_CALLS_ENV]: "0" }, 1), 0, "zero is a real budget: think and report, do not call");
+  assert.equal(callBudget({ [MAX_CALLS_ENV]: "soon" }, 1), null, "and a nonsense one is no budget rather than NaN");
+  assert.equal(callBudget({}, 1), null, "with no marker there is no budget");
+  const branch = [
+    { type: "message", message: { role: "toolResult", toolName: "eyg", details: { ran: true } } },
+    { type: "message", message: { role: "toolResult", toolName: "eyg", details: { ran: false } } },
+    { type: "message", message: { role: "toolResult", toolName: "read", details: {} } },
+    { type: "message", message: { role: "assistant", content: [] } },
+  ];
+  assert.equal(eygCallCount(branch), 1, "only a call that reached a policy spends the budget, the same rule a grant is spent by");
+  assert.equal(eygCallCount(undefined), 0, "an empty session is zero calls");
+  assert.match(budgetRefusal(2, 2), /budget of 2/, "the child is told the number it ran out of");
+  assert.match(budgetRefusal(2, 2), /not yours to widen/, "and that the budget belongs to the spawner");
+
   // The rows the subagent tool renders: the ask, and what came back.
   const asked = subagentCallLines({ task: "l1\nl2\nl3\nl4\nl5", roots: ["/work/sub"], timeout: 90, policy: "deny-all" }, false);
   assert.match(flat(asked), /eyg_subagent \(timeout: 90s\) ?policy: deny-all/, "the timeout and the named preset in the head");
@@ -391,6 +442,12 @@ let metadata = {
   assert.match(flat(asked), /\.\.\. 1 more lines/, "and says how many it dropped");
   assert.match(flat(subagentCallLines({ task: "l1\nl2\nl3\nl4\nl5", roots: [] }, true)), /l5/, "expanded shows the whole task");
   assert.match(flat(subagentCallLines({ task: "t" }, false)), /roots: inherited: the roots this session has/, "with no roots named the child inherits them");
+  const narrowed = subagentCallLines({ task: "t", tools: ["eyg", "read"], effects: ["ReadFile", "WriteFile"], max_calls: 3 }, false);
+  assert.match(flat(narrowed), /tools: eyg, read \(pi's read tool is not policy-gated\)/, "the tools, with the fact that makes them worth narrowing");
+  assert.match(flat(narrowed), /effects: read_file, write_file under the spawner allowlist preset/, "effect names shown as the fields the preset reads");
+  assert.match(flat(narrowed), /max_calls: 3/, "and the budget");
+  assert.match(flat(subagentCallLines({ task: "t" }, false)), /tools: eyg/, "a child left at the default has one tool");
+  assert.ok(!flat(subagentCallLines({ task: "t" }, false)).includes("effects:"), "and no effect allowlist line when none was named");
 
   const childResult = {
     content: [{ type: "text", text: "eyg_subagent: answered in 1.20 s wall\nchild under /p.eyg (project settings), roots /work" }],
@@ -415,6 +472,12 @@ let metadata = {
   assert.equal(childRefusalRows({ policy: "/p.eyg", refusals: [] }).length, 0, "no refusal, no lecture");
   const refusedSpawn = subagentResultRows({ content: [{ type: "text", text: "eyg refused: a subagent gets no children" }], details: { gated: true, ran: false } }, false, undefined);
   assert.equal(tones(refusedSpawn).split("\n")[0], "error", "a refused spawn is an error row");
+  const out = JSON.parse(JSON.stringify(childResult));
+  out.details.maxCalls = 2;
+  out.details.calls.push({ policy: "/p.eyg", policySource: "spawner", roots: "/work", exit: null, refusals: [], budget: 2 });
+  assert.match(flat(subagentResultRows(out, false, 1200)), /of a budget of 2/, "a budgeted child's row says what it was bounded by");
+  assert.match(flat(subagentResultRows(out, false, 1200)), /spent its call budget/, "and that it ran out");
+  assert.ok(!flat(subagentResultRows(childResult, false, 1200)).includes("call budget"), "a child that never hit one is not told about one");
 
   // The drift guard. This workspace is the pi package on its own, so the runtime
   // that owns `rule_mapping` is not in this tree: the guard compares `POLICY_FIELDS`

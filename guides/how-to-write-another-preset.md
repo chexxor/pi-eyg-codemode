@@ -19,7 +19,7 @@ The steps are:
 | 1 | the `policy` argument of this call, which may only name a preset this package ships - it narrows a call and cannot widen one |
 | 2 | a grant the operator made in this session with `/eyg-grant`, for one tool call, N calls or the rest of the session |
 | 3 | the policy the spawner of a subagent session named (`EYG_SUBAGENT_POLICY`), read only when `EYG_CODEMODE_DEPTH` says this package started the process - so a spawner can narrow a child in a project that names its own preset |
-| 4 | `eyg.policy` in `.pi/settings.json` - a preset shipped in this package (`agent-roots`, `deny-all`) or an absolute path to a module of your own |
+| 4 | `eyg.policy` in `.pi/settings.json` - a preset shipped in this package (`agent-roots`, `deny-all`, `spawner-effects`) or an absolute path to a module of your own |
 | 5 | `EYG_POLICY`, the environment variable of the pi process |
 | 6 | `policies/agent-roots.eyg`, the preset in the package, which is what you get if you set nothing |
 | if none exists | the tool refuses to run anything rather than run unchecked |
@@ -81,9 +81,10 @@ check and a host check are.
 | --- | --- |
 | `policies/agent-roots.eyg` | file effects under the roots named in `EYG_ALLOWED_ROOTS`; `CWD`, `Now`, `Random`, `Sleep`, `Flip`, `StandardOut`, `StandardError`, `Exit` performed; `Fetch`, `StandardIn`, `CreateKey` refused; `Env` answered as unset; a path ending `.env.eyg` never readable, even under a root |
 | `policies/deny-all.eyg` | values and output only; every file, network and environment effect refused |
+| `policies/spawner-effects.eyg` | the agent-roots rules, but only for the fields named in `EYG_SUBAGENT_EFFECTS`; unset names nothing and refuses every gateable effect. `eyg_subagent` installs it for a child session whose spawner named `effects`, and an allowlist there cannot add reach (`docs/world/entities/pi.spawner-preset.md`) |
 
 Copy one to a file of your own and change what you need. The comment above each shipped
-rule names why it decides what it does, and neither preset imports anything, so each is
+rule names why it decides what it does, and none of them imports anything, so each is
 readable in full where it is used; `notes/pi-codemode-preset-inlining.md` records why the
 presets are written out rather than imported.
 

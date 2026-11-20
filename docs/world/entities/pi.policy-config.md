@@ -13,8 +13,10 @@ sources: [README.md, guides/how-to-write-another-preset.md, guides/tool-referenc
 Two questions the operator asked, answered in the tree: which policy the package uses if
 you set nothing, and where to go to change it.
 
-- The package ships two presets: `policies/agent-roots.eyg` (the default, 18 rules) and
-  `policies/deny-all.eyg` (the narrowest). README.md names both in its preset table.
+- The package ships three presets: `policies/agent-roots.eyg` (the default, 18 rules),
+  `policies/deny-all.eyg` (the narrowest) and `policies/spawner-effects.eyg`, which is agent-roots
+  behind a per-field allowlist and is installed for a child session rather than chosen by an operator
+  (`docs/world/entities/pi.spawner-preset.md`). README.md names all three in its preset table.
 - The order a call's preset comes from is stated once, in
   `guides/how-to-write-another-preset.md`: the `policy` argument of the call (a preset the
   package ships, so it can only narrow), a grant the operator made in this session, the policy a
@@ -28,7 +30,7 @@ you set nothing, and where to go to change it.
   force - which is `resolveRoots`.
   `guides/tool-reference.md` carries the knobs and links there for the orders.
 - The project key is the per-project knob: `"eyg": { "policy": ..., "roots": [...] }`, where
-  the policy is a preset name (`agent-roots`, `deny-all`) or an absolute module path, and the
+  the policy is a preset name (`agent-roots`, `deny-all`, `spawner-effects`) or an absolute module path, and the
   roots are absolute paths. This workspace sets it: `.pi/settings.json` names `agent-roots`
   with no roots, which means the working directory. A relative root or a name that resolves to
   no file stops the call with a message that names the key.

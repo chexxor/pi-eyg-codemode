@@ -10,7 +10,8 @@ Capability question first: `guides/cli_effects_reference.md` opens with `Every e
 one row per effect with the policy field it sits under and what that field allows - that answers "can I
 perform this here" without deriving it. Then the one-line smoke test `perform StandardOut("ok")`
 shows the policy answering. The presets this package ships are written out in full in
-`policies/agent-roots.eyg` and `policies/deny-all.eyg`, so authoring another one means editing
+`policies/agent-roots.eyg`, `policies/deny-all.eyg` and `policies/spawner-effects.eyg`, so authoring
+another one means editing
 one of those records, not reading a library somewhere else; the renderer, the timeout shape and
 the registry scopes are in `README.md`, presets and security in `guides/pi_codemode_agent.md`,
 surface syntax in `guides/syntax.md`.
@@ -42,6 +43,12 @@ match result { Error(why) -> { perform StandardOut(why) } Ok(_) -> { perform Sta
 A refused effect resumes the program with an `Error`, and `let _ = perform WriteFile(...)` throws that
 answer away, so the call looks like success while nothing was written: bind a name you use and branch
 on its value, as the last two lines above do.
+
+- `match` arms: the first arm takes no leading `|`, an arm after it takes none either, and the only arm
+  that carries a `|` is the **catch-all**, written `| (name) -> { ... }`. `_ -> { ... }` is not a
+  pattern, and a constructor arm written `| Error(_) -> { ... }` fails with `unexpected ->` at the
+  arrow, which reads like a broken arm rather than a stray pipe (measured 2026-11-20,
+  `.local/eyg-checked check`).
 
 - `action` selects what the call does: `run` (default, effects allowed by the policy), `eval` (pure,
   prints the value), `effects` (what the policy in force decides, one probe per effect - pass
@@ -99,9 +106,15 @@ not permission to read it and contents never come through. Without the `Search` 
 
 ## Delegating a chunk of work
 
-`eyg_subagent` starts one pi session in the same directory with only the `eyg` tool: it performs its
-effects through a policy module like you do, and returns its final message, one row per call and every
-refusal it got. It can be given a preset this package ships and roots **inside** the roots you have, and
+`eyg_subagent` starts one pi session in the same directory. It performs its effects through a policy
+module like you do, and returns its final message, one row per call and every refusal it got. Three
+knobs, each checked against what this session already has: `tools` (`eyg`, or `eyg` plus pi's `read`
+tool - never a tool you do not have yourself), `effects` (an allowlist of effects, enforced by the
+shipped narrowing preset `policies/spawner-effects.eyg`; it removes reach and cannot add it, so `Fetch`
+is not in it), and `max_calls` (how many `eyg` calls the child may make before it is told to report what
+it has). It can be given a preset this package ships and roots **inside** the roots you have, and
 nothing wider: no root you lack, no module you wrote, no grant this session holds, and a session that is
 itself a subagent gets no children. Use it for work you can state completely in `task`; do not use it to get
-past a refusal. `guides/how-to-spawn-a-subagent.md` is the how-to.
+past a refusal. Hand the child programs to paste rather than a description of them - a child left to
+invent EYG spends its budget on syntax errors and reports its own mistakes instead of your boundary
+(`docs/world/entities/pi.subagent-spawn.md`). `guides/how-to-spawn-a-subagent.md` is the how-to.

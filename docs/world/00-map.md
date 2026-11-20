@@ -56,6 +56,7 @@ nothing here reads it at run time, and this tree never writes outside itself.
 | pi.policy-config | Two questions the operator asked, answered in the tree: which policy the package uses if you set nothing, and where to ... | delegate | 2026-11-20 |
 | pi.reference-action | `action: "reference"` (`code: ""`) prints the language surface the session is writing against: `eyg reference: 29 ... | delegate | 2026-11-20 |
 | pi.session-grants | A refused effect is an ask the model makes in chat and the operator answers with `/eyg-grant`, registered by ... | delegate | 2026-11-20 |
+| pi.spawner-preset | `policies/spawner-effects.eyg` is the third preset this package ships: `agent-roots.eyg` with an allowlist check over ... | delegate | 2026-11-20 |
 | pi.subagent-spawn | `eyg_subagent`, registered by `extensions/eyg-codemode.ts`, starts a second pi session in the same working directory ... | delegate | 2026-11-20 |
 | usability.without-language-skill | One task, run in fresh one-shot sessions over two scratch projects whose `.pi/settings.json` differ only in whether the ... | delegate | 2026-11-20 |
 | world-model.package | `pi-simple-world-model/` is a pi package carried in this workspace as a copy, declared per project in ... | delegate | 2026-11-20 |
@@ -73,7 +74,7 @@ nothing here reads it at run time, and this tree never writes outside itself.
 
 ## Where to look for a claim
 
-- entities: 21 · invariants: 4 · decisions: 5 · runbooks: 2 · traps: 40
+- entities: 22 · invariants: 4 · decisions: 5 · runbooks: 2 · traps: 44
 - suspect right now: ADR-002-handler-seam, overlay.agent-harness
 - re-check everything: `npm run world` · checks: `npm run world:lint` · regenerate this index: `npm run world:map`
 <!-- END GENERATED -->
