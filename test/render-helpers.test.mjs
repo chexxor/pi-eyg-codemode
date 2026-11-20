@@ -11,7 +11,7 @@
  */
 
 import assert from "node:assert/strict";
-import { argumentPolicyPath, callLines, checkDeclaredEffects, classifyProbeOutput, COLLAPSED_SOURCE_LINES, describeGrant, effectLine, effectsUsed, eygSettings, findMetadata, formatDuration, grantEvents, GRANT_ENTRY, outsideRoot, prepareCallArguments, presetPath, probeArguments, probeProgram, POLICY_FIELDS, refusalHints, replayGrants, resolvePolicy, resolveRoots, resultLines, ruleMappingEffects, runnerCandidates, suggestGrant } from "../lib/render-helpers.mjs";
+import { argumentPolicyPath, callLines, checkDeclaredEffects, classifyProbeOutput, COLLAPSED_SOURCE_LINES, childAnswer, childArgv, childCalls, childEnvOverrides, describeGrant, effectLine, effectsUsed, eygSettings, findMetadata, formatDuration, grantEvents, GRANT_ENTRY, isUnder, outsideRoot, prepareCallArguments, presetPath, probeArguments, probeProgram, POLICY_FIELDS, refusalHints, replayGrants, resolvePolicy, resolveRoots, resultLines, ruleMappingEffects, rootsInside, runnerCandidates, suggestGrant } from "../lib/render-helpers.mjs";
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
 
@@ -326,8 +326,47 @@ let metadata = {
   assert.equal(argumentPolicyPath("deny-all", null), null, "and with no package directory there is nothing to resolve against");
 }
 
+  // A subagent: how it is started, what it may be given, and what comes back.
+  assert.deepEqual(
+    childArgv({ task: "write the file", model: "strata/qwen3.8-flash", trusted: true }),
+    ["--print", "--mode", "json", "--tools", "eyg", "--model", "strata/qwen3.8-flash", "--approve", "write the file"],
+    "argv, no shell, only the eyg tool, the task last",
+  );
+  assert.deepEqual(childArgv({ task: "t" }), ["--print", "--mode", "json", "--tools", "eyg", "t"], "no model, no trust, no --approve");
+  assert.deepEqual(
+    childEnvOverrides({ policy: "/p/wide.eyg", roots: "/a,/b", depth: 1 }),
+    { EYG_POLICY: "/p/wide.eyg", EYG_SUBAGENT_POLICY: "/p/wide.eyg", EYG_ALLOWED_ROOTS: "/a,/b", EYG_CODEMODE_DEPTH: "1" },
+    "the policy, the roots and the depth the child runs at",
+  );
+  assert.deepEqual(rootsInside(["/work/sub"], ["/work"]), { ok: true, outside: [] }, "a slice of the spawner's reach is allowed");
+  assert.deepEqual(rootsInside(["/work", "/tmp"], ["/work"]).outside, ["/tmp"], "a root outside it is named back");
+  assert.equal(isUnder("/workx", "/work"), false, "a sibling directory is not under the root");
+  assert.equal(isUnder("/", "/work"), false, "and neither is its parent");
+  assert.equal(isUnder("/work", "/work"), true, "a root covers itself");
+  const childRecords = [
+    JSON.stringify({ type: "tool_execution_end", toolName: "eyg", result: { details: { policy: "/p.eyg", policySource: "spawner", roots: "/work", exit: 0, refusals: [{ field: "write_file", path: "/tmp/x" }] } } }),
+    JSON.stringify({ type: "message", message: { role: "assistant", content: [{ type: "text", text: "wrote it, /tmp was refused" }] } }),
+    "not json",
+  ].join("\n");
+  assert.deepEqual(childCalls(childRecords).map((call) => call.policySource), ["spawner"], "the child's calls, read out of its JSON records");
+  assert.deepEqual(childCalls(childRecords)[0].refusals, [{ field: "write_file", path: "/tmp/x" }], "and its refusals reach the parent");
+  assert.equal(childAnswer(childRecords), "wrote it, /tmp was refused", "and its last words");
+  assert.deepEqual(childCalls(undefined), [], "no output is no calls, not a crash");
+
   // A grant adds roots on top of what the project and the environment say, and a
   // model may not name the module it is checked against.
+  assert.deepEqual(
+    resolvePolicy({ grant: "/g", spawner: "/s", project: "/p", env: "/e", packageDefault: "/d" }),
+    { policy: "/g", source: "session grant" },
+    "the operator's grant outranks what a spawner chose",
+  );
+  assert.deepEqual(
+    resolvePolicy({ spawner: "/s", project: "/p", env: "/e", packageDefault: "/d" }),
+    { policy: "/s", source: "spawner" },
+    "then the policy the spawner of a subagent session named, which outranks the project key",
+  );
+  assert.equal(rootsInside(["/work/a", "/work/b"], ["/work"]).ok, true, "several slices are fine");
+
   assert.equal(resolveRoots({ grant: ["/tmp"], project: ["/p1"], env: "/e", cwd: "/c" }), "/p1,/tmp", "the grant widens, it does not replace");
   assert.equal(resolveRoots({ grant: ["/p1"], project: ["/p1"], env: null, cwd: "/c" }), "/p1", "and cannot duplicate a root");
   assert.equal(resolveRoots({ grant: ["/tmp"], env: "/a, /b", cwd: "/c" }), "/a,/b,/tmp", "an environment list is split and trimmed first");
