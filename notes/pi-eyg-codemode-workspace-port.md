@@ -48,9 +48,9 @@ package is the root; they are one level deep in both cases.
 | `.pi/settings.json` | `.pi/settings.json` | `.pi/settings.json` | mirror of the installed context: `./pi-simple-world-model`, `npm:@woksin/pi-context-budget`, the EYG language skill declared from outside this tree, `"-builtin:codemode"`, compaction off, same `defaultTools` |
 | `.gitignore` | `.gitignore` | `.gitignore` | same rule: keep `.pi/settings.json`, ignore `.pi/goals/`, the goal-pool snapshot and `.pi/npm/` |
 
-The EYG *language* skill is not ported. It is published from its own workspace,
-`the language-skill package/skills/eyg-expressions/`, as a harness-independent
-pi package; this workspace declares it by path, it does not copy it.
+The EYG *language* skill is not ported. It is published from its own workspace - that
+package keeps the skill at `skills/eyg-expressions/` inside itself - as a
+harness-independent pi package; this workspace declares it by path, it does not copy it.
 
 ## Every cross-workspace reference inside the package
 
@@ -243,7 +243,7 @@ commit that carries the audit).
 | the test | `node --test test/render-helpers.test.mjs` | exit 0, `pass 1 fail 0` |
 | registration | `pi list` | `..` → `this workspace`, `../pi-simple-world-model` → the vendored copy, `npm:@woksin/pi-context-budget` → `.pi/npm/...`, the language-skill declaration → outside this tree |
 | the vendored world model checks, as a session sees them | `pi --world-model-check` | exit 0, ends `tool registered: yes (22 tools active in this session)` |
-| local commit only | `git status --porcelain` / `git remote -v` | 0 lines / 0 lines; `git log` shows the local commits, no remote exists |
+| local commit only | `git status --porcelain` / `git remote -v` | 0 lines / 0 lines; `git log` shows the local commits, no remote exists on that date - on 2026-11-20 `git remote -v` answers a remote named `chexxor`, and `AGENTS.md` carries the current rule |
 | that checkout is untouched | `cd <the language repository> && git diff \| wc -l` | `0` tracked diffs; `git status --porcelain` prints only the pre-existing `?? .ai-work/` |
 
 Still **UNVERIFIED** on 2026-11-18, and named as such wherever it appeared: that a preset

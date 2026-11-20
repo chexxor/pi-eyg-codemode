@@ -23,7 +23,8 @@ one reason, recorded here as the language's: a policy inside a program is a requ
 constraint (`notes/pi_codemode_host_gate.md`).
 
 The lineage is one change, not two designs. The operator reports (2026-11-19, from the language
-repository) that commit `0b28819` on its `chexxor` branch, 2026-11-15, added
+repository) that commit `0b28819` on that repository's non-default branch (which one, and how it
+relates to `main`, is recorded once at `gap.policy-runner-not-on-main`), 2026-11-15, added
 `packages/gleam_cli/src/eyg/cli/policy_runner.gleam` (182 lines), which imports
 `eyg/cli/overlay` as `gate` and reuses `gate.rule_mapping`, `overlay.setup` and `decide` - the
 same loop `pi_codemode_host_gate.md` names. **UNVERIFIED from this workspace**: that file is not

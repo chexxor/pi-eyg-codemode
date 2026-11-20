@@ -39,7 +39,8 @@ has no checks to answer with. The tool's candidates are `eyg` on your `PATH` and
 mentions the flag wins.
 
 On 2026-11-19 the release the language repository publishes answers `0`
-(`gleam_cli-v0.1.0`, read from its release feed that day),
+(`gleam_cli-v0.1.0`, read on 2026-11-19 from the latest-release page that repository publishes;
+`docs/world/entities/gap.runner-release-lacks-policy.md` carries the command that re-checks it),
 so a reader who installed today should expect the refusal below, not a run. Two ways out:
 
 - build the current CLI from source (the second install link), then

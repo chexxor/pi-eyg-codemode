@@ -147,9 +147,14 @@ never put a workspace fact in a guide - a fact in two places drifts.
 - **Never write outside this tree.** The language repository and every other checkout are
   read-only from here: no edits, no moves, no `git` command run in anything but this
   workspace.
-- **Do not push, publish or release.** No remote is configured here (`git remote get-url
-  origin` answers nothing, 2026-11-18); publishing this package is the operator's, and `npm
-  publish` is out of scope. Local commits are fine.
+- **Do not push, publish or release.** A remote **is** configured: `git remote -v` answers
+  `chexxor  git@github.com:chexxor/pi-eyg-codemode.git` and there is no `origin`
+  (`@measured 2026-11-20`), and `git log -g refs/remotes/chexxor/main` records four
+  `update by push` entries, the latest on 2026-11-20; the record does not say who ran them. The
+  rule is unchanged by the fact: pushing is not a session's act, publishing this package is the
+  operator's, and `npm publish` is out of scope. Local commits are fine, and a session's work is
+  done when it is committed - check `git branch -r --contains <your commit>` answers nothing
+  before saying nothing was pushed.
 - **Ground every claim** in a file read, a command run, or a fetched page, with a date and
   the command (`@measured 2026-11-18 by ...`). An unverified item is labelled UNVERIFIED.
 - **A deferral names its trigger**, or it is not parked - it is lost.
