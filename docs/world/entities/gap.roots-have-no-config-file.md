@@ -3,7 +3,7 @@ id: gap.roots-have-no-config-file
 type: entity
 owner: delegate
 status: current
-verified_at: 2026-11-19
+verified_at: 2026-11-20
 verify: "grep -q 'EYG_ALLOWED_ROOTS' extensions/eyg-codemode.ts && ! grep -q 'roots' .pi/settings.json"
 confidence: high
 sources: [extensions/eyg-codemode.ts, .pi/settings.json, README.md, policies/agent-roots.eyg]

@@ -3,7 +3,7 @@ id: world-model.package
 type: entity
 owner: delegate
 status: current
-verified_at: 2026-11-19
+verified_at: 2026-11-20
 verify: "test -f pi-simple-world-model/bin/world_lint.mjs && grep -q pi-simple-world-model .pi/settings.json && grep -q '\"..\"' .pi/settings.json"
 confidence: high
 sources: [pi-simple-world-model/package.json, pi-simple-world-model/README.md, .pi/settings.json, README.md]
@@ -16,7 +16,7 @@ superseded_by: null
 `pi-simple-world-model/` is a pi package carried in this workspace as a copy, declared
 per project in `.pi/settings.json` (written `../pi-simple-world-model`, relative to the
 settings file; `pi list` on 2026-11-18 resolves it to
-`/home/chexxor/Git/pi-eyg-codemode/pi-simple-world-model`). Every session rooted here
+`pi-simple-world-model/, in this workspace`). Every session rooted here
 loads the `world_model` tool, the `project-world-model` skill, the `/world` command and
 the tier-0 injection of `docs/world/00-map.md`.
 

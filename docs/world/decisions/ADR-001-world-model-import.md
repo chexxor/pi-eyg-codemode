@@ -3,7 +3,7 @@ id: ADR-001-world-model-import
 type: adr
 owner: delegate
 status: accepted
-verified_at: 2026-11-19
+verified_at: 2026-11-20
 verify: "test -f pi-simple-world-model/package.json && grep -q pi-simple-world-model .pi/settings.json"
 confidence: high
 sources: [pi-simple-world-model/package.json, .pi/settings.json, pi-simple-world-model/CHANGELOG.md]
@@ -16,7 +16,7 @@ superseded_by: null
 ## Context
 
 The world model tool (`pi-simple-world-model`) is authored in
-`~/Git/social-event-publisher`. This workspace needs the same tool over its own
+`another of the operator's projects`. This workspace needs the same tool over its own
 `docs/world/`. A local pi package is loaded from the path in the settings file, so
 there are two ways to make it available: declare the foreign absolute path, or
 carry a copy here.
@@ -29,7 +29,7 @@ declaration into `.pi/settings.json`.
 
 ## Alternatives rejected
 
-- Declare `~/Git/social-event-publisher/pi-simple-world-model` from here: one
+- Declare `another of the operator's projects/pi-simple-world-model` from here: one
   source of truth, but a session here changes behaviour whenever the publisher
   session edits the tool, and the tool's own `README`/skill paths (`pi-simple-world-model/bin/...`)
   stop matching this tree.

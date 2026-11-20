@@ -21,7 +21,7 @@ The sections:
 | --- | --- | --- |
 | policy module | `policies/agent-roots.eyg` inside the installed package, the path taken from `import.meta.url` | `extensions/eyg-codemode.ts` (`packageDir`, `defaultPolicy`) |
 | roots | the session working directory, exported as `EYG_ALLOWED_ROOTS` for the call and restored after it | `extensions/eyg-codemode.ts`; the preset reads the variable |
-| runner | first candidate whose `--help` advertises `--policy`: `eyg` on PATH, then `<cwd>/packages/gleam_cli/dist/eyg` (the language workspace's layout) | `extensions/eyg-codemode.ts` (`resolveRunner`) |
+| runner | first candidate whose `--help` advertises `--policy`: `eyg` on PATH, then `<cwd>/packages/gleam_cli/dist/eyg` (the language repository's layout) | `extensions/eyg-codemode.ts` (`resolveRunner`) |
 | mode | `run`; `eval` is pure and prints the value | `extensions/eyg-codemode.ts` |
 | timeout | 30 s default, 120 s cap; the parameter is `timeout` in **seconds** | `extensions/eyg-codemode.ts` |
 | argv | `[mode, "--policy", policy, "-c", code]`, spawned with no shell in between | `extensions/eyg-codemode.ts` |
@@ -48,7 +48,7 @@ policy module rather than in a program (`guides/pi_codemode_agent.md`).
 `policies/deny-all.eyg` is the narrowest record there is: it refuses every effect except
 `Now`, `Random`, `Sleep`, `Flip`, `StandardOut`, `StandardError` and `Exit`. Both are one
 record, one rule per refusable effect, **written out in full and importing nothing**; the
-vocabulary used to be imported from the language workspace and was inlined on 2026-11-18 so
+vocabulary used to be imported from the language repository and was inlined on 2026-11-18 so
 the package owns its whole decision (`notes/pi-codemode-preset-inlining.md`, and `docs/world/traps.md`
 for the trap inlining prevents). `guides/how-to-write-another-preset.md` is the how-to over
 changing one of them.
@@ -186,7 +186,7 @@ advertises, not a fixed path. An earlier version probed at `/dev/null` and liste
 
 A read inside the roots and a write outside them, in one program:
 
-*[2026-11-16 · the language workspace]*
+*[2026-11-16 · the language repository]*
 
 ```
 eyg run: ran
@@ -199,19 +199,22 @@ took the capture.
 
 The second boundary, same marking:
 
-*[2026-11-16 · the language workspace]*
+*[2026-11-16 · the language repository]*
 
 ```
-read_file denied by policy: /home/chexxor/Git/eyg-lang/.search-proof/.env.eyg
-/home/chexxor/Git/eyg-lang/.search-proof/.env.eyg
+read_file denied by policy: <that checkout>/.search-proof/.env.eyg
+<that checkout>/.search-proof/.env.eyg
 ```
 
-The first line is a refused `ReadFile`, the second is `Search` naming the same path.
+The first line is a refused `ReadFile`, the second is `Search` naming the same path. The
+path is masked: the capture named a checkout outside this tree, and nothing tracked here
+quotes such a path.
 
 ## Captures, and how they are marked
 
-A block under an italic tag `*[date · the language workspace]*` is a verbatim capture taken there
-on that date - paths and all, never re-run here and never edited, so the paths in it mean nothing
+A block under an italic tag `*[date · the language repository]*` is a capture taken there
+on that date - paths masked where they name a checkout outside this tree, otherwise never
+re-run here and never rewritten, so the paths in it mean nothing
 on your machine. Untagged blocks are instructions, or captures taken in this workspace. On 2026-11-18
 this README was rewritten shorter: captures that carried a decision a reader still needs were kept
 (the refusal above, the `.env.eyg` name boundary, the status lines), and the rest - the language

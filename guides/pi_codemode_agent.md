@@ -1,6 +1,6 @@
 # Run a pi agent whose side effects are EYG effects only
 
-*Reference copied from the language workspace on 2026-11-18 and re-pointed to this
+*Reference copied from the language repository on 2026-11-18 and re-pointed to this
 workspace: the costs in it were measured there (`@measured 2026-11-15`) and stay as
 they were; commands marked "here" were re-measured in this tree on 2026-11-18. On
 2026-11-19 the word "gate" was replaced with "the checks" throughout, so this page's
@@ -14,7 +14,7 @@ before the host performs it. A denied effect is an EYG error such as
 `write_file denied by policy: /abs/path` and nothing happened on disk, so the
 model can read the permission it was refused and act on it.
 
-The runner that makes this possible is in the language workspace
+The runner that makes this possible is in the language repository
 (`packages/gleam_cli/src/eyg/cli/policy_runner.gleam`, `eyg run --policy <module.eyg>`);
 this tree carries its rule table as a snapshot (`test/fixtures/rule_mapping.gleam`) and
 the claim over it in `docs/world/entities/overlay.policy-rules.md`. The checks already
@@ -57,21 +57,21 @@ The **EYG-only** shape - the model gets nothing but `eyg` - is:
 so the `eyg` tool from the package stays. `-builtin:codemode` disables the built-in
 JavaScript codemode, so no script can reach a tool that checks nothing. What this workspace
 actually declares on 2026-11-18 is the wider shape - the package itself (`..`), the
-vendored world model, `npm:@woksin/pi-context-budget`, the language skill from
-`../../pi-eyg-expressions`, compaction off, and `defaultTools` left at
+vendored world model, `npm:@woksin/pi-context-budget`, a language-skill package declared
+outside this tree, compaction off, and `defaultTools` left at
 `read, edit, write, bash, codemode, grep` - so a session here still has the plain
 file tools alongside `eyg`.
 
 From this workspace root the package *is* the root, so the declaration is the
-workspace itself (0.3 s wall in the language workspace; `pi install . -l` here writes
+workspace itself (0.3 s wall in the language repository; `pi install . -l` here writes
 `..`, measured 2026-11-18):
 
 ```bash
 pi install . -l                       # writes ".." into .pi/settings.json
 pi install ./pi-simple-world-model -l # writes "../pi-simple-world-model"
-pi list                               # Project packages: .. -> /home/chexxor/Git/pi-eyg-codemode
-                                      # ../pi-simple-world-model -> .../pi-eyg-codemode/pi-simple-world-model
-                                      # ../../pi-eyg-expressions -> /home/chexxor/Git/pi-eyg-expressions
+pi list                               # Project packages: .. -> this repository's root
+                                      # ../pi-simple-world-model -> the vendored copy inside it
+                                      # plus whatever the language-skill declaration resolves to
 ```
 
 `pi list` prints the resolved absolute path; the entries read `..` and
@@ -81,11 +81,11 @@ pi list                               # Project packages: .. -> /home/chexxor/Gi
 Then point the tool at one policy for the session:
 
 ```bash
-# the runner that checks effects is built in the language workspace; it is NOT vendored here,
-# so from this tree these lines are instructions for that workspace, not a run.
-export EYG_CODEMODE_RUNNER=/home/chexxor/Git/eyg-lang/packages/gleam_cli/dist/eyg
-export EYG_POLICY=/home/chexxor/Git/pi-eyg-codemode/policies/agent-roots.eyg
-export EYG_ALLOWED_ROOTS=/home/chexxor/Git/pi-eyg-codemode,/tmp/agent-workspace
+# the runner that checks effects is built in the language repository; it is NOT vendored here,
+# so from this tree these lines are the shape to set, with your own paths, not a run.
+export EYG_CODEMODE_RUNNER=<absolute path to a --policy-capable eyg>
+export EYG_POLICY=<absolute path to this package>/policies/agent-roots.eyg
+export EYG_ALLOWED_ROOTS=<absolute path to this package>,/tmp/agent-workspace
 ```
 
 The `EYG_POLICY` path is this workspace's shipped preset; the default is the same
@@ -118,7 +118,7 @@ and the file does not exist, while a write under an allowed root returns
 
 ## The loops, with their cost
 
-Rows marked *language workspace* are commands that run in `/home/chexxor/Git/eyg-lang`,
+Rows marked *language repository* are commands that run in that repository,
 not here: nothing here builds the CLI or runs the language suite, and their costs were
 measured there `@measured 2026-11-15`. Rows marked *here* were re-measured in this tree
 on 2026-11-18.
@@ -126,11 +126,11 @@ on 2026-11-18.
 | loop | command | cost, wall |
 | --- | --- | --- |
 | one EYG expression (here, the CLI on PATH) | `eyg eval -c '!int_add(1, 1)'` | 0.06 s, measured there |
-| one run with checks in force (refusal) (language workspace) | `packages/gleam_cli/dist/eyg run --policy <module> -c '<write outside root>'` | 0.06-0.07 s - **UNVERIFIED here**: no `--policy` runner vendored |
-| one unchecked write (language workspace, the gap) | `eyg run -c '<WriteFile>'` | 0.06 s - do not run it here |
-| the codemode package suite (language workspace) | `eyg script eyg_packages/codemode_policy/entry.eyg` | 2.3 s - not runnable here |
-| the whole EYG suite (language workspace) | `eyg script entry.eyg` | 5.7 s (100 tests, 0 failed) - not runnable here |
-| every committed policy rule needed? (language workspace) | `node scripts/mutation-check.mjs` | 13.5-15.4 s (6 suite runs) - not here: no such script in this tree |
+| one run with checks in force (refusal) (language repository) | `packages/gleam_cli/dist/eyg run --policy <module> -c '<write outside root>'` | 0.06-0.07 s - **UNVERIFIED here**: no `--policy` runner vendored |
+| one unchecked write (language repository, the gap) | `eyg run -c '<WriteFile>'` | 0.06 s - do not run it here |
+| the codemode package suite (language repository) | `eyg script eyg_packages/codemode_policy/entry.eyg` | 2.3 s - not runnable here |
+| the whole EYG suite (language repository) | `eyg script entry.eyg` | 5.7 s (100 tests, 0 failed) - not runnable here |
+| every committed policy rule needed? (language repository) | `node scripts/mutation-check.mjs` | 13.5-15.4 s (6 suite runs) - not here: no such script in this tree |
 | one type-check of this package's modules (here) | `for f in policies/*.eyg libraries/*.eyg; do eyg check "$f"; done` | in `AGENTS.md`'s command table |
 | this package's unit test (here) | `node --test 'test/*.mjs'` | in `AGENTS.md`'s command table |
 | the world model checks (here) | `node pi-simple-world-model/bin/world_lint.mjs`, `world_map.mjs --check`, `pi --world-model-check` | in `AGENTS.md`'s command table |
@@ -164,7 +164,7 @@ reference; the policy vocabulary is written out inside this package's presets
 `notes/pi-codemode-preset-inlining.md` for why, and for the fact that the language
 workspace's preset library and its security suite are no longer reachable from here.
 
-The presets this package ships are those two. The language workspace's richer set
+The presets this package ships are those two. The language repository's richer set
 (`agent(roots)`, `reader(roots)`, `fetching(roots, hosts)`, `service(...)`, `nothing`)
 lives in `eyg_packages/codemode_policy/index.eyg` there; to get a preset with that
 shape here, write it in a policy module of your own, one rule per effect, and point
@@ -184,7 +184,7 @@ pi --world-model-check                                 # the same checks as a pi
 ```
 
 What is **not** provable here, and stays UNVERIFIED: that an effect is actually refused
-at run time. The proof of that was the language workspace's - a runner built there
+at run time. The proof of that was the language repository's - a runner built there
 (`bin/agent/gate.sh gleam_cli`), the suite in `eyg_packages/codemode_policy/`, and
 `scripts/mutation-check.mjs`, which loosens one rule of the preset library at a time
 and requires the security suite to fail. This tree carries the *record* of those results

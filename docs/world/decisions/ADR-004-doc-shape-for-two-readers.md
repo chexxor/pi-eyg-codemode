@@ -3,7 +3,7 @@ id: ADR-004-doc-shape-for-two-readers
 type: adr
 owner: human
 status: accepted
-verified_at: 2026-11-19
+verified_at: 2026-11-20
 verify: "grep -q 'diataxis.fr' docs/world/decisions/ADR-004-doc-shape-for-two-readers.md && grep -q 'fuchsia.dev/fuchsia-src/contribute/docs/documentation-style-guide' docs/world/decisions/ADR-004-doc-shape-for-two-readers.md && grep -q '## Alternatives rejected' docs/world/decisions/ADR-004-doc-shape-for-two-readers.md && test -f skills/eyg-codemode/SKILL.md"
 confidence: high
 sources: [README.md, AGENTS.md, guides/pi_codemode_agent.md, guides/cli_effects_reference.md, skills/eyg-codemode/SKILL.md, .agents/skills/eyg-run/SKILL.md, docs/world/decisions/ADR-003-doc-delegation.md, docs/world/runbooks/runbook.check-a-change.md]
@@ -127,7 +127,7 @@ Reader 2 (the model that writes EYG):
   event; more files means more reads in every session for the model, which is the reader that
   pays that cost.
 - **Fixing the functionality gaps in this milestone:** the release is the operator's to publish,
-  the language workspace is read-only from here, and the objective says log them for next time.
+  the language repository is read-only from here, and the objective says log them for next time.
 - **Citing the website inside the README's claims:** an offline session cannot load it, so the
   website is linked and dated while the checkable artefact stays local (ADR-003's rule).
 

@@ -5,7 +5,7 @@ date: 2026-11-18
 ---
 
 The snippet below is what the modules looked like before this port, while the package sat
-inside the language workspace (`/home/chexxor/Git/eyg-lang`); it is quoted as history, and
+inside the language repository; it is quoted as history, and
 nothing in this package imports it.
 
 `policies/agent-roots.eyg` and `policies/deny-all.eyg` used to be three lines of
@@ -38,7 +38,7 @@ printed `eyg v0.1.0`), which prints the policy record with the result type of ev
 - `eyg check policies/deny-all.eyg` exit 0, 18 fields.
 - `eyg check policies/agent-roots.eyg` exit 0, 18 fields.
 - `/tmp/eyg-preset-compare.eyg` imported the language repository's preset
-  (`/home/chexxor/Git/eyg-lang/eyg_packages/overlay/policy.eyg`) and printed
+  (`eyg_packages/overlay/policy.eyg` there) and printed
   `{deny_all: policy.deny_all, read_write: policy.read_write(["/abs/root"])}`; `eyg check`
   exit 0.
 
@@ -63,7 +63,7 @@ record against the recorded `rule_mapping` in `test/fixtures/rule_mapping.gleam`
 
 What the check does **not** cover: the decisions at run time. A denial is a value, so
 `policy.read_write(["/x"])` refusing a path can only be observed by running a program
-through a runner that has the `--policy` flag. `which eyg` is `/home/chexxor/.local/bin/eyg`,
+through a runner that has the `--policy` flag. `which eyg` is `$HOME/.local/bin/eyg`,
 `eyg --version` prints `eyg v0.1.0`, and `eyg --help` advertises no `--policy`, so this host
 has no runner that checks effects. Run behaviour in this workspace is UNVERIFIED until
 a policy-capable runner is installed (`guides/install_from_source.md` in this workspace covers

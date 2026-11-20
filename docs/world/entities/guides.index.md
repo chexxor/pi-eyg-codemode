@@ -3,7 +3,7 @@ id: guides.index
 type: entity
 owner: delegate
 status: current
-verified_at: 2026-11-19
+verified_at: 2026-11-20
 verify: "grep -q '^name: EYG syntax guide' guides/syntax.md && grep -q '^name: Builtins reference' guides/builtins_reference.md && test -f guides/pi_codemode_agent.md && test -f guides/cli_effects_reference.md && test -f guides/first-session.md && test -f guides/tool-reference.md && test -f guides/how-to-share-functions.md && grep -q 'first-session.md' README.md"
 confidence: high
 sources: [guides/syntax.md, guides/builtins_reference.md, guides/cli_effects_reference.md, guides/pi_codemode_agent.md, guides/first-session.md, guides/tool-reference.md, guides/how-to-share-functions.md, README.md]
@@ -18,7 +18,7 @@ is the offline mirror: `syntax.md` is the surface syntax, `builtins_reference.md
 every `!builtin`, `cli_effects_reference.md` is the full effect reference for the CLI runtime,
 `pi_codemode_agent.md` is how to run a policy-checked codemode session, and
 `install_from_source.md` plus `install_prebuilt.md` say how the CLI reaches a user - they
-describe the language workspace's build, not a command that runs here.
+describe the language repository's build, not a command that runs here.
 
 The **package set** was written here on 2026-11-19 and is not a copy of anything: `first-session.md`
 is the tutorial a new user follows to one call, the `how-to-*.md` pages carry the four things the
@@ -29,7 +29,7 @@ seam it cannot check. The README links all of them and carries none of their con
 **The website is the source; `guides/` is an offline mirror.** The EYG documentation lives at
 <https://eyg.run> - <https://eyg.run/guides> carries install, syntax, the CLI effect reference,
 the builtins reference, `advanced-effects` (program-level handlers) and `effect-access-policies`
-(the `overlay.access` vocabulary). The copies here were taken from the language workspace on
+(the `overlay.access` vocabulary). The copies here were taken from the language repository on
 2026-11-18 and are only for a session that cannot load a page; the README points at the website,
 not at the copies, so a guide and its page can disagree without either being wrong today
 (`docs/world/traps.md`).
@@ -42,4 +42,4 @@ this workspace type-checks modules, it does not build a compiler.
 ## Not this
 
 Not the implementation and not the spec: the rules an implementation follows live in the
-language workspace, not in `guides/`.
+language repository, not in `guides/`.

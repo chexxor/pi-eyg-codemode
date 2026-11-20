@@ -3,7 +3,7 @@ name: the codemode checks are host-side, and a pure-EYG mediated runner cannot e
 description: Why the agent's restriction is installed on the runner that starts the interpreter rather than in the program or in a mediated EYG helper; the decision and the material that rules the alternatives out.
 date: 2026-11-15
 ---
-*(This note's subject was worked out in the language workspace on 2026-11-15; it is carried here as the package's decision record, measured there, not re-run here. The paths it names are that workspace's.)*
+*(This note's subject was worked out in the language repository on 2026-11-15; it is carried here as the package's decision record, measured there, not re-run here. The paths it names are that workspace's.)*
 
 # The decision: restrict in the process that starts the interpreter
 

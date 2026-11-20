@@ -3,10 +3,10 @@ id: runbook.next-milestone
 type: runbook
 owner: delegate
 status: current
-verified_at: 2026-11-19
-verify: "test -f docs/world/runbooks/runbook.next-milestone.md && grep -q 'gap.runner-release-lacks-policy' docs/world/runbooks/runbook.next-milestone.md"
+verified_at: 2026-11-20
+verify: "test -f docs/world/runbooks/runbook.next-milestone.md && grep -q 'gap.runner-release-lacks-policy' docs/world/runbooks/runbook.next-milestone.md && grep -q 'gap.policy-runner-not-on-main' docs/world/runbooks/runbook.next-milestone.md"
 confidence: high
-sources: [docs/world/entities/gap.runner-release-lacks-policy.md, docs/world/entities/gap.install-guides-name-no-policy.md, docs/world/entities/gap.roots-have-no-config-file.md, docs/world/entities/gap.windows-is-undocumented.md, docs/world/decisions/ADR-004-doc-shape-for-two-readers.md]
+sources: [docs/world/entities/gap.runner-release-lacks-policy.md, docs/world/entities/gap.install-guides-name-no-policy.md, docs/world/entities/gap.roots-have-no-config-file.md, docs/world/entities/gap.windows-is-undocumented.md, docs/world/entities/gap.policy-runner-not-on-main.md, docs/world/decisions/ADR-004-doc-shape-for-two-readers.md]
 supersedes: null
 superseded_by: null
 ---
@@ -23,8 +23,17 @@ the new evidence rather than leaving it suspect.
 | `gap.install-guides-name-no-policy` | a page that takes a working CLI to a runner this package finds | write `guides/how-to-point-the-tool-at-your-runner.md`, then file the same gap against the website |
 | `gap.roots-have-no-config-file` | a per-project place for the roots, so a session does not inherit the cwd by surprise | decide the shape (a `roots` key in `.pi/settings.json`), then implement it in the extension and its test |
 | `gap.windows-is-undocumented` | anything at all about Windows beyond the release asset's name | run one Windows session and record the rows; fix the environment hand-off if it fails |
+| `gap.policy-runner-not-on-main` | the checked one-shot runner in the language's default branch, not only in a branch of it | land it there and publish it (the row above), then re-capture `test/fixtures/rule_mapping.gleam` and re-run the live guard against that source |
 
 The audit that produced this list is `ADR-004-doc-shape-for-two-readers`. Two further gaps are
 documentation, not functionality, and were fixed in the same milestone as this record: the
 missing tutorial and the missing how-to guides. Anything added to this list goes through the
 same rule as every other claim: a command that answers while the hole is open.
+
+One parked decision sits here rather than in the table, because no command answers it and the
+operator wants it reviewed later: **should the EYG language-skill package stay a separate
+package declared from outside this tree, or live inside this one?** It is the only line of
+this tree that reaches outside it (`pi list`, 2026-11-20). Both options and their costs are in
+`notes/pi-codemode-language-skill-packaging.md`. Trigger to decide: the first session rooted
+here that cannot load the language reference - for anyone without this operator's checkout,
+that is the first session - or the first release of either package.

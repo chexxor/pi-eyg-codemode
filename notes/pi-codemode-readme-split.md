@@ -17,7 +17,7 @@ split it across pages named by Diátaxis kind - was rejected in the same commit 
 landed in: the world-model lint requires a claim id to equal its filename stem, so moving
 pages moves ids, pointers and verify commands; and the two `guides/install_*.md` files would
 stop being mirrors of the website's pages and stop being checkable against them. A page this
-package writes carries no "copied from the language workspace" note, so the mirror record in
+package writes carries no "copied from the language repository" note, so the mirror record in
 `guides/pi_codemode_agent.md` and `guides/cli_effects_reference.md` stays the only such note
 in `guides/`, and `guides/PURPOSE` says which set each file belongs to.
 

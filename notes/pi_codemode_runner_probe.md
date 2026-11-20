@@ -3,7 +3,7 @@ name: pi-codemode-runner-probe-and-roots
 description: Why pi-eyg-codemode probes its runner for --policy, why the preset refuses when roots are unset, and why the context-budget package is project-local here
 date: 2026-11-16
 ---
-*(Carried from the language workspace, 2026-11-16: the runner probe and its costs were measured there. On this host the probe fails - the CLI on `PATH` has no `--policy` - so nothing in this note re-runs from this tree.)*
+*(Carried from the language repository, 2026-11-16: the runner probe and its costs were measured there. On this host the probe fails - the CLI on `PATH` has no `--policy` - so nothing in this note re-runs from this tree.)*
 
 Three trade-offs that the code states but does not argue.
 
@@ -32,8 +32,8 @@ install artefact of this machine, not source. Pi resolves packages and settings 
 `session_start`, so installing the package does not change a session that is running -
 on 2026-11-16 the session that started before the install committed 3 native
 compactions and 0 by hook, and its handoff text is unrecoverable. Check the plane a
-fresh process resolves with
-`node /home/chexxor/Git/pi-durable-harness/scripts/diagnose-context-budget.mjs`
+fresh process resolves with the `diagnose-context-budget.mjs` script of another of the
+operator's pi packages
 (1.2 s wall, offline).
 
 **Two runtimes, two resolutions of `touch_grass`, and one search effect.** The `Search`

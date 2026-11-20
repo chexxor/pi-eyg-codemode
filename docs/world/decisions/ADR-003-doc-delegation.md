@@ -3,7 +3,7 @@ id: ADR-003-doc-delegation
 type: adr
 owner: human
 status: accepted
-verified_at: 2026-11-19
+verified_at: 2026-11-20
 verify: "grep -q 'eyg.run/guides/install-a-prebuilt-binary' README.md && ! grep -q 'not from this README' README.md && test -f guides/install_prebuilt.md"
 confidence: high
 sources: [README.md, guides/install_prebuilt.md, guides/install_from_source.md, guides/syntax.md, guides/cli_effects_reference.md, docs/world/entities/guides.index.md]
@@ -41,7 +41,7 @@ never presented as current instructions.
 - **Deleting the offline guide copies:** the world model's `sources` and several claim verify
   commands read those files, and a session with no network would lose the effect and syntax
   reference mid-task. Keeping them as labelled mirrors keeps the claim honest ("copied 2026-11-18").
-- **Pointing only at the language workspace's copies:** that repository is not on a new user's
+- **Pointing only at the language repository's copies:** that repository is not on a new user's
   machine, and a path into it is one more thing that does not resolve.
 
 ## Consequences

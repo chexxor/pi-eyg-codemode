@@ -3,7 +3,7 @@ id: ADR-002-handler-seam
 type: adr
 owner: human
 status: suspect
-verified_at: 2026-11-19
+verified_at: 2026-11-20
 verify: "grep -q 'Plan first, then act' guides/tool-reference.md && grep -q 'advanced embedding scenarios' guides/tool-reference.md"
 confidence: high
 sources: [policies/agent-roots.eyg, policies/deny-all.eyg, README.md, guides/syntax.md, notes/pi-codemode-handler-seam.md]
@@ -19,10 +19,10 @@ An operator wants tools an agent can trust, and EYG separates an effect's *descr
 its *implementation* (`guides/syntax.md:349`: "Scripts declare effects they need; the runner
 decides what to do with them"), so more than one place could hold an implementation: the
 policy module the host loads, a registry module the model calls, the CLI runtime's own effect
-code in the language workspace, or `handle EffectName` inside the program. Those are not
+code in the language repository, or `handle EffectName` inside the program. Those are not
 interchangeable - one of them is in the program, and a permission decided in the program is
 not a permission. Each also costs something different: 0.06-0.07 s per checked call, one runner
-start-up per call, or an escalation in the language workspace.
+start-up per call, or an escalation in the language repository.
 
 ## Decision
 
@@ -44,7 +44,7 @@ to act.
   with nothing on disk, which is the failure mode an operator least wants. `Mock` belongs in a
   plan preset, where "nothing lands" is the point.
 - **A new domain effect in the language** (`QueryKB`, `Snapshot`) to get the tool: an effect is
-  an escalation in the language workspace's rules, the 19 policy fields already decide the paths
+  an escalation in the language repository's rules, the 19 policy fields already decide the paths
   such a tool needs, and a new effect would need a rule in every preset anyway.
 - **`handle EffectName` in the program** as the seam: it is the one route where the program
   supplies a handler, the language documents it in two lines for "advanced embedding

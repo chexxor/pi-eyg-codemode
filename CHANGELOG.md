@@ -1,15 +1,15 @@
 # Changelog
 
 Every entry below 1.5.0 records what ran while this package lived inside
-`/home/chexxor/Git/eyg-lang`; the paths in them (`packages/...`, `eyg_packages/...`,
-`bin/agent/gate.sh`, `pi --world-model-check` counts) are that workspace's and are kept as
+the language repository; the paths in them (`packages/...`, `eyg_packages/...`,
+`bin/agent/gate.sh`, `pi --world-model-check` counts) are that repository's and are kept as
 history, not as instructions for this tree. On 2026-11-19 the word "gate" was replaced with
 "the checks", "checked" and "unchecked" throughout these entries; what ran is unchanged.
 
 ## 1.5.0 - 2026-11-18
 
-- The package has its own workspace. `package.json` is now the workspace manifest at
-  `/home/chexxor/Git/pi-eyg-codemode`, so `pi install . -l` (from the workspace root) declares
+- The package has its own workspace. `package.json` is now the manifest at
+  this workspace's root, so `pi install . -l` (from the workspace root) declares
   the package as `..`, and no part of the package reaches into the language repository at run
   time.
 - The presets are self-contained: `policies/agent-roots.eyg` and `policies/deny-all.eyg`
@@ -30,7 +30,7 @@ history, not as instructions for this tree. On 2026-11-19 the word "gate" was re
   checked by a `pi-simple-world-model` copy vendored into this workspace - the tool is copied
   per workspace, never declared across workspaces.
 - Not done here, and named rather than claimed: end-to-end run behaviour. The CLI on `PATH`
-  (`/home/chexxor/.local/bin/eyg`, `eyg v0.1.0`) advertises no `--policy`, so no runner on this
+  (`$HOME/.local/bin/eyg`, `eyg v0.1.0`) advertises no `--policy`, so no runner on this
   host can check effects, and UNVERIFIED is what the README says until one is built.
 
 ## 1.4.0 - 2026-11-16

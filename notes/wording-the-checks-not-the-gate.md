@@ -32,7 +32,7 @@ reworded at the same time as the paragraphs were cut to say each fact once.
 - `gated: true` in the tool's `details` record - a field name in `extensions/eyg-codemode.ts`,
   not prose. Renaming it would falsify every capture of a tool result in the docs and the
   test that pins those shapes.
-- `bin/agent/gate.sh` and `gleam-gate` - names of things in the language workspace, quoted
+- `bin/agent/gate.sh` and `gleam-gate` - names of things in the language repository, quoted
   as paths, never as instructions.
 - `notes/pi_codemode_host_gate.md` keeps its filename; several claim `sources` lists and
   `test -f` checks name it, and a note's file name is not a sentence a reader parses.

@@ -6,8 +6,7 @@ verified: 2026-11-14
 
 # Running EYG
 
-The CLI's own reference lives in the language workspace
-(`/home/chexxor/Git/eyg-lang/packages/gleam_cli/README.md`), which this tree does not
+The CLI's own reference lives in the language repository, which this tree does not
 read; the effect surface this package documents is here, in
 `guides/cli_effects_reference.md`. Read that rather than guessing at effects.
 
@@ -30,7 +29,7 @@ read; the effect surface this package documents is here, in
 `signatory initial|list|show`, `tui`, `overlay <file>`, `version`.
 
 ## Environment
-- Hub commands (`share`, `publish`, `signatory`) belong to the language workspace;
+- Hub commands (`share`, `publish`, `signatory`) belong to the language repository;
   nothing in this package reaches a hub.
 
 ## Two traps this repo has already burned people on
@@ -41,11 +40,11 @@ read; the effect surface this package documents is here, in
   keep that invariant intact.
 
 ## What the CLI on this host can and cannot do
-Measured 2026-11-18: `command -v eyg` answers `/home/chexxor/.local/bin/eyg`, and
+Measured 2026-11-18: `command -v eyg` answers `$HOME/.local/bin/eyg`, and
 `eyg --version` answers `eyg v0.1.0`. That build's help has no `--policy`
-(`grep -c -- '--policy' <<< "$(~/.local/bin/eyg --help 2>&1)"` prints `0`), so from
+(`grep -c -- '--policy' <<< "$(eyg --help 2>&1)"` prints `0`), so from
 this workspace the CLI **type-checks** (`eyg check <file>.eyg`) but **cannot check a run**. A run with checks in force needs the runner
-built in the language workspace (`packages/gleam_cli/dist/eyg` after `./bin/compile`),
+built in the language repository (`packages/gleam_cli/dist/eyg` after `./bin/compile`),
 which is not vendored here - so an effect-level result claimed from this tree is
 UNVERIFIED, never PASS.
 

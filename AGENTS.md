@@ -12,19 +12,23 @@ the extension resolves its own `policies/` and `libraries/` from `import.meta.ur
 outside the package (`invariant.policy-self-contained`). **Nothing in this tree reads
 another workspace at run time.**
 
-## Two neighbours, neither of them in here
+## Two things this tree does not contain
 
 - **The language itself** - the EYG compiler, its Gleam sources, its test suite, its
-  hub - lives in `/home/chexxor/Git/eyg-lang`. This workspace was extracted from inside
-  that repository on 2026-11-18 and never goes back: it is read-only from here, and a
-  session here must not write, move or `git` into that tree. Its files are cited as
-  "the language workspace", never as a path this tree can open.
-- **The EYG language skill is not in this tree**: it is the separate pi package
-  `pi-eyg-expressions` at `/home/chexxor/Git/pi-eyg-expressions`, declared by absolute
-  path in `.pi/settings.json` (written relative as `../../pi-eyg-expressions`; `pi list`
-  on 2026-11-18 resolves it to that absolute path). A session that needs the language
-  reference loads that package; a session that needs the effect reference reads
-  `guides/` here.
+  hub - lives in **the language repository**, somewhere else on the operator's machine.
+  This package was extracted from inside it on 2026-11-18 and never goes back. Its files
+  are cited as "the language repository's", never as a path this tree can open. That
+  repository also carries its own agent harness, Overlay: what each harness owns is
+  `docs/world/entities/overlay.agent-harness.md`, and where the gate this package starts
+  lives inside that repository today is
+  `docs/world/entities/gap.policy-runner-not-on-main.md`.
+- **The EYG language skill is not in this tree**: it is a separate pi package declared by
+  path in `.pi/settings.json` - the one line of this tree that reaches outside it, and the
+  only reason a session here can see the language reference. `pi list` prints where each
+  declared package resolves. A session that needs the language reference loads that
+  package; a session that needs the effect reference reads `guides/` here. Whether that
+  skill belongs inside this package or out as its own release is an open question,
+  tracked in `docs/world/runbooks/runbook.next-milestone.md`.
 
 ## The layout, and what each directory is for
 
@@ -51,8 +55,8 @@ shell commands; a policy module decides each effect before the host performs it.
 - The runner is probed, not assumed: candidates `eyg` on PATH and
   `<cwd>/packages/gleam_cli/dist/eyg`, and a candidate only qualifies when its `--help`
   mentions `--policy` (`extensions/eyg-codemode.ts:387-404`).
-- **On this host that probe fails.** `command -v eyg` answers `/home/chexxor/.local/bin/eyg`,
-  `eyg --version` answers `eyg v0.1.0`, and `grep -c -- '--policy' <<< "$(~/.local/bin/eyg --help 2>&1)"`
+- **On this host that probe fails.** `command -v eyg` answers `$HOME/.local/bin/eyg`,
+  `eyg --version` answers `eyg v0.1.0`, and `grep -c -- '--policy' <<< "$(eyg --help 2>&1)"`
   printed `0` (measured 2026-11-18). So from this workspace the CLI type-checks but cannot
   check a run, and any statement about what a preset *allows at runtime* is UNVERIFIED here -
   never report it as PASS.
@@ -64,7 +68,7 @@ shell commands; a policy module decides each effect before the host performs it.
   (`DecodeJSON`, `EYGParse`, `Hash`, `Sign`) available under every preset including deny-all;
   `Search` shares the `read_file` field. The drift guard compares
   `POLICY_FIELDS` in `lib/render-helpers.mjs` against `test/fixtures/rule_mapping.gleam`
-  (a recorded snapshot of the language workspace's `overlay.gleam`, md5
+  (a recorded snapshot of the language repository's `overlay.gleam`, md5
   `9cb5e8ace42e1df79083bab255ee9bb1` at capture).
 - A **policy rule is a function** the host calls with the value the program asked for, and it
   answers `Pass(value)` (perform with what you hand back, so the argument may be rewritten) or
@@ -84,7 +88,7 @@ shell commands; a policy module decides each effect before the host performs it.
 | `for f in policies/*.eyg libraries/*.eyg; do eyg check "$f"; done` | 0.43 s wall | 2026-11-18 |
 | `node pi-simple-world-model/bin/world_lint.mjs` | 0.06 s wall | 2026-11-18 |
 | `node pi-simple-world-model/bin/world_map.mjs --check` | 0.04 s wall | 2026-11-18 |
-| `node pi-simple-world-model/bin/world_verify.mjs --all` | 0.65 s wall, prints how many claims it checked | 2026-11-19 |
+| `node pi-simple-world-model/bin/world_verify.mjs --all` | 1.13 s wall, prints how many claims it checked | 2026-11-19 |
 | `pi --world-model-check` | 1.14 s wall | 2026-11-18 |
 | `pi list` | registers the four project packages by absolute path | 2026-11-18 |
 
@@ -134,8 +138,9 @@ never put a workspace fact in a guide - a fact in two places drifts.
 - **Bash is not the work.** EYG does not have an effect to run shell commands; bash here is
   for reading this tree and for work EYG cannot express, not for doing the work the operator
   asked for.
-- **Do not touch the language workspace.** `/home/chexxor/Git/eyg-lang` is read-only from
-  here: no edits, no moves, no `git` commands run in it.
+- **Never write outside this tree.** The language repository and every other checkout are
+  read-only from here: no edits, no moves, no `git` command run in anything but this
+  workspace.
 - **Do not push, publish or release.** No remote is configured here (`git remote get-url
   origin` answers nothing, 2026-11-18); publishing this package is the operator's, and `npm
   publish` is out of scope. Local commits are fine.
@@ -163,7 +168,7 @@ never put a workspace fact in a guide - a fact in two places drifts.
 ## What is not here yet
 
 - **No planning system.** `PLAN.md`, `NEXT.md`, `QUESTIONS.md`, milestones and stage checks are the
-  language workspace's; nothing here carries a queue. Trigger to port one: a task from the
+  language repository's; nothing here carries a queue. Trigger to port one: a task from the
   operator that spans several steps of its own.
 - **No CI, no check script.** There is no `bin/agent/audit.sh`, no `.github/workflows`, no
   `entry.eyg` here; the checks in the table above are all of it. Trigger: the first
@@ -172,6 +177,6 @@ never put a workspace fact in a guide - a fact in two places drifts.
   `--policy`, so end-to-end check behaviour is UNVERIFIED from here. Trigger: the first
   session that actually needs a run with checks in force - then vendor or build a `--policy` runner and
   record what the presets then do.
-- **Three copies of the world model tool.** This one, the language workspace's, and the
+- **Three copies of the world model tool.** This one, the language repository's, and the
   publisher's; drift between them is invisible. Revisit trigger: two `CHANGELOG.md`s differ,
   or a fourth workspace wants the same tool - then publish it as an npm or git package.

@@ -14,7 +14,7 @@ only two of them are this package's.
 program runs, so the handler exists before the program can reach anything. The **registry
 module** (`libraries/`, `.pi/eyg-functions/`) is the operator's composition of effects into a
 tool the model calls - also available today. The **runtime implementation** of an effect is the
-language workspace's and an escalation there; the effect-to-field map is recorded here at
+language repository's and an escalation there; the effect-to-field map is recorded here at
 `test/fixtures/rule_mapping.gleam` and is not ours to edit. `handle EffectName`
 (`guides/syntax.md:383`) is the one route where a *program* supplies a handler, and whether it
 can shadow the host's rule is **UNVERIFIED from this workspace** (`docs/world/traps.md` carries
@@ -41,14 +41,14 @@ buys an operator who wants a plan approved before a change: the same program run
 `StandardOut`, `StandardError`, `Exit`) prints its plan and gets a refusal value for every
 effect it would have used, then the same program runs under `policies/agent-roots.eyg` to act.
 It works because a refusal is a value, not a crash. Two presets, no new field, no new tool,
-one extra runner start-up (0.06-0.07 s measured in the language workspace).
+one extra runner start-up (0.06-0.07 s measured in the language repository).
 
 **Rejected: a `tools` parameter in the extension** that maps names to modules and dispatches
 them. That is a second answer to "what may this reach", and it would disagree with the runner's
 - the same reason the registry listing's availability is advisory and re-probed rather than a
 check (`notes/pi_codemode_registry_probe.md`). Permission belongs in the one record the host
 loads. **Rejected: a new domain effect** (`QueryKB`, `Snapshot`) to get such a tool: an effect
-is an escalation in the language workspace's rules, the 19 fields already decide the paths it
+is an escalation in the language repository's rules, the 19 fields already decide the paths it
 needs, and a new effect would still need a rule in every preset.
 
 **The store discipline, and the one number that matters.** Context that lives under a root and
@@ -59,7 +59,7 @@ claim whose verify command fails moves to `status: suspect`, so stale context is
 than silently trusted. A read is still
 not free. Calls are not the constraint:
 10-30 checked calls per session is 0.6-2 s against a 44-142 s live session (`@measured 2026-11-15`
-in the language workspace), so what an operator should budget is decisions to approve, not
+in the language repository), so what an operator should budget is decisions to approve, not
 runner time.
 
 Trigger to revisit: the first session that installs a `--policy` runner here - then the

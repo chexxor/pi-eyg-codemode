@@ -3,7 +3,7 @@ id: codemode.effect-surface
 type: entity
 owner: delegate
 status: current
-verified_at: 2026-11-19
+verified_at: 2026-11-20
 verify: "grep -q '^## Every effect at a glance' guides/cli_effects_reference.md && test $(grep -c 'PolicyField(' test/fixtures/rule_mapping.gleam) -eq 19 && for n in AppendFile CreateKey CWD DecodeJSON DeleteFile Env Exit EYGParse Fetch Flip Hash MakeDirectory Now Random ReadDirectory ReadFile Search Sign Sleep StandardError StandardIn StandardOut WriteFile; do grep -q \"^| $n \" guides/cli_effects_reference.md || exit 1; done"
 confidence: high
 sources: [guides/cli_effects_reference.md, test/fixtures/rule_mapping.gleam, policies/agent-roots.eyg, policies/deny-all.eyg, README.md]
@@ -23,7 +23,7 @@ intersection of three files. Read them in this order, and the answer costs one l
 3. The roots themselves, for a path question. The tool reports the policy it used and its
    roots in the call, so a refusal names the path it was denied.
 
-`test/fixtures/rule_mapping.gleam` is the recorded snapshot of the language workspace's
+`test/fixtures/rule_mapping.gleam` is the recorded snapshot of the language repository's
 `rule_mapping` (captured 2026-11-18, md5 `9cb5e8ace42e1df79083bab255ee9bb1` of the source
 file): 23 effects, 19 of them named by a `PolicyField`, 4 (`DecodeJSON`, `EYGParse`,
 `Hash`, `Sign`) marked unchecked and deterministic, so available under every preset
@@ -42,4 +42,4 @@ carry a bare path string, `read_file`, `write_file` and `append_file` carry a re
 The table is not the policy: it says what a CLI can name and how a preset decides, not what
 was allowed on any given day. Which preset ran, and its roots, is reported by the tool per
 call (`README.md`). Effects are not added to answer a feature request: that is an escalation,
-and the file that answers "can this effect exist at all" lives in the language workspace.
+and the file that answers "can this effect exist at all" lives in the language repository.

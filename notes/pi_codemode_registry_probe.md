@@ -3,7 +3,7 @@ name: registry availability is a re-probed advisory, not a block
 description: Why the eyg-codemode registry probes each effect at every listing, why the probe arguments are root-relative rather than fixed, and why availability is advisory rather than a second check that blocks a run.
 date: 2026-11-16
 ---
-*(Carried from the language workspace, 2026-11-16: the registry probes and their output were measured there, against the language workspace's preset library. This tree re-states the shapes it depends on in `policies/` and `lib/`; the probe itself is UNVERIFIED here.)*
+*(Carried from the language repository, 2026-11-16: the registry probes and their output were measured there, against the language repository's preset library. This tree re-states the shapes it depends on in `policies/` and `lib/`; the probe itself is UNVERIFIED here.)*
 
 # The decision: answer "can this session perform that effect" by asking, and answer it per query
 

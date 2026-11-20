@@ -1,5 +1,11 @@
 # pi-eyg-codemode
 
+**Status: a first draft.** The package is written, type-checked and measured call by call, but
+it has not been proved in use: no long-running session, no comparison against the built-in
+JavaScript codemode measured, and no checked call observed end to end on the machine it was
+developed on, because no runner there accepts `--policy`. Treat the design as settled and the
+behaviour as provisional (`docs/world/entities/pi.first-draft.md`).
+
 **EYG** is a small scripting language: everything is an expression, there are no statements,
 and the only route a program has to the outside world is a named effect -
 `perform ReadFile({path: "/abs/file", offset: 0, limit: 60})`. It has no effect that runs a
@@ -10,12 +16,8 @@ not the program - decides every effect, per call, before the host performs it. A
 effect is a value (`Error("write_file denied by policy: /abs/path")`), so the model reads the
 permission it was refused and acts on it; nothing happened on disk.
 
-The language, its compiler, its test suite and **its documentation** live elsewhere: the code
-is a separate repository - the language workspace, checked out somewhere on the operator's
-machine - and the prose is on the **EYG website, <https://eyg.run>** (guides, references, the
-policy vocabulary). This package is the tool in front of that check; it decides nothing about
-what an effect may do, reads nothing from that repository at run time, and **replicates no
-install steps** - the section below says what has to be true on your machine.
+The language, its compiler, and **its documentation** live elsewhere. Check the
+**EYG website, <https://eyg.run>** for details.
 
 ## Who reads this page
 
@@ -53,6 +55,7 @@ Three readers, and each needs one thing from this tree:
 | the tool's knobs, rows, probes, limits and the seam it cannot check | `guides/tool-reference.md` |
 | the language itself: surface syntax, builtins, every effect | <https://eyg.run/guides>, mirrored offline in `guides/syntax.md`, `guides/builtins_reference.md`, `guides/cli_effects_reference.md` |
 | to run a whole pi agent in EYG rather than one call | `guides/pi_codemode_agent.md`, with `skills/eyg-codemode/SKILL.md` loaded for the model |
+| to compare this package with the language's own agent harness (Overlay) and choose between them | `docs/world/entities/overlay.agent-harness.md` for what each owns, `notes/pi_codemode_vs_overlay.md` for the trade-off |
 | what this tree claims about itself, and the command that re-checks each claim | `docs/world/00-map.md` |
 | the commands a session here runs, with measured costs and the hard rules | `AGENTS.md` |
 
@@ -77,7 +80,7 @@ for an effect. Install one from
 <https://eyg.run/guides/install-from-source> (Gleam >= 1.7 and Bun).
 `guides/install_prebuilt.md` and `guides/install_from_source.md` are copies of those two
 pages, taken 2026-11-18, for a session that cannot load a page; the paths inside the second
-belong to the language workspace, not to this tree.
+belong to the language repository, not to this tree.
 
 Then the tool has to find what you installed. It looks in exactly three places, in this order
 (`extensions/eyg-codemode.ts:387-390`, `resolveRunner` at `:219`):
@@ -85,7 +88,7 @@ Then the tool has to find what you installed. It looks in exactly three places, 
 1. **`EYG_CODEMODE_RUNNER`** - the absolute path to the runner. Set it and nothing else is
    probed, so installing the compiler somewhere off `PATH` is fine as long as you name it here.
 2. **`eyg` on `PATH`** - whatever `command -v eyg` finds.
-3. **`<cwd>/packages/gleam_cli/dist/eyg`** - the language workspace's own layout, which only
+3. **`<cwd>/packages/gleam_cli/dist/eyg`** - the language repository's own layout, which only
    helps if you run pi sessions inside a checkout of that repository.
 
 A candidate counts only when `<candidate> --help` mentions `--policy` - the probe runs once per
@@ -97,8 +100,8 @@ binary exists:
 
 **The prebuilt route is not enough on the machine this package was developed on.** On 2026-11-18
 the release found by `command -v eyg` answered `v0.1.0`, that check printed `0`, and the release
-published on the language repository the next day (`gleam_cli-v0.1.0`, fetched from
-<https://github.com/CrowdHailer/eyg-lang/releases/latest>) predates the `--policy` flag. Until a
+the language repository published the next day (`gleam_cli-v0.1.0`, read from its release feed on
+2026-11-19) predates the `--policy` flag. Until a
 release carries it: build from source (the other guide) and point `EYG_CODEMODE_RUNNER` at that
 binary, or read this package as documentation - installing the tool and getting a refusal for
 every call is the honest outcome, not a bug to chase. Until such a runner runs here, **end-to-end
@@ -125,10 +128,13 @@ the drift guard against `test/fixtures/rule_mapping.gleam`, never an observed re
   <https://eyg.run/guides/eyg-syntax-guide> and the effect reference is
   <https://eyg.run/guides/cli-effects-reference> (offline copies of both live here as
   `guides/syntax.md` and `guides/cli_effects_reference.md`). The language *skill* is the separate
-  pi package `pi-eyg-expressions`, a sibling of this tree; `pi list` prints the absolute path a
+  pi package, declared in `.pi/settings.json`; `pi list` prints the absolute path a
   declaration of it resolves to on your machine.
 - **When not to use it:** a workspace whose agent must run arbitrary host commands - builds, git,
-  a compiler - or a session whose job is editing this package's own source.
+  a compiler - or a session whose job is editing this package's own source. If the harness itself
+  should be written in EYG - its own loop, its own model client, a project config file - that is
+  the language repository's Overlay harness, not this package
+  (`docs/world/entities/overlay.agent-harness.md`).
 - **Costs** live in `AGENTS.md`'s command table, dated where they were measured; the language
   workspace's own runs are marked as its.
 
@@ -142,9 +148,9 @@ the drift guard against `test/fixtures/rule_mapping.gleam`, never an observed re
 | `libraries/search.eyg` | the search helper bound as `search_lib` by the `libraries` parameter; carries the `metadata` record the registry reads |
 | `lib/render-helpers.mjs` | the pure shapes the tool and its test share (plain JS: jiti does not transform a `.mjs`, so annotations in it are a parse error at load) |
 | `test/render-helpers.test.mjs` | the unit test over those shapes and the drift guard |
-| `test/fixtures/rule_mapping.gleam` | the runtime's `rule_mapping` recorded verbatim, so the guard runs without the language workspace next door (`test/fixtures/rule_mapping.PROVENANCE.md`: where it came from, its checksums, how to refresh it) |
+| `test/fixtures/rule_mapping.gleam` | the runtime's `rule_mapping` recorded verbatim, so the guard runs without the language repository present (`test/fixtures/rule_mapping.PROVENANCE.md`: where it came from, its checksums, how to refresh it) |
 | `skills/eyg-codemode/SKILL.md` | the pi skill loaded when a model writes EYG: the forms, what a refusal means, how to ask the registry |
-| `guides/` | the reference copied from the language workspace, and this package's tutorial, how-tos and reference |
+| `guides/` | the reference copied from the language repository, and this package's tutorial, how-tos and reference |
 | `notes/`, `docs/world/`, `pi-simple-world-model/` | the decision record, the claims with the tool that checks them |
 
 ## Commands that run here

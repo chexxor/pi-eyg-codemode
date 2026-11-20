@@ -3,7 +3,7 @@ id: overlay.policy-rules
 type: entity
 owner: delegate
 status: current
-verified_at: 2026-11-19
+verified_at: 2026-11-20
 verify: "test -f test/fixtures/rule_mapping.gleam && grep -q 'pub const rule_mapping' test/fixtures/rule_mapping.gleam && grep -q 'policy.Unchecked' test/fixtures/rule_mapping.gleam && grep -q 'hide_secrets' policies/agent-roots.eyg && grep -q 'Mock(Error' policies/deny-all.eyg && grep -q 'Pass(value)' policies/agent-roots.eyg"
 confidence: high
 sources: [test/fixtures/rule_mapping.gleam, policies/agent-roots.eyg, policies/deny-all.eyg, README.md, guides/cli_effects_reference.md]
@@ -15,11 +15,11 @@ superseded_by: null
 
 A running EYG program is stopped at every effect before the host performs it, and a
 user-supplied function decides. This is the mechanism this package sits in front of; the
-implementation is in the language workspace, and this tree carries only the recorded
+implementation is in the language repository, and this tree carries only the recorded
 snapshot of its rule table.
 
 - The rule table (`rule_mapping`) is recorded here at `test/fixtures/rule_mapping.gleam`,
-  captured 2026-11-18 from the language workspace's
+  captured 2026-11-18 from the language repository's
   `packages/gleam_cli/src/eyg/cli/overlay.gleam`: which of the computer effects have a
   policy field and which field decides each. `DecodeJSON`, `EYGParse`, `Hash` and `Sign` are
   `Unchecked`.

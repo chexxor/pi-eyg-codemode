@@ -3,7 +3,7 @@ id: gap.install-guides-name-no-policy
 type: entity
 owner: delegate
 status: current
-verified_at: 2026-11-19
+verified_at: 2026-11-20
 verify: "! grep -q -- '--policy' guides/install_prebuilt.md && ! grep -q -- '--policy' guides/install_from_source.md"
 confidence: high
 sources: [guides/install_prebuilt.md, guides/install_from_source.md, README.md, docs/world/decisions/ADR-003-doc-delegation.md]
@@ -21,7 +21,7 @@ The package's own contract already names the remedy in the refusal: build the cu
 
 Upstream, the same gap sits in the language's install pages: their verify step proves the binary
 runs, not that it answers for an effect. Filing it there is the operator's, since this tree does
-not write to the language workspace. Trigger: the next time one of those website pages is edited.
+not write to the language repository. Trigger: the next time one of those website pages is edited.
 
 ## Not this
 

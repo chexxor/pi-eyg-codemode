@@ -3,7 +3,7 @@ id: pi.codemode-tool
 type: entity
 owner: delegate
 status: current
-verified_at: 2026-11-19
+verified_at: 2026-11-20
 verify: "test -f extensions/eyg-codemode.ts && grep -q -- '\"--policy\"' extensions/eyg-codemode.ts && grep -q 'join(dir, \"policies\", \"agent-roots.eyg\")' extensions/eyg-codemode.ts && grep -q 'renderCall:' extensions/eyg-codemode.ts && grep -q 'prepareArguments' extensions/eyg-codemode.ts && grep -q 'DEFAULT_TIMEOUT_S' extensions/eyg-codemode.ts && grep -q 'list_functions' extensions/eyg-codemode.ts && grep -q 'buildRegistry' extensions/eyg-codemode.ts && test -f lib/render-helpers.mjs && grep -q 'export function callLines' lib/render-helpers.mjs && grep -q 'defaultTools' .pi/settings.json && grep -q '\"-builtin:codemode\"' .pi/settings.json && test -f libraries/search.eyg && test -f notes/pi_codemode_registry_probe.md && ! grep -q 'import \"' policies/agent-roots.eyg"
 confidence: high
 sources: [extensions/eyg-codemode.ts, policies/agent-roots.eyg, policies/deny-all.eyg, package.json, lib/render-helpers.mjs, README.md, .pi/settings.json, guides/pi_codemode_agent.md, notes/pi_codemode_host_gate.md, notes/pi_codemode_registry_probe.md, notes/pi-codemode-preset-inlining.md]
@@ -14,7 +14,7 @@ superseded_by: null
 # The pi agent's coding tool is EYG, checked effect by effect
 
 This workspace **is** the package: `pi list` (2026-11-18) resolves the declaration `..`
-in `.pi/settings.json` to `/home/chexxor/Git/pi-eyg-codemode`, whose one extension
+in `.pi/settings.json` to this workspace's root, whose one extension
 registers one tool, `eyg`. With `"-builtin:codemode"` in `extensions` the built-in
 JavaScript codemode is disabled, and `defaultTools` names only `read`, `edit`, `write`,
 `bash`, `codemode`, `grep`, so the model's channel to the outside world is an EYG
@@ -64,7 +64,7 @@ program whose every effect is decided by the policy in force before the host per
 - Search has two routes. `libraries/search.eyg` is search as a library, bound by the
   tool's `libraries` parameter as `<name>_lib`: it walks with `ReadDirectory`, so the
   policy decides every directory it opens and it cannot see outside the roots. The CLI
-  runtime also has a `Search` effect (landed 2026-11-16 in the language workspace),
+  runtime also has a `Search` effect (landed 2026-11-16 in the language repository),
   mapped to the existing `read_file` policy field, so one host action is decided once
   by the same roots that decide reads and no new policy field exists. Both routes report
   names under an allowed root - including the name of a file a read of that path would
@@ -72,7 +72,7 @@ program whose every effect is decided by the policy in force before the host per
 - `policies/agent-roots.eyg` is the policy module: it imports nothing and answers the
   roots named in `EYG_ALLOWED_ROOTS` with the preset written out inline, one rule per
   effect that can be refused, denying `.env.eyg`. `policies/deny-all.eyg` is the other shipped preset.
-  The presets were inlined from the language workspace's `overlay/policy.eyg` on
+  The presets were inlined from the language repository's `overlay/policy.eyg` on
   2026-11-18 (`notes/pi-codemode-preset-inlining.md`).
 - A refusal is reported, not swallowed: the runner exits 1 with the reason on stderr,
   and the tool result carries `gated: true, ran: true, exit: 1` plus the reason.
@@ -80,6 +80,6 @@ program whose every effect is decided by the policy in force before the host per
 ## Not this
 
 Not the permission mechanism - `overlay.policy-rules` owns that, and the runner side is in the
-language workspace. Not the EYG language reference - `guides/pi_codemode_agent.md` is
+language repository. Not the EYG language reference - `guides/pi_codemode_agent.md` is
 how to run such a session, `guides/syntax.md` is the language, and the language *skill*
-is the separate `pi-eyg-expressions` package.
+is a separate pi package, declared in `.pi/settings.json`.
