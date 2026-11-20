@@ -6,6 +6,44 @@ the language repository; the paths in them (`packages/...`, `eyg_packages/...`,
 history, not as instructions for this tree. On 2026-11-19 the word "gate" was replaced with
 "the checks", "checked" and "unchecked" throughout these entries; what ran is unchanged.
 
+## Unreleased
+
+- **The reference is inside the tool.** `action: "reference"` (`code: ""`) answers the builtin set with
+  its signatures and the effect surface with the policy field that decides each effect, performing
+  nothing and asking the policy nothing, so it answers where no runner was found as well as where one
+  was. A run that named a builtin the runtime does not have now carries rows naming
+  `guides/builtins_reference.md`, `guides/syntax.md` and `action: "reference"`, and says pi's own `read`
+  tool is not policy-gated while `ReadFile` reaches only the roots. Measured 2026-11-20 in one fresh
+  one-shot session: 20 tool calls and 0 `builtin undefined`, against the 41-93 calls and 16-57 such
+  errors of the rounds that guessed (`docs/world/entities/pi.reference-action.md`,
+  `docs/world/entities/usability.without-language-skill.md`).
+- **A grant is an ask, with a duration.** `/eyg-grant` lets the operator widen the session they are in -
+  one tool call, N calls, or the rest of the session - and the tool reads that record back off the
+  session branch (`docs/world/entities/pi.session-grants.md`). A program cannot reach it and a call
+  cannot widen itself.
+- **A spawner names the child's surface.** `eyg_subagent` takes `tools` (`eyg`, or `eyg` plus pi's `read`
+  tool, never a tool the parent session lacks), `effects` (an allowlist enforced by the third shipped
+  preset, `policies/spawner-effects.eyg`: `agent-roots.eyg` written out whole with an allowlist check
+  per field, reading `EYG_SUBAGENT_EFFECTS`, unset refusing every gateable effect, never able to grant
+  `fetch`, `standard_in` or `create_key`) and `max_calls` (carried as `EYG_SUBAGENT_MAX_CALLS` and
+  enforced in the child's own `eyg` tool, counted off the session records). Roots still have to sit
+  inside the spawner's, a child gets no children, and a grant is not inherited. Proven live 2026-11-20
+  in two parent sessions: one with the roots narrowed to a slice, where the allowlist refusal and the
+  roots refusal both came back in the parent's report and the child's `read` tool read the file outside
+  the slice; one where a budget of 2 stopped the third call (`docs/world/entities/pi.subagent-spawn.md`,
+  `docs/world/entities/pi.spawner-preset.md`, `notes/spawner-effect-allowlist.md`).
+- **One page from a fresh clone to a checked runner, and the build it points at.**
+  `guides/how-to-get-a-checked-runner.md` names the candidates the tool probes and what each answer
+  means; `bin/agent/build-checked-runner.sh` is a script a person runs, which refuses to call its
+  artifact a runner until its `--help` mentions `--policy` and the shipped `deny-all` preset has refused
+  its write fixture. Nothing in this tree runs it
+  (`docs/world/entities/gap.runner-release-lacks-policy.md`, `notes/checked-runner-build-script.md`).
+- **The six checks run in one command.** `bin/agent/audit.sh` runs the unit test and drift guard, the
+  world lint, the claim verifies, the map check, `pi --world-model-check` and the tracked-path-and-name
+  sweep, printing what each cost and whether a record moved: 5.70 s wall, 6/6, 2026-11-20.
+- Vocabulary: the tree says **the checks**, **checked** and **unchecked**; a new claim, four trap
+  entries and the `AGENTS.md` "no check script" line moved with the script's arrival.
+
 ## 1.5.0 - 2026-11-18
 
 - The package has its own workspace. `package.json` is now the manifest at

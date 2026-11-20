@@ -13,7 +13,7 @@ nothing here reads it at run time, and this tree never writes outside itself.
 
 | directory | purpose |
 | --- | --- |
-| bin/ | The shell scripts a human runs outside this package. Today one: `agent/build-checked-runner.sh`, which builds an EYG CLI that answers for an effect and proves the artifact before naming it. Nothing in this tree runs them - the package has no effect that starts a shell command, and a build of the language repository is not this tree's work. |
+| bin/ | The shell scripts a human runs outside this package. Two: `agent/build-checked-runner.sh`, which builds an EYG CLI that answers for an effect and proves the artifact before naming it, and `agent/audit.sh`, which runs the six checks in `AGENTS.md`'s table and prints what each cost. Nothing in this tree runs them - the package has no effect that starts a shell command, and a build of the language repository is not this tree's work. |
 | docs/ | The world model records for this workspace: docs/world/00-map.md (tier-0 index), the entity, decision and runbook pages, invariants.md, traps.md and roster.yaml. The lint, map and verify CLIs that check them live in pi-simple-world-model/. |
 | extensions/ | The one pi extension: it registers the `eyg` tool, resolves the policy, the roots and the runner from inside the package, and spawns the runner that checks every effect through argv. |
 | guides/ | Prose guides read before writing EYG, in two sets: the language reference copied from the |
@@ -69,12 +69,13 @@ nothing here reads it at run time, and this tree never writes outside itself.
 | ADR-002-handler-seam | ## Context An operator wants tools an agent can trust, and EYG separates an effect's *description* from its ... | human | 2026-11-20 |
 | ADR-003-doc-delegation | ## Context A new user of this package needs two different things: how to get an EYG CLI onto their machine, and what ... | human | 2026-11-20 |
 | ADR-004-doc-shape-for-two-readers | ## Context Three readers, and each needs a different thing from this tree: 1. | human | 2026-11-20 |
+| ADR-005-grants-spawn-and-child-surface | ## Context Three mechanisms went in during 2026-11-20, each answering a different question the code could not answer ... | delegate | 2026-11-20 |
 | runbook.check-a-change | Costs are in `AGENTS.md`'s command table, dated where each was measured; they are not repeated here. | delegate | 2026-11-20 |
 | runbook.next-milestone | Each row is a claim whose `verify` still passes, which means the hole is still open. | delegate | 2026-11-20 |
 
 ## Where to look for a claim
 
-- entities: 22 · invariants: 4 · decisions: 5 · runbooks: 2 · traps: 44
+- entities: 22 · invariants: 4 · decisions: 6 · runbooks: 2 · traps: 44
 - suspect right now: ADR-002-handler-seam, overlay.agent-harness
 - re-check everything: `npm run world` · checks: `npm run world:lint` · regenerate this index: `npm run world:map`
 <!-- END GENERATED -->

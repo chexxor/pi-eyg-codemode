@@ -9,7 +9,7 @@ Six decisions the child surface forces, argued here rather than in the code.
 **A whole copied preset, not an import.** `policies/spawner-effects.eyg` is `agent-roots.eyg` with an
 allowlist over each field, written out in full. A policy module may import nothing outside this package
 (`docs/world/invariants.md`, `notes/pi-codemode-preset-inlining.md`), so "narrow a preset" cannot mean
-"wrap the file next door": the runner loads one module and that module has to carry every rule. Cost,
+"wrap the module that sits beside it": the runner loads one module and that module has to carry every rule. Cost,
 stated plainly: the two files can drift - a rule fixed in `agent-roots.eyg` stays wrong in the copy
 until someone mirrors it. What guards it: both files carry one field per entry of `POLICY_FIELDS`,
 which the drift guard already compares against the recorded `rule_mapping` snapshot, and the preset

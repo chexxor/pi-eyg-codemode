@@ -89,6 +89,7 @@ shell commands; a policy module decides each effect before the host performs it.
 
 | Do this | cost | measured |
 | --- | --- | --- |
+| `bin/agent/audit.sh` (a human or a cron runs it; six gates, each cost printed) | 5.70 s wall, 6/6 passed | 2026-11-20 |
 | `node --test 'test/*.mjs'` (or the single file) | 0.09 s wall, pass 1 fail 0 | 2026-11-18 |
 | `.local/eyg-checked run --policy policies/deny-all.eyg test/fixtures/refusal-probe.eyg` | 0.1 s wall, prints `write_file denied by policy` and writes nothing | 2026-11-20 |
 | `pi --print --mode json --tools eyg <prompt>` (one fresh session, one tool call) | 20-40 s wall; needs `--model`, the default model hangs | 2026-11-20 |
@@ -182,9 +183,10 @@ never put a workspace fact in a guide - a fact in two places drifts.
 - **No planning system.** `PLAN.md`, `NEXT.md`, `QUESTIONS.md`, milestones and stage checks are the
   language repository's; nothing here carries a queue. Trigger to port one: a task from the
   operator that spans several steps of its own.
-- **No CI, no check script.** There is no `bin/agent/audit.sh`, no `.github/workflows`, no
-  `entry.eyg` here; the checks in the table above are all of it. Trigger: the first
-  time a session has to re-derive the same check three times.
+- **No CI.** There is no `.github/workflows` and no `entry.eyg` here. `bin/agent/audit.sh` is the
+  one command that runs the six gates in the table above and prints what each cost (added
+  2026-11-20, 5.70 s, 6/6); nothing in this tree runs it, so a red gate is still something a
+  person notices. Trigger for CI: the first commit that lands with a failing gate nobody saw.
 - **No release and no default branch carries the checked runner.** A runner that accepts
   `--policy` is reachable here through the `.local/eyg-checked` symlink, and the language
   repository's default branch and its published release both lack it
