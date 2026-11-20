@@ -62,8 +62,14 @@ import {
   argumentPolicyPath,
   buildRegistry,
   callLines,
+  childAnswer,
+  childArgv,
+  childCalls,
+  childEnvOverrides,
+  childRefusalRows,
   checkDeclaredEffects,
   classifyProbeOutput,
+  DEPTH_ENV,
   describeGrant,
   effectLine,
   effectsUsed,
@@ -79,6 +85,12 @@ import {
   resolvePolicy,
   resolveRoots,
   runnerCandidates,
+  rootsInside,
+  sessionDepth,
+  spawnerPolicy,
+  spawnerRoots,
+  subagentCallLines,
+  subagentResultRows,
   suggestGrant,
   eygSettings,
   presetPath,
@@ -100,9 +112,38 @@ interface RegistryEntry {
 
 const DEFAULT_TIMEOUT_S = 30;
 const MAX_TIMEOUT_S = 120;
+const SUBAGENT_DEFAULT_TIMEOUT_S = 120;
+const SUBAGENT_MAX_TIMEOUT_S = 300;
 const MIN_TIMEOUT_MS = 100;
 const PROBE_TIMEOUT_MS = 5_000;
 const ACTIONS = ["run", "eval", "effects", "list_functions", "describe_function"];
+
+/// What a call in this session gets from everything except the call's own argument:
+/// the project settings, and the grants on this session's branch. `error` names what
+/// is wrong in the settings instead of running a module nobody named. Both tools read
+/// the chain, so the settings are validated one way.
+type PolicyChain = {
+  error: string | null;
+  settings: { policy: string | null; roots: string[] };
+  projectPreset: string | null;
+  grants: ReturnType<typeof replayGrants>;
+  depth: number;
+};
+
+function policyChain(pi: ExtensionAPI, ctx: unknown, dir: string | null): PolicyChain {
+  const depth = sessionDepth(process.env);
+  const settings = eygSettings(typeof pi.getSettings === "function" ? pi.getSettings() : {});
+  const projectPreset = settings.policy === null ? null : presetPath(settings.policy, dir);
+  const empty = replayGrants([]);
+  if (settings.policy !== null && projectPreset === null) {
+    return { error: `eyg.policy in the project settings must name a shipped preset or an absolute module path, got ${settings.policy}`, settings, projectPreset: null, grants: empty, depth };
+  }
+  const relativeRoot = settings.roots.find((root) => !root.startsWith("/"));
+  if (relativeRoot !== undefined) {
+    return { error: `every eyg.roots entry must be an absolute path, got ${relativeRoot}`, settings, projectPreset, grants: empty, depth };
+  }
+  return { error: null, settings, projectPreset, grants: grantState(ctx as { sessionManager?: { getBranch?: () => unknown[] } }), depth };
+}
 
 function refuseToRun(reason: string) {
   return {
@@ -418,18 +459,13 @@ export default function (pi: ExtensionAPI) {
       // order and the tests read it. A program is never run without one: an
       // unchecked run performs every effect the host can reach, and a registry
       // availability probe is answered by the same policy that will run the program.
-      const settings = eygSettings(typeof pi.getSettings === "function" ? pi.getSettings() : {});
-      const projectPreset = settings.policy === null ? null : presetPath(settings.policy, dir);
-      if (settings.policy !== null && projectPreset === null) {
-        return refuseToRun(
-          `eyg.policy in the project settings must name a shipped preset or an absolute module path, got ${settings.policy}`,
-        );
+      const chain = policyChain(pi, ctx, dir);
+      if (chain.error !== null) {
+        return refuseToRun(chain.error);
       }
-      const relativeRoot = settings.roots.find((root) => !root.startsWith("/"));
-      if (relativeRoot !== undefined) {
-        return refuseToRun(`every eyg.roots entry must be an absolute path, got ${relativeRoot}`);
-      }
-      const grants = grantState(ctx);
+      const settings = chain.settings;
+      const projectPreset = chain.projectPreset;
+      const grants = chain.grants;
       const grantDetails = { grants: grants.grants, grantId: grants.active === null ? null : grants.active.id };
       const presets = shippedPresets(dir);
       const argumentPolicy = params.policy === undefined ? null : argumentPolicyPath(params.policy, dir);
@@ -442,6 +478,7 @@ export default function (pi: ExtensionAPI) {
       const chosen = resolvePolicy({
         argument: argumentPolicy,
         grant: grants.policy,
+        spawner: spawnerPolicy(process.env, chain.depth),
         project: projectPreset,
         env: process.env.EYG_POLICY ?? null,
         packageDefault: defaultPolicy(),
@@ -481,7 +518,7 @@ export default function (pi: ExtensionAPI) {
       // The project's `eyg.roots` win over an inherited `EYG_ALLOWED_ROOTS`, both
       // over the working directory, and a grant in force adds roots on top of the
       // result - `resolveRoots` holds that order.
-      const roots = resolveRoots({ grant: grants.roots, project: settings.roots, env: process.env.EYG_ALLOWED_ROOTS ?? null, cwd });
+      const roots = resolveRoots({ grant: grants.roots, spawner: spawnerRoots(process.env, chain.depth), project: settings.roots, env: process.env.EYG_ALLOWED_ROOTS ?? null, cwd });
       const spawn = async (mode: string, source: string, timeoutMs: number) => {
         const previousRoots = process.env.EYG_ALLOWED_ROOTS;
         process.env.EYG_ALLOWED_ROOTS = roots;
@@ -777,6 +814,231 @@ export default function (pi: ExtensionAPI) {
           prelude: prelude.map((line) => line.trim()),
         },
       };
+    },
+  }));
+
+  // A second pi session, started by this one, that can do nothing this session could
+  // not already do: the same channel, a policy this project's settings name or a
+  // preset this package ships, and roots inside the roots this session has. The child
+  // is started as argv with no shell in between, in this working directory, with only
+  // the `eyg` tool declared, so delegating work cannot smuggle in reach or a shell.
+  pi.registerTool(defineTool({
+    name: "eyg_subagent",
+    label: "EYG subagent",
+    description: [
+      "Spawn one pi subagent session in this working directory and report what it did.",
+      "The child has only the eyg tool: every effect it performs is decided by a host policy",
+      "module before the host performs it, exactly as yours are, and it has no bash, read,",
+      "edit or write. It sees this project's files and none of this conversation, so `task`",
+      "must carry the paths, what to do and what to report.",
+      "The child's policy is the one this session's settings name, or one you name with",
+      "`policy` - only a preset this package ships, never a module of your own. Its roots",
+      "must be inside the roots this session has: name `roots` to narrow it to a slice.",
+      "A subagent narrows your reach and never widens it. It is not a route around a",
+      "refusal: it cannot be given a root you do not have, and a grant the operator made",
+      "with /eyg-grant covers the session the operator is in, not a child session.",
+      "You get back the child's final message, one line per eyg call it made, and every",
+      "refusal its policy answered - the refusals are how you learn where its boundary was.",
+      "A session that is itself a subagent cannot spawn one: the tree is one level deep.",
+      `Pass \`timeout\` in SECONDS for the whole child session (default ${SUBAGENT_DEFAULT_TIMEOUT_S}, at most ${SUBAGENT_MAX_TIMEOUT_S}).`,
+    ].join(" "),
+    promptSnippet: "Spawn one pi subagent that works only through the eyg tool, under a policy you name",
+    promptGuidelines: [
+      "Use eyg_subagent for a self-contained chunk of work - a search over many files, a mechanical edit set - that you can state completely in `task`; the child sees no part of this conversation.",
+      "Name the child's roots inside the roots this session has; expect the call to be refused and the outside root named back when you do not.",
+      "Never spawn a subagent to get past a refusal: the child is bounded by your reach, and a grant you hold does not reach it. Ask the operator for the grant and do the work yourself.",
+      "Read the child's refusals in the result before deciding what to do next; they name the field, the path and the policy that refused it.",
+      "A subagent session costs a model run of its own: one spawn per chunk of work, not one per question.",
+    ],
+
+    parameters: Type.Object({
+      task: Type.String({
+        description: "What the child should do, completely: the absolute paths it may touch, the work, and what to report back. It sees this project's files and none of this conversation.",
+      }),
+      policy: Type.Optional(
+        Type.String({
+          description: "Name a preset this package ships (`agent-roots`, `deny-all`) for the child. An absolute module path is refused: it must be a policy this package authored, not one you wrote.",
+        }),
+      ),
+      roots: Type.Optional(
+        Type.Array(
+          Type.String({
+            description: "Absolute roots for the child, each one already under a root this session has. Omit to give it the roots this session has.",
+          }),
+        ),
+      ),
+      timeout: Type.Optional(
+        Type.Number({
+          description: `Wall time for the whole child session in SECONDS: default ${SUBAGENT_DEFAULT_TIMEOUT_S}, at most ${SUBAGENT_MAX_TIMEOUT_S}.`,
+        }),
+      ),
+    }),
+
+    renderCall: (args, theme, context) => {
+      const lines = subagentCallLines(args, context.expanded);
+      return new Text(lines.map((line) => paint(theme, line)).join("\n"), 0, 0);
+    },
+
+    renderResult: (result, options, theme, context) => {
+      const measured = context.durationMs ?? (result.details && typeof result.details.durationMs === "number" ? result.details.durationMs : undefined);
+      const startedAt = context.state && typeof context.state.startedAt === "number" ? context.state.startedAt : undefined;
+      if (options.isPartial && startedAt !== undefined) {
+        const rows = [[{ tone: "warning", text: `subagent session running, ${formatDuration(Date.now() - startedAt)} so far` }]];
+        return new Text(rows.map((line) => paint(theme, line)).join("\n"), 0, 0);
+      }
+      const rows = subagentResultRows(result, options.expanded, measured);
+      return new Text(rows.map((line) => paint(theme, line)).join("\n"), 0, 0);
+    },
+
+    async execute(_toolCallId, params, signal, _onUpdate, ctx) {
+      const startedAt = Date.now();
+      const cwd = ctx.cwd || process.cwd();
+      const dir = packageDir();
+      const chain = policyChain(pi, ctx, dir);
+      if (chain.error !== null) {
+        return refuseToRun(chain.error);
+      }
+      if (chain.depth >= 1) {
+        return refuseToRun(
+          `this session is itself a subagent (depth ${chain.depth}), and a subagent gets no children: the tree this package spawns is one level deep. Do the work here, or report what you found to the session that started you.`,
+        );
+      }
+      const task = (params.task ?? "").trim();
+      if (task === "") {
+        return refuseToRun("task must say what the child should do and what to report: it sees this project's files and none of this conversation.");
+      }
+
+      // What the child may run under: the policy this session's settings name, or a
+      // preset this package ships. A grant the operator made here is deliberately not
+      // read - it covers calls in the session the operator said yes in, so a one-call
+      // grant cannot be spent over and over by a child with no call limit.
+      const presets = shippedPresets(dir);
+      const argumentPolicy = params.policy === undefined ? null : argumentPolicyPath(params.policy, dir);
+      if (params.policy !== undefined && argumentPolicy === null) {
+        return refuseToRun(
+          `the child's policy may only be a preset this package ships (${presets.join(", ") || "none"}), not a module of your own choosing: got ${params.policy}. ` +
+            "A wider policy is the operator's to give: /eyg-grant in this session, eyg.policy in the project settings, or EYG_POLICY.",
+        );
+      }
+      const child = resolvePolicy({
+        argument: argumentPolicy,
+        project: chain.projectPreset,
+        env: process.env.EYG_POLICY ?? null,
+        packageDefault: defaultPolicy(),
+      });
+      const childPolicy = child.policy ?? "";
+      if (childPolicy === "") {
+        return refuseToRun(
+          "no policy module was configured for the child and this package ships no preset. Set eyg.policy in the project settings, set EYG_POLICY to an absolute path, or name a preset.",
+        );
+      }
+      if (!childPolicy.startsWith("/") || !existsSync(childPolicy)) {
+        return refuseToRun(`the child's policy module was not found: ${childPolicy}`);
+      }
+
+      // The boundary the child gets sits inside the boundary this session has, grant
+      // roots excluded for the same reason the granted policy is.
+      const parentRoots = resolveRoots({ project: chain.settings.roots, env: process.env.EYG_ALLOWED_ROOTS ?? null, cwd }).split(",");
+      const requested = params.roots === undefined || params.roots.length === 0 ? parentRoots : params.roots;
+      const badRoot = requested.find((root) => typeof root !== "string" || !root.startsWith("/"));
+      if (badRoot !== undefined) {
+        return refuseToRun(`every roots entry must be an absolute path, got ${badRoot}`);
+      }
+      const inside = rootsInside(requested, parentRoots);
+      if (!inside.ok) {
+        return refuseToRun(
+          `the child's roots must be inside the roots this session has (${parentRoots.join(", ")}); these are outside: ${inside.outside.join(", ")}. ` +
+            "A subagent narrows your reach, it does not widen it: a root you do not have is the operator's /eyg-grant to give, and a grant is given to this session, not to a child.",
+        );
+      }
+      const childRoots = requested;
+      // The child is a pi session like this one. `pi` on PATH is the assumption,
+      // `EYG_CODEMODE_PI` names it when PATH does not carry it.
+      const binary = typeof process.env.EYG_CODEMODE_PI === "string" && process.env.EYG_CODEMODE_PI !== "" ? process.env.EYG_CODEMODE_PI : "pi";
+      const wantedSeconds = params.timeout ?? SUBAGENT_DEFAULT_TIMEOUT_S;
+      const timeout = Math.min(Math.max(Math.trunc(wantedSeconds * 1000), MIN_TIMEOUT_MS), SUBAGENT_MAX_TIMEOUT_S * 1000);
+      const argv = childArgv({
+        task,
+        model: ctx.model && typeof ctx.model.id === "string" ? ctx.model.id : null,
+        trusted: typeof ctx.isProjectTrusted === "function" ? ctx.isProjectTrusted() : false,
+      });
+
+      // `pi.exec` takes no `env`, so the child's boundary is set on this process for
+      // the spawn and restored after it, as a checked run does for the roots. The depth
+      // marker is what makes the child read `EYG_SUBAGENT_POLICY` and those roots as a
+      // spawner's word rather than its project's.
+      const overrides: Record<string, string> = childEnvOverrides({ policy: childPolicy, roots: childRoots.join(","), depth: chain.depth + 1 });
+      const previous: Record<string, string | undefined> = {};
+      for (const key of Object.keys(overrides)) {
+        previous[key] = process.env[key];
+        process.env[key] = overrides[key] as string;
+      }
+      let result;
+      try {
+        result = await pi.exec(binary, argv, { signal, timeout, cwd });
+      } catch (error) {
+        return refuseToRun(
+          `could not start the child session with \`${binary}\`: ${error instanceof Error ? error.message : String(error)}. ` +
+            "Set EYG_CODEMODE_PI to the absolute path of the pi CLI.",
+        );
+      } finally {
+        for (const key of Object.keys(overrides)) {
+          if (previous[key] === undefined) {
+            delete process.env[key];
+          } else {
+            process.env[key] = previous[key] as string;
+          }
+        }
+      }
+
+      const calls = childCalls(result.stdout + "\n" + result.stderr);
+      const answer = childAnswer(result.stdout);
+      const refusals: { field: string; path: string }[] = [];
+      for (const call of calls) {
+        for (const hint of call.refusals) {
+          if (!refusals.some((seen) => seen.field === hint.field && seen.path === hint.path)) refusals.push(hint);
+        }
+      }
+      const durationMs = Date.now() - startedAt;
+      const duration = formatDuration(durationMs);
+      const status = result.killed
+        ? `timed out after ${Math.round(timeout / 1000)} s in ${duration} wall`
+        : result.code === 0
+          ? `answered in ${duration} wall`
+          : `exit ${result.code} in ${duration} wall`;
+      const details = {
+        gated: true,
+        ran: true,
+        depth: chain.depth,
+        childDepth: chain.depth + 1,
+        task,
+        policy: childPolicy,
+        policySource: child.source,
+        roots: childRoots.join(","),
+        parentRoots: parentRoots.join(","),
+        binary,
+        argv,
+        exit: result.code,
+        killed: result.killed,
+        truncated: result.truncated,
+        timeoutMs: timeout,
+        durationMs,
+        duration,
+        calls,
+        refusals,
+        answer,
+      };
+      const asks = childRefusalRows(details).map((row) => row.map((segment) => segment.text).join(""));
+      const stderr = (result.stderr ?? "").trim();
+      const text = [
+        `eyg_subagent: ${status}`,
+        `child under ${childPolicy} (${child.source}), roots ${childRoots.join(", ")}, tools: eyg only. Its policy comes from this session's settings or a shipped preset; a grant made here does not reach it.`,
+        `child's final message:\n${answer === "" ? "(the child left no final message)" : answer}`,
+        `child eyg calls: ${calls.length}${calls.length === 0 && stderr !== "" ? ` (stderr: ${stderr.split("\n").slice(-5).join(" | ")})` : ""}`,
+        ...calls.map((call, index) => `  ${index + 1}. under ${call.policy ?? "?"} (${call.policySource ?? "?"}) roots ${call.roots ?? "?"} exit ${call.exit ?? "?"}${call.refusals.length > 0 ? ` refused ${call.refusals.map((hint) => `${hint.field} at ${hint.path}`).join(", ")}` : ""}`),
+        ...asks,
+      ].join("\n");
+      return { content: [{ type: "text", text }], details };
     },
   }));
 

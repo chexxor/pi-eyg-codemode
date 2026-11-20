@@ -11,7 +11,7 @@
  */
 
 import assert from "node:assert/strict";
-import { argumentPolicyPath, callLines, checkDeclaredEffects, classifyProbeOutput, COLLAPSED_SOURCE_LINES, childAnswer, childArgv, childCalls, childEnvOverrides, describeGrant, effectLine, effectsUsed, eygSettings, findMetadata, formatDuration, grantEvents, GRANT_ENTRY, isUnder, outsideRoot, prepareCallArguments, presetPath, probeArguments, probeProgram, POLICY_FIELDS, refusalHints, replayGrants, resolvePolicy, resolveRoots, resultLines, ruleMappingEffects, rootsInside, runnerCandidates, suggestGrant } from "../lib/render-helpers.mjs";
+import { argumentPolicyPath, callLines, checkDeclaredEffects, classifyProbeOutput, COLLAPSED_SOURCE_LINES, childAnswer, childArgv, childCalls, childEnvOverrides, childRefusalRows, describeGrant, effectLine, effectsUsed, eygSettings, findMetadata, formatDuration, grantEvents, GRANT_ENTRY, isUnder, outsideRoot, prepareCallArguments, presetPath, probeArguments, probeProgram, POLICY_FIELDS, refusalHints, replayGrants, resolvePolicy, resolveRoots, resultLines, ruleMappingEffects, rootsInside, runnerCandidates, sessionDepth, spawnerPolicy, spawnerRoots, subagentCallLines, subagentResultRows, suggestGrant } from "../lib/render-helpers.mjs";
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
 
@@ -370,6 +370,51 @@ let metadata = {
   assert.equal(resolveRoots({ grant: ["/tmp"], project: ["/p1"], env: "/e", cwd: "/c" }), "/p1,/tmp", "the grant widens, it does not replace");
   assert.equal(resolveRoots({ grant: ["/p1"], project: ["/p1"], env: null, cwd: "/c" }), "/p1", "and cannot duplicate a root");
   assert.equal(resolveRoots({ grant: ["/tmp"], env: "/a, /b", cwd: "/c" }), "/a,/b,/tmp", "an environment list is split and trimmed first");
+
+  // The depth marker decides which slots a spawner fills: a project that sets the
+  // variables in its own environment gets no spawner standing.
+  assert.equal(sessionDepth({}), 0, "a session a human started sits at depth 0");
+  assert.equal(sessionDepth({ EYG_CODEMODE_DEPTH: "2" }), 2, "a session this package started sits where the marker says");
+  assert.equal(sessionDepth({ EYG_CODEMODE_DEPTH: "nonsense" }), 0, "a nonsense marker reads as depth 0, not NaN");
+  assert.equal(spawnerPolicy({ EYG_SUBAGENT_POLICY: "/s.eyg" }), null, "a project that sets the variable itself gets nothing");
+  assert.equal(spawnerPolicy({ EYG_SUBAGENT_POLICY: "/s.eyg" }, 1), "/s.eyg", "in a session this package started it is the spawner's word");
+  assert.deepEqual(spawnerRoots({ EYG_ALLOWED_ROOTS: "/a, /b" }, 1), ["/a", "/b"], "the roots a spawner gave, split the way the preset parses them");
+  assert.deepEqual(spawnerRoots({ EYG_ALLOWED_ROOTS: "/a" }), [], "and not in a session a human started");
+  assert.equal(resolveRoots({ spawner: ["/work/sub"], project: ["/p1"], env: "/e", cwd: "/c" }), "/work/sub", "a spawner's roots replace the project's, which is how it hands over a slice");
+  assert.equal(resolveRoots({ grant: ["/tmp"], spawner: ["/work/sub"], cwd: "/c" }), "/work/sub,/tmp", "and a grant in that session still adds on top");
+
+  // The rows the subagent tool renders: the ask, and what came back.
+  const asked = subagentCallLines({ task: "l1\nl2\nl3\nl4\nl5", roots: ["/work/sub"], timeout: 90, policy: "deny-all" }, false);
+  assert.match(flat(asked), /eyg_subagent \(timeout: 90s\) ?policy: deny-all/, "the timeout and the named preset in the head");
+  assert.match(flat(asked), /roots: \/work\/sub/, "the roots the child was given");
+  assert.ok(!flat(asked).includes("l5"), "collapsed shows the first lines of the task only");
+  assert.match(flat(asked), /\.\.\. 1 more lines/, "and says how many it dropped");
+  assert.match(flat(subagentCallLines({ task: "l1\nl2\nl3\nl4\nl5", roots: [] }, true)), /l5/, "expanded shows the whole task");
+  assert.match(flat(subagentCallLines({ task: "t" }, false)), /roots: inherited: the roots this session has/, "with no roots named the child inherits them");
+
+  const childResult = {
+    content: [{ type: "text", text: "eyg_subagent: answered in 1.20 s wall\nchild under /p.eyg (project settings), roots /work" }],
+    details: {
+      ran: true,
+      exit: 0,
+      argv: ["--print", "--mode", "json", "--tools", "eyg", "t"],
+      policy: "/p.eyg",
+      calls: [{ policy: "/p.eyg", policySource: "spawner", roots: "/work", exit: 0, refusals: [{ field: "write_file", path: "/tmp/x" }] }],
+      refusals: [{ field: "write_file", path: "/tmp/x" }],
+    },
+  };
+  const answered = subagentResultRows(childResult, false, 1200);
+  assert.ok(flat(answered).split("\n")[0].startsWith("eyg_subagent: answered in 1.20 s wall"), "the status line is the first line of the report");
+  assert.match(flat(answered), /\(1 eyg call\)/, "and how many calls the child made");
+  assert.match(flat(answered), /child refused: write_file at \/tmp\/x under \/p\.eyg/, "a child's refusal shows collapsed");
+  assert.match(flat(answered), /a grant does not reach a child/, "with the honest reason for it");
+  assert.ok(!flat(answered).includes("argv:"), "the argv belongs to the expanded row");
+  assert.match(flat(subagentResultRows(childResult, true, 1200)), /argv: pi --print --mode json --tools eyg t/, "and shows there");
+  assert.ok(flat(subagentResultRows(childResult, true, 1200)).includes("child under /p.eyg"), "expanded carries the whole report");
+  assert.equal(childRefusalRows({ policy: "/p.eyg", refusals: [{ field: "read_file", path: "/x" }] }).length, 2, "the refusal and the reason it stands");
+  assert.equal(childRefusalRows({ policy: "/p.eyg", refusals: [] }).length, 0, "no refusal, no lecture");
+  const refusedSpawn = subagentResultRows({ content: [{ type: "text", text: "eyg refused: a subagent gets no children" }], details: { gated: true, ran: false } }, false, undefined);
+  assert.equal(tones(refusedSpawn).split("\n")[0], "error", "a refused spawn is an error row");
 
   // The drift guard. This workspace is the pi package on its own, so the runtime
   // that owns `rule_mapping` is not in this tree: the guard compares `POLICY_FIELDS`
