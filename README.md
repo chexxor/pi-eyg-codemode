@@ -105,10 +105,15 @@ the language repository published the next day (`gleam_cli-v0.1.0`, read from it
 2026-11-19) predates the `--policy` flag. Until a
 release carries it: build from source (the other guide) and point `EYG_CODEMODE_RUNNER` at that
 binary, or read this package as documentation - installing the tool and getting a refusal for
-every call is the honest outcome, not a bug to chase. Until such a runner runs here, **end-to-end
-policy behaviour in this tree is UNVERIFIED** (`docs/world/entities/cli.prebuilt-binary.md`,
-`notes/pi_codemode_runner_probe.md`): what holds the presets is `eyg check` on the modules and
-the drift guard against `test/fixtures/rule_mapping.gleam`, never an observed refusal.
+every call is the honest outcome, not a bug to chase. That sentence is about a *release*: on
+2026-11-20 a dev build of the language CLI reached this tree through the untracked
+`.local/eyg-checked` symlink and a checked call was seen - `WriteFile` performed inside the
+roots, `write_file denied by policy: /tmp/...` outside them
+(`docs/world/entities/cli.checked-runner-on-this-host.md`). What stays unproven here is the
+package in use, not the checks: no long-running session
+(`docs/world/entities/pi.first-draft.md`), and the drift guard against
+`test/fixtures/rule_mapping.gleam` is a record of the language's security suite rather than a
+run of it.
 
 ## What it changes, and what it does not
 

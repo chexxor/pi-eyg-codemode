@@ -65,6 +65,9 @@ What the check does **not** cover: the decisions at run time. A denial is a valu
 `policy.read_write(["/x"])` refusing a path can only be observed by running a program
 through a runner that has the `--policy` flag. `which eyg` is `$HOME/.local/bin/eyg`,
 `eyg --version` prints `eyg v0.1.0`, and `eyg --help` advertises no `--policy`, so this host
-has no runner that checks effects. Run behaviour in this workspace is UNVERIFIED until
-a policy-capable runner is installed (`guides/install_from_source.md` in this workspace covers
-building one, or set `EYG_CODEMODE_RUNNER`).
+has no runner that checks effects. That was measured 2026-11-18 and is still true of the CLI on
+`PATH`; what moved is that on 2026-11-20 a dev build reached this tree through
+`.local/eyg-checked` and a checked call was seen
+(`docs/world/entities/cli.checked-runner-on-this-host.md`), so a run-time decision is observable
+here. On a machine holding only the release nothing runs at all: `guides/install_from_source.md`
+in this workspace covers building one, or set `EYG_CODEMODE_RUNNER`.

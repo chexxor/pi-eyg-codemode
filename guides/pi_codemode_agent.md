@@ -91,8 +91,10 @@ export EYG_ALLOWED_ROOTS=<absolute path to this package>,/tmp/agent-workspace
 The `EYG_POLICY` path is this workspace's shipped preset; the default is the same
 file resolved from the package, so setting nothing works. The prebuilt `eyg` on
 `PATH` here is v0.1.0 and predates `--policy` (measured 2026-11-18: its help has no
-`--policy`), so the runner probe in this workspace fails and the tool refuses - what a
-preset allows at run time is UNVERIFIED from here until a `--policy` runner is built or vendored.
+`--policy`), so that candidate is never chosen; on 2026-11-20 a dev build reached this tree
+through `<cwd>/.local/eyg-checked` and the tool ran checked calls through it
+(`docs/world/entities/cli.checked-runner-on-this-host.md`). On a machine with neither, the
+probe finds no runner and the tool refuses every call.
 
 ## One-shot session, and what it costs
 
@@ -126,7 +128,7 @@ on 2026-11-18.
 | loop | command | cost, wall |
 | --- | --- | --- |
 | one EYG expression (here, the CLI on PATH) | `eyg eval -c '!int_add(1, 1)'` | 0.06 s, measured there |
-| one run with checks in force (refusal) (language repository) | `packages/gleam_cli/dist/eyg run --policy <module> -c '<write outside root>'` | 0.06-0.07 s - **UNVERIFIED here**: no `--policy` runner vendored |
+| one run with checks in force (refusal) (language repository) | `packages/gleam_cli/dist/eyg run --policy <module> -c '<write outside root>'` | 0.06-0.07 s measured there; re-run here 2026-11-20 through `.local/eyg-checked`: 0.1 s, prints `write_file denied by policy` (`AGENTS.md`'s table) |
 | one unchecked write (language repository, the gap) | `eyg run -c '<WriteFile>'` | 0.06 s - do not run it here |
 | the codemode package suite (language repository) | `eyg script eyg_packages/codemode_policy/entry.eyg` | 2.3 s - not runnable here |
 | the whole EYG suite (language repository) | `eyg script entry.eyg` | 5.7 s (100 tests, 0 failed) - not runnable here |
@@ -183,14 +185,16 @@ node pi-simple-world-model/bin/world_lint.mjs          # the records themselves
 pi --world-model-check                                 # the same checks as a pi session sees them
 ```
 
-What is **not** provable here, and stays UNVERIFIED: that an effect is actually refused
-at run time. The proof of that was the language repository's - a runner built there
-(`bin/agent/gate.sh gleam_cli`), the suite in `eyg_packages/codemode_policy/`, and
+What a checked call proves is the decision, not its coverage. The rows recorded
+`@measured 2026-11-20` in `docs/world/entities/cli.checked-runner-on-this-host.md` show one
+write performed inside the roots and one refused outside them. What stays UNVERIFIED is that
+**every** rule decides as recorded: that proof is the language repository's - a runner built
+there (`bin/agent/gate.sh gleam_cli`), the suite in `eyg_packages/codemode_policy/`, and
 `scripts/mutation-check.mjs`, which loosens one rule of the preset library at a time
 and requires the security suite to fail. This tree carries the *record* of those results
 (`test/fixtures/rule_mapping.gleam` plus `notes/pi-codemode-preset-inlining.md`), not the
-test. If a `--policy` runner is ever vendored here, re-run the probes and let the claims
-move with the output.
+test. Point the tool at a runner of your own, re-run the probes, and let the claims move with
+the output.
 
 ## Limits
 

@@ -29,8 +29,9 @@ refusal shape (`Mock(Error("<effect> denied by policy: <path>"))`) and a substit
 environment (`deny-all.eyg:60`). `deny-all.eyg:58` refuses `cwd` with `Mock(Error({}))` because
 `CWD` returns a `Result`. The obligation the code cannot show is the **type**: the mocked value
 must be the effect's own value type, and `Mock` cannot answer `Exit` at all. Whether the runner
-checks that before performing is UNVERIFIED here (no runner that checks to run it on), so a
-mis-typed mock should be read as a runtime error rather than a refusal until proven.
+checks that before performing is UNVERIFIED here - the checked runner reached on 2026-11-20
+(`docs/world/entities/cli.checked-runner-on-this-host.md`) has never been pointed at a mis-typed
+mock - so a mis-typed mock should be read as a runtime error rather than a refusal until proven.
 
 **Do not mock in an act preset.** An act preset that mocks `write_file` reports a successful
 run with nothing on disk - the trap file already records the neighbouring failure mode

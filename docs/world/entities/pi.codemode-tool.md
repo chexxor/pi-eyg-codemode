@@ -32,9 +32,11 @@ program whose every effect is decided by the policy in force before the host per
   the tool says which one it used.
 - The runner is probed, not assumed: a candidate is usable only if its `--help`
   advertises `--policy`, because the check lives in the runner and the prebuilt release
-  on `PATH` predates that flag. **On this host the probe fails**: `$HOME/.local/bin/eyg`
-  (v0.1.0) has no `--policy` in its help, so the tool refuses, and every statement about
-  what a preset allows at run time is UNVERIFIED from this workspace. `EYG_CODEMODE_RUNNER`
+  on `PATH` predates that flag. **That candidate fails the probe**: `$HOME/.local/bin/eyg`
+  (v0.1.0) has no `--policy` in its help, so the tool does not pick it. On 2026-11-20 a dev
+  build reached this tree through `<cwd>/.local/eyg-checked` and checked calls were seen
+  through it (`cli.checked-runner-on-this-host`), so what a preset allows at run time is
+  checkable here: run that claim's command and report what it prints. `EYG_CODEMODE_RUNNER`
   overrides the probe. Using a runner without the flag runs unchecked and mis-parses
   the argv - it reads `run` as a program path.
 - The tool renders like the built-in `bash` tool: `renderCall` and `renderResult` are

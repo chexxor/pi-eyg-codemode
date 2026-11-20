@@ -154,6 +154,9 @@ which one it read.
   builds one.
 - The language keeps a wider preset library than the two this package ships, and it is not
   installed with this package, so the preset you need is a module you write here.
-- What a preset allows at run time is UNVERIFIED on the machine this package was written
-  on: no CLI there accepts `--policy`, so no call ran to compare a rule against. `AGENTS.md`
-  names the probe and its result.
+- What a preset allows at run time is checkable, not something to take on faith: run one call
+  through a `--policy` runner and read what comes back. On this machine that happened on
+  2026-11-20, with a dev build reached through the untracked `.local/eyg-checked` symlink
+  (`docs/world/entities/cli.checked-runner-on-this-host.md`); the prebuilt release on `PATH`
+  still carries no `--policy`, so on a machine that installed only the release no call runs at
+  all. `AGENTS.md` names the probe and its result.

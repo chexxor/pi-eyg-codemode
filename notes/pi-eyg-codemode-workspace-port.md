@@ -97,8 +97,11 @@ unchanged in the surviving README.*
 the `--policy` flag. The package's own runner probe (`/\-\-policy/` against `<runner> --help`)
 therefore finds no runner on this host, and the policy decision cannot be re-observed here
 without building `packages/gleam_cli` from source inside the language repository — out of
-this port's scope. Run behaviour in this workspace is **UNVERIFIED** until a policy-capable
-runner is installed; the inlined presets are held to the preset source read on 2026-11-18.
+this port's scope. At the time of writing, run behaviour in this workspace was **UNVERIFIED**
+for want of a runner that checks; the inlined presets are held to the preset source
+read on 2026-11-18. Superseded on 2026-11-20: a dev build reached this tree through
+`.local/eyg-checked` and checked calls were seen
+(`docs/world/entities/cli.checked-runner-on-this-host.md`).
 
 ## The checks run from this workspace root, `@measured 2026-11-18`
 
@@ -216,10 +219,12 @@ $ find /tmp/eyg-proof -newermt '2026-11-18' -print
 ```
 
 Read as: v0.1.0 reads `run` as a program path, so the checked call never started; the policy
-decision was therefore **not observed** from this workspace. The claims about what each
-preset does at run time stay **UNVERIFIED** here, and say so wherever they appear
-(`docs/world/entities/cli.prebuilt-binary.md`, `docs/world/entities/pi.codemode-tool.md`,
-`AGENTS.md`, `guides/pi_codemode_agent.md`, this note). What *is* proven here is that both
+decision was therefore **not observed** from this workspace on that binary. The claims about what
+each preset does at run time were **UNVERIFIED** here at the time and said so wherever they
+appear (`docs/world/entities/cli.prebuilt-binary.md`, `docs/world/entities/pi.codemode-tool.md`,
+`AGENTS.md`, `guides/pi_codemode_agent.md`, this note); since 2026-11-20 a refusal has been
+observed through `.local/eyg-checked` (`cli.checked-runner-on-this-host`). What *is* proven here
+is that both
 presets parse, carry all 18 policy fields, and type-check; that the package's extension
 resolves its own policy, library and render helpers from inside itself; and that the
 language repository keeps its own copy of everything.
@@ -241,9 +246,9 @@ commit that carries the audit).
 | local commit only | `git status --porcelain` / `git remote -v` | 0 lines / 0 lines; `git log` shows the local commits, no remote exists |
 | that checkout is untouched | `cd <the language repository> && git diff \| wc -l` | `0` tracked diffs; `git status --porcelain` prints only the pre-existing `?? .ai-work/` |
 
-Still **UNVERIFIED**, and named as such wherever it appears: that a preset actually refuses
-or allows an effect at run time. The CLI on PATH (`$HOME/.local/bin/eyg`, `eyg v0.1.0`)
-has no `--policy` (`grep -c -- '--policy' <<< "$(eyg --help 2>&1)"` → `0`), so both checked probes
+Still **UNVERIFIED** on 2026-11-18, and named as such wherever it appeared: that a preset
+actually refuses or allows an effect at run time on that binary. The CLI on PATH
+(`$HOME/.local/bin/eyg`, `eyg v0.1.0`) has no `--policy` (`grep -c -- '--policy' <<< "$(eyg --help 2>&1)"` → `0`), so both checked probes
 print `error: no such file: <this workspace>/run` and exit 1 without starting a program. What the
 presets' semantics rest on here is the recorded preset source, `eyg check` on both modules, the
 18-field comparison against `test/fixtures/rule_mapping.gleam`, and the unit test - not an
