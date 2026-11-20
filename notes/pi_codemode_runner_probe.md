@@ -10,7 +10,7 @@ Three trade-offs that the code states but does not argue.
 **The runner is probed, not configured.** The check lives in the runner:
 `packages/gleam_cli/src/eyg_cli.gleam` sends `run`/`script`/`eval` through
 `policy_runner` only when `--policy` is present. The CLI installed on `PATH`
-(`~/.local/bin/eyg`) is the prebuilt release and has no such flag, so a tool that
+(`$HOME/.local/bin/eyg`) is the prebuilt release and has no such flag, so a tool that
 assumed it would be a tool with no check, and the argv would be mis-parsed by that
 release: it reads `run` as a program path (`error: no such file: <cwd>/run`).
 Assuming either the path or the version is a guess about the host; probing `--help`

@@ -4,7 +4,7 @@ type: entity
 owner: delegate
 status: current
 verified_at: 2026-11-20
-verify: "head -20 README.md | grep -qi 'first draft' && ! ~/.local/bin/eyg --help 2>&1 | grep -q -- '--policy'"
+verify: "head -20 README.md | grep -qi 'first draft' && ! $HOME/.local/bin/eyg --help 2>&1 | grep -q -- '--policy'"
 confidence: high
 sources: [README.md, package.json, CHANGELOG.md, docs/world/entities/gap.runner-release-lacks-policy.md, docs/world/entities/gap.policy-runner-not-on-main.md, AGENTS.md]
 supersedes: null

@@ -1,5 +1,5 @@
 ---
-name: pi-codemode and the language repository's Overlay harness
+name: pi-eyg-codemode and the language repository's Overlay harness
 description: Two harnesses sit on one set of checks; when to use which, what wrapping an external runner costs this package, and what it still cannot show on a machine without a checked runner
 date: 2026-11-19
 ---

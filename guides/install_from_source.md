@@ -32,10 +32,13 @@ curl -fsSL https://bun.sh/install | bash
 ## Build and install
 
 ```sh
-git clone https://github.com/CrowdHailer/eyg-lang.git
-cd eyg-lang/packages/gleam_cli
+git clone <the clone URL on https://eyg.run/guides/install-from-source>
+cd <the checkout>/packages/gleam_cli
 ./bin/install
 ```
+
+This copy names no repository: the website page above carries the clone URL, and it is the
+source for these steps (`docs/world/decisions/ADR-003-doc-delegation.md`).
 
 The script runs `./bin/compile` an uses sudo to move that executable to `/usr/local/bin/eyg`.
 

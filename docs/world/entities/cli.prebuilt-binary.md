@@ -4,7 +4,7 @@ type: entity
 owner: delegate
 status: current
 verified_at: 2026-11-20
-verify: "test -f guides/install_prebuilt.md && test -f guides/install_from_source.md && ! ~/.local/bin/eyg --help 2>&1 | grep -q -- '--policy'"
+verify: "test -f guides/install_prebuilt.md && test -f guides/install_from_source.md && ! $HOME/.local/bin/eyg --help 2>&1 | grep -q -- '--policy'"
 confidence: high
 sources: [guides/install_prebuilt.md, guides/install_from_source.md, notes/pi_codemode_runner_probe.md, guides/pi_codemode_agent.md]
 supersedes: null
@@ -13,11 +13,11 @@ superseded_by: null
 
 # The CLI this workspace can reach is prebuilt, and prebuilt means it checks nothing
 
-`command -v eyg` answers `~/.local/bin/eyg` and `eyg --version` answers
+`command -v eyg` answers `$HOME/.local/bin/eyg` and `eyg --version` answers
 `eyg v0.1.0` (measured 2026-11-18). That build ships as one self-contained executable per
 platform installed by `install.sh` into `$HOME/.local/bin/` - it is the release asset, not
 a tree build - and its help has no `--policy` flag: `grep -c -- '--policy' <<<
-"$(~/.local/bin/eyg --help 2>&1)"` printed `0`.
+"$($HOME/.local/bin/eyg --help 2>&1)"` printed `0`.
 
 Consequences for this workspace, stated as facts:
 

@@ -4,7 +4,7 @@ type: entity
 owner: delegate
 status: current
 verified_at: 2026-11-20
-verify: "! ~/.local/bin/eyg --help 2>&1 | grep -q -- '--policy'"
+verify: "! $HOME/.local/bin/eyg --help 2>&1 | grep -q -- '--policy'"
 confidence: high
 sources: [README.md, docs/world/entities/cli.prebuilt-binary.md, docs/world/traps.md, guides/install_prebuilt.md]
 supersedes: null
@@ -13,7 +13,7 @@ superseded_by: null
 
 # Gap: the release published today cannot answer for an effect
 
-The latest release the language repository serves is `gleam_cli-v0.1.0` (read from its release feed on 2026-11-19), and that build's help has no `--policy` (`! ~/.local/bin/eyg --help 2>&1 | grep -q -- '--policy'`, run 2026-11-19). The tool refuses every call when no candidate accepts the flag, so **a person who follows the one-line installer cannot use this package at all** - every effect comes back refused before the program runs.
+The latest release the language repository serves is `gleam_cli-v0.1.0` (read from its release feed on 2026-11-19), and that build's help has no `--policy` (`! $HOME/.local/bin/eyg --help 2>&1 | grep -q -- '--policy'`, run 2026-11-19). The tool refuses every call when no candidate accepts the flag, so **a person who follows the one-line installer cannot use this package at all** - every effect comes back refused before the program runs.
 
 ## What to do about it
 

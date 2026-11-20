@@ -55,7 +55,7 @@ Three readers, and each needs one thing from this tree:
 | the tool's knobs, rows, probes, limits and the seam it cannot check | `guides/tool-reference.md` |
 | the language itself: surface syntax, builtins, every effect | <https://eyg.run/guides>, mirrored offline in `guides/syntax.md`, `guides/builtins_reference.md`, `guides/cli_effects_reference.md` |
 | to run a whole pi agent in EYG rather than one call | `guides/pi_codemode_agent.md`, with `skills/eyg-codemode/SKILL.md` loaded for the model |
-| to compare this package with the language's own agent harness (Overlay) and choose between them | `docs/world/entities/overlay.agent-harness.md` for what each owns, `notes/pi_codemode_vs_overlay.md` for the trade-off |
+| to compare this package with the language's own agent harness (Overlay) and choose between them | `docs/world/entities/overlay.agent-harness.md` for what each owns, `notes/pi-eyg-codemode-vs-overlay.md` for the trade-off |
 | what this tree claims about itself, and the command that re-checks each claim | `docs/world/00-map.md` |
 | the commands a session here runs, with measured costs and the hard rules | `AGENTS.md` |
 

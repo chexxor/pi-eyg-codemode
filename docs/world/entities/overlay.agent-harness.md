@@ -2,11 +2,11 @@
 id: overlay.agent-harness
 type: entity
 owner: delegate
-status: current
+status: suspect
 verified_at: 2026-11-20
-verify: "grep -q 'policy_runner.gleam' notes/pi_codemode_host_gate.md && grep -q '\"--policy\"' extensions/eyg-codemode.ts && grep -q 'action === \"effects\"' extensions/eyg-codemode.ts && grep -q 'eyg-functions' extensions/eyg-codemode.ts && grep -q 'eyg_packages/overlay/policy.eyg' notes/pi-codemode-preset-inlining.md && test -f notes/pi_codemode_vs_overlay.md"
+verify: "grep -q 'policy_runner.gleam' notes/pi_codemode_host_gate.md && grep -q '\"--policy\"' extensions/eyg-codemode.ts && grep -q 'action === \"effects\"' extensions/eyg-codemode.ts && grep -q 'eyg-functions' extensions/eyg-codemode.ts && grep -q 'eyg_packages/overlay/policy.eyg' notes/pi-codemode-preset-inlining.md && test -f notes/pi-eyg-codemode-vs-overlay.md"
 confidence: high
-sources: [notes/pi_codemode_host_gate.md, notes/pi-codemode-preset-inlining.md, notes/pi_codemode_vs_overlay.md, extensions/eyg-codemode.ts, test/fixtures/rule_mapping.gleam, docs/world/entities/overlay.policy-rules.md, docs/world/entities/gap.policy-runner-not-on-main.md, README.md]
+sources: [notes/pi_codemode_host_gate.md, notes/pi-codemode-preset-inlining.md, notes/pi-eyg-codemode-vs-overlay.md, extensions/eyg-codemode.ts, test/fixtures/rule_mapping.gleam, docs/world/entities/overlay.policy-rules.md, docs/world/entities/gap.policy-runner-not-on-main.md, README.md]
 supersedes: null
 superseded_by: null
 ---
@@ -58,4 +58,4 @@ Not the effect surface - `codemode.effect-surface` owns it, and neither harness 
 Not the mechanism or its `Pass`/`Mock` contract - `overlay.policy-rules`. Not whether the
 runner this package starts can answer for an effect today - `gap.runner-release-lacks-policy`.
 Not the argument for choosing one harness over the other - that trade-off is
-`notes/pi_codemode_vs_overlay.md`; this page only says what each owns.
+`notes/pi-eyg-codemode-vs-overlay.md`; this page only says what each owns.

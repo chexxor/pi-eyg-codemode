@@ -33,8 +33,8 @@ curl -fsSL https://eyg.run/install \
 
 ## Install a release asset by hand
 
-Download the asset for your platform from the
-[latest release](https://github.com/CrowdHailer/eyg-lang/releases/latest):
+Download the asset for your platform from the latest release the language repository
+publishes; <https://eyg.run/guides/install-a-prebuilt-binary> links that page:
 
 | Platform | Asset |
 |---|---|
