@@ -4,9 +4,9 @@ type: entity
 owner: delegate
 status: current
 verified_at: 2026-11-20
-verify: "! $HOME/.local/bin/eyg --help 2>&1 | grep -q -- '--policy'"
+verify: "! $HOME/.local/bin/eyg --help 2>&1 | grep -q -- '--policy' && test -x bin/agent/build-checked-runner.sh && grep -q -- '--policy' guides/how-to-get-a-checked-runner.md"
 confidence: high
-sources: [README.md, docs/world/entities/cli.prebuilt-binary.md, docs/world/traps.md, guides/install_prebuilt.md]
+sources: [README.md, docs/world/entities/cli.prebuilt-binary.md, docs/world/traps.md, guides/install_prebuilt.md, guides/how-to-get-a-checked-runner.md, bin/agent/build-checked-runner.sh, notes/checked-runner-build-script.md]
 supersedes: null
 superseded_by: null
 ---
@@ -17,7 +17,9 @@ The latest release the language repository serves is `gleam_cli-v0.1.0` (read fr
 
 ## What to do about it
 
-The fix belongs to the language, not to this package: publish a release whose CLI accepts `--policy`, then move `cli.prebuilt-binary` and this record with the new output and re-run the effect probes. Until then this package cannot shorten the gap - it can only make the README state it where a new reader will hit it, which ADR-004 does. A development build of the language CLI, named by `<cwd>/.local/eyg-checked`, is what lets this workspace see checked calls at all (`cli.checked-runner-on-this-host`); it changes nothing for a person who followed the installer.
+The fix belongs to the language, not to this package: publish a release whose CLI accepts `--policy`, then move `cli.prebuilt-binary` and this record with the new output and re-run the effect probes.
+
+What this package can do is shorten the wait, and since 2026-11-20 it does: `guides/how-to-get-a-checked-runner.md` is the one page from a fresh clone to a checked call, and `bin/agent/build-checked-runner.sh` is the build it points at - a script a person runs, which compiles a ref the operator names and refuses to call the artifact a runner until its `--help` mentions `--policy` and the shipped `deny-all` preset has refused its write fixture (`notes/checked-runner-build-script.md`). A person who followed the one-line installer still cannot use this package, and that is the honest outcome the README states; what is no longer true is that they have no route.
 
 ## Not this
 

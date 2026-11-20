@@ -63,5 +63,6 @@ prints `write_file denied by policy` and leaves no file behind (0.1 s wall, @mea
 ## Not this
 
 This page does not build a CLI - <https://eyg.run/guides/install-from-source> does, and
-this package carries none of that build. It also does not change what a policy allows;
-`guides/how-to-write-another-preset.md` does that.
+this package carries none of that build; if you have no binary yet, start at
+`guides/how-to-get-a-checked-runner.md`, which ends with a script you run. It also does not change
+what a policy allows; `guides/how-to-write-another-preset.md` does that.

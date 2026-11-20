@@ -4,9 +4,9 @@ type: entity
 owner: delegate
 status: current
 verified_at: 2026-11-20
-verify: "! grep -q -- '--policy' guides/install_prebuilt.md && ! grep -q -- '--policy' guides/install_from_source.md"
+verify: "grep -q -- '--policy' guides/how-to-get-a-checked-runner.md && grep -q -- '--policy' guides/how-to-point-the-tool-at-your-runner.md && ! grep -q -- '--policy' guides/install_prebuilt.md && ! grep -q -- '--policy' guides/install_from_source.md"
 confidence: high
-sources: [guides/install_prebuilt.md, guides/install_from_source.md, README.md, docs/world/decisions/ADR-003-doc-delegation.md]
+sources: [guides/install_prebuilt.md, guides/install_from_source.md, guides/how-to-get-a-checked-runner.md, guides/how-to-point-the-tool-at-your-runner.md, README.md, docs/world/decisions/ADR-003-doc-delegation.md, notes/checked-runner-build-script.md]
 supersedes: null
 superseded_by: null
 ---
@@ -17,11 +17,12 @@ Neither install route - the website's pages and this tree's mirrors, `guides/ins
 
 ## What to do about it
 
-The package's own contract already names the remedy in the refusal: build the current CLI and set `EYG_CODEMODE_RUNNER`. The missing piece is a page - `guides/how-to-point-the-tool-at-your-runner.md` - that starts from a working CLI and ends with the tool finding it, plus the one check that proves it (`<the binary> --help 2>&1 | grep -c -- --policy`, `0` means every call will be refused).
+The half this tree owns is closed as of 2026-11-20: two pages carry the requirement and its check. `guides/how-to-point-the-tool-at-your-runner.md` starts from a working CLI and ends with the tool finding it; `guides/how-to-get-a-checked-runner.md` starts from nothing, names the four places the tool probes, and points at `bin/agent/build-checked-runner.sh`, which a person runs (`notes/checked-runner-build-script.md`). The mirrors still answer `0` for `--policy`, which is correct: they are dated copies of the website's pages and ADR-003 says the website wins.
 
 Upstream, the same gap sits in the language's install pages: their verify step proves the binary
-runs, not that it answers for an effect. Filing it there is the operator's, since this tree does
-not write to the language repository. Trigger: the next time one of those website pages is edited.
+runs (`eyg eval -c '!int_add(1, 1)'`), not that it answers for an effect. Filing it there is the
+operator's, since this tree does not write to the language repository. Trigger: the next time one
+of those website pages is edited.
 
 ## Not this
 

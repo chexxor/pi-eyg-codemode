@@ -27,7 +27,7 @@ copy is wrong the day the site changes - the trap that covers "a fact in two pla
 ## Decision
 
 The README states **only this package's contract** - what has to be true on your machine
-(a runner that accepts `--policy`), where the tool looks for it (the three places, in order,
+(a runner that accepts `--policy`), where the tool looks for it (the candidate list, in order,
 with `EYG_CODEMODE_RUNNER` first), what the probe accepts, and what is UNVERIFIED until such a
 runner runs here - and links the website for every step of getting the CLI. Install commands
 are not quoted in the README. The offline copies in `guides/` stay in the tree as a mirror for

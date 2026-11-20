@@ -48,6 +48,7 @@ Three readers, and each needs one thing from this tree:
 | you want | read |
 | --- | --- |
 | one call to try, and how to read a refusal | `guides/first-session.md` - the tutorial |
+| to get a runner that answers for an effect, starting from nothing | `guides/how-to-get-a-checked-runner.md`, with `bin/agent/build-checked-runner.sh` for you to run |
 | to point the tool at a CLI you built or downloaded | `guides/how-to-point-the-tool-at-your-runner.md` |
 | to change what a session may reach: roots, one host, secrets | `guides/how-to-write-another-preset.md` |
 | to read a file bigger than one result | `guides/how-to-read-in-slices.md` |
@@ -83,14 +84,17 @@ for an effect. Install one from
 pages, taken 2026-11-18, for a session that cannot load a page; the paths inside the second
 belong to the language repository, not to this tree.
 
-Then the tool has to find what you installed. It looks in exactly three places, in this order
-(`extensions/eyg-codemode.ts:387-390`, `resolveRunner` at `:219`):
+Then the tool has to find what you installed. It looks in exactly four places, in this order
+(`runnerCandidates` in `lib/render-helpers.mjs`, tried by `resolveRunner` in
+`extensions/eyg-codemode.ts`):
 
 1. **`EYG_CODEMODE_RUNNER`** - the absolute path to the runner. Set it and nothing else is
    probed, so installing the compiler somewhere off `PATH` is fine as long as you name it here.
 2. **`eyg` on `PATH`** - whatever `command -v eyg` finds.
 3. **`<cwd>/packages/gleam_cli/dist/eyg`** - the language repository's own layout, which only
    helps if you run pi sessions inside a checkout of that repository.
+4. **`<cwd>/.local/eyg-checked`** - the place for a checked build this machine has and `PATH`
+   does not carry: a symlink you make, in a directory this tree gitignores.
 
 A candidate counts only when `<candidate> --help` mentions `--policy` - the probe runs once per
 session and the refusal names the remedy, so a tool that assumed a path or a version would be a
@@ -103,10 +107,11 @@ binary exists:
 the release found by `command -v eyg` answered `v0.1.0`, that check printed `0`, and the release
 the language repository published the next day (`gleam_cli-v0.1.0`, read from its release feed on
 2026-11-19) predates the `--policy` flag. Until a
-release carries it: build from source (the other guide) and point `EYG_CODEMODE_RUNNER` at that
-binary, or read this package as documentation - installing the tool and getting a refusal for
-every call is the honest outcome, not a bug to chase. That sentence is about a *release*: on
-2026-11-20 a dev build of the language CLI reached this tree through the untracked
+release carries it there is one route: `guides/how-to-get-a-checked-runner.md`, which ends with
+`bin/agent/build-checked-runner.sh` - you run that script, the package never does - pointing the
+artifact at `EYG_CODEMODE_RUNNER` or `<cwd>/.local/eyg-checked`. Installing the tool and getting a
+refusal for every call is the honest outcome, not a bug to chase. That sentence is about a *release*:
+on 2026-11-20 a dev build of the language CLI reached this tree through the untracked
 `.local/eyg-checked` symlink and a checked call was seen - `WriteFile` performed inside the
 roots, `write_file denied by policy: /tmp/...` outside them
 (`docs/world/entities/cli.checked-runner-on-this-host.md`). What stays unproven here is the
@@ -157,6 +162,7 @@ run of it.
 | `test/fixtures/rule_mapping.gleam` | the runtime's `rule_mapping` recorded verbatim, so the guard runs without the language repository present (`test/fixtures/rule_mapping.PROVENANCE.md`: where it came from, its checksums, how to refresh it) |
 | `skills/eyg-codemode/SKILL.md` | the pi skill loaded when a model writes EYG: the forms, what a refusal means, how to ask the registry |
 | `guides/` | the reference copied from the language repository, and this package's tutorial, how-tos and reference |
+| `bin/agent/build-checked-runner.sh` | a script a person runs to build a runner that accepts `--policy` and prove it before naming it; nothing in this tree runs it |
 | `notes/`, `docs/world/`, `pi-simple-world-model/` | the decision record, the claims with the tool that checks them |
 
 ## Commands that run here
