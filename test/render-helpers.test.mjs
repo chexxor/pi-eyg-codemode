@@ -11,7 +11,7 @@
  */
 
 import assert from "node:assert/strict";
-import { callLines, checkDeclaredEffects, classifyProbeOutput, COLLAPSED_SOURCE_LINES, effectLine, effectsUsed, eygSettings, findMetadata, formatDuration, prepareCallArguments, presetPath, probeArguments, probeProgram, POLICY_FIELDS, resolvePolicy, resolveRoots, resultLines, ruleMappingEffects, runnerCandidates } from "../lib/render-helpers.mjs";
+import { argumentPolicyPath, callLines, checkDeclaredEffects, classifyProbeOutput, COLLAPSED_SOURCE_LINES, describeGrant, effectLine, effectsUsed, eygSettings, findMetadata, formatDuration, grantEvents, GRANT_ENTRY, outsideRoot, prepareCallArguments, presetPath, probeArguments, probeProgram, POLICY_FIELDS, refusalHints, replayGrants, resolvePolicy, resolveRoots, resultLines, ruleMappingEffects, runnerCandidates, suggestGrant } from "../lib/render-helpers.mjs";
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
 
@@ -242,6 +242,95 @@ let metadata = {
   assert.equal(resolveRoots({ project: ["/p1", "/p2"], env: "/e", cwd: "/c" }), "/p1,/p2", "the project roots win, as a list the preset parses");
   assert.equal(resolveRoots({ project: [], env: "/e", cwd: "/c" }), "/e", "then EYG_ALLOWED_ROOTS");
   assert.equal(resolveRoots({ project: [], env: null, cwd: "/c" }), "/c", "then the working directory");
+
+// --- the grant store: durations, expiry, revoke, and the branch it lives on ---
+
+{
+  const grant = (id, calls, policy = "/p/wide.eyg", roots = []) => ({ op: "grant", id, policy, calls, roots });
+  const call = (grantId) => ({ op: "call", grantId });
+
+  const one = replayGrants([grant("g1", 1)]);
+  assert.equal(one.policy, "/p/wide.eyg", "a one-call grant is in force until the call spends it");
+  assert.equal(one.grants.length, 1, "and says so before the call");
+  assert.equal(replayGrants([grant("g1", 1), call("g1")]).policy, null, "one call is spent by one call");
+
+  const three = replayGrants([grant("g2", 3), call("g2"), call("g2")]);
+  assert.equal(three.active.used, 2, "an N-call grant counts the calls it covered");
+  assert.equal(three.active.calls, 3, "and remembers what it was sold as");
+  assert.equal(describeGrant(three.active), "g2: /p/wide.eyg for 3 tool calls (2 used)", "and says so in one line");
+
+  const session = replayGrants([grant("g3", null), call("g3"), call("g3"), call("g3")]);
+  assert.equal(session.policy, "/p/wide.eyg", "a session grant is still in force after three calls");
+  assert.equal(describeGrant(session.active), "g3: /p/wide.eyg for the rest of the session", "and is described without a counter");
+
+  const revoked = replayGrants([grant("g4", null), call("g4"), { op: "revoke", id: "g4" }, call(null)]);
+  assert.deepEqual(revoked.grants, [], "revoke ends it before its calls run out");
+
+  const stack = replayGrants([grant("wide", null), grant("narrow", 1), call("narrow")]);
+  assert.equal(stack.active.id, "wide", "the newest grant wins, and the older one is still underneath it");
+  assert.equal(stack.grants.map((g) => g.id).join(","), "wide", "the spent one drops out of what is in force");
+
+  assert.equal(replayGrants([grant("g5", 2), { op: "call", grantId: null }]).active.used, 0, "a call that ran under no grant spends nothing");
+  assert.deepEqual(replayGrants([]).grants, [], "no events, no grants");
+
+  // The branch, not a variable: the entries come back as pi shapes, and a call that
+  // never reached a policy is not one the grant paid for.
+  const entries = [
+    { type: "custom", customType: GRANT_ENTRY, data: grant("g6", 2, "/p/wide.eyg", ["/extra"]) },
+    { type: "message", message: { role: "toolResult", toolName: "eyg", details: { ran: false } } },
+    { type: "message", message: { role: "toolResult", toolName: "bash", details: { ran: true } } },
+    { type: "message", message: { role: "toolResult", toolName: "eyg", details: { ran: true, grantId: "g6" } } },
+  ];
+  assert.deepEqual(grantEvents(entries).map((event) => event.op), ["grant", "call"], "only the grant records and the eyg calls that reached a policy");
+  const rebuilt = replayGrants(grantEvents(entries));
+  assert.equal(rebuilt.active.used, 1, "so a refused call does not spend the grant");
+  assert.deepEqual(rebuilt.roots, ["/extra"], "and a grant carries roots as well as a policy");
+  assert.equal(replayGrants(grantEvents([{ type: "custom", customType: "other", data: grant("gX", 1) }])).policy, null, "an entry that is not on this extension's type is not a grant");
+}
+
+// --- what a refusal names: the path, and the exact grant that would clear it ---
+
+{
+  const output = "eyg run: exit 1 in 0.11 s wall\nError(\"write_file denied by policy: /tmp/outside\")\nError(\"write_file denied by policy: /tmp/outside\")";
+  const hints = refusalHints(output);
+  assert.deepEqual(hints, [{ field: "write_file", path: "/tmp/outside" }], "one hint per distinct refusal");
+  assert.equal(outsideRoot("/tmp/outside", ["/work"]), "/tmp", "the first directory no root covers");
+  assert.equal(outsideRoot("/work/sub/file.eyg", ["/work"]), null, "a path already under a root needs a rule, not a root");
+  const lines = suggestGrant(hints[0], { roots: "/work", policy: "/pkg/policies/agent-roots.eyg" });
+  assert.match(lines[0], /write_file at \/tmp\/outside/, "the row names the path");
+  assert.match(lines[1], /\/eyg-grant/, "and the command that would allow it");
+  assert.match(lines[1], /roots \+ \/tmp/, "naming the root to add");
+  assert.match(lines[1], /one tool call, N calls, or the rest of the session/, "and the durations offered");
+  assert.match(lines[2], /cannot grant it yourself/, "and who may grant it");
+  const inside = suggestGrant({ field: "read_file", path: "/work/.env.eyg" }, { roots: "/work", policy: "/p" });
+  assert.match(inside[1], /a rule of \/p, not a root/, "when no root would help it says so instead of guessing one");
+
+  // The rows are visible collapsed: the operator has to see the ask to answer it.
+  const refused = resultLines({
+    content: [{ type: "text", text: "eyg run: exit 1 in 0.11 s wall\nError(\"write_file denied by policy: /tmp/outside\")" }],
+    details: { ran: true, exit: 1, policy: "/pkg/policies/agent-roots.eyg", policySource: "package default", roots: "/work", refusals: hints, grants: replayGrants([{ op: "grant", id: "g9", policy: "/p/wide.eyg", calls: 2, roots: ["/tmp"] }]).grants },
+  }, false, 110, undefined);
+  const shown = flat(refused);
+  assert.match(shown, /refused: write_file at \/tmp\/outside/, "the refusal row names the path");
+  assert.match(shown, /grants in force: g9: \/p\/wide\.eyg for 2 tool calls \(0 used\) roots \+ \/tmp/, "and every call names the grants in force");
+  assert.equal(refused[0][0].tone, "error", "the status line is still the status line");
+  assert.match(flat(refused.filter((row) => row[0].tone === "warning")), /one tool call, N calls/, "with the durations to choose from");
+}
+
+// --- a model may narrow to a shipped preset and may not name a module ---
+
+{
+  assert.equal(argumentPolicyPath("deny-all", "/pkg"), join("/pkg", "policies", "deny-all.eyg"), "a bare preset name resolves inside the package");
+  assert.equal(argumentPolicyPath("/tmp/my-policy.eyg", "/pkg"), null, "an absolute module path is not the model's to choose");
+  assert.equal(argumentPolicyPath("../outside.eyg", "/pkg"), null, "nor is a path that walks out of it");
+  assert.equal(argumentPolicyPath("deny-all", null), null, "and with no package directory there is nothing to resolve against");
+}
+
+  // A grant adds roots on top of what the project and the environment say, and a
+  // model may not name the module it is checked against.
+  assert.equal(resolveRoots({ grant: ["/tmp"], project: ["/p1"], env: "/e", cwd: "/c" }), "/p1,/tmp", "the grant widens, it does not replace");
+  assert.equal(resolveRoots({ grant: ["/p1"], project: ["/p1"], env: null, cwd: "/c" }), "/p1", "and cannot duplicate a root");
+  assert.equal(resolveRoots({ grant: ["/tmp"], env: "/a, /b", cwd: "/c" }), "/a,/b,/tmp", "an environment list is split and trimmed first");
 
   // The drift guard. This workspace is the pi package on its own, so the runtime
   // that owns `rule_mapping` is not in this tree: the guard compares `POLICY_FIELDS`

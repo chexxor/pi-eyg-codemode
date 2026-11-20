@@ -142,7 +142,7 @@ the drift guard against `test/fixtures/rule_mapping.gleam`, never an observed re
 
 | path | what it is |
 | --- | --- |
-| `extensions/eyg-codemode.ts` | the one pi extension: registers `eyg`, resolves policy/roots/runner from inside the package, starts the runner that checks every effect through argv, renders the rows, reads the registry scopes |
+| `extensions/eyg-codemode.ts` | the one pi extension: registers `eyg` and the operator's `/eyg-grant`, resolves policy/roots/runner from inside the package, starts the runner that checks every effect through argv, renders the rows, reads the registry scopes |
 | `policies/agent-roots.eyg` | the default preset: files under `EYG_ALLOWED_ROOTS`, nothing else, `.env.eyg` never readable |
 | `policies/deny-all.eyg` | the narrowest preset: a session that may only compute |
 | `libraries/search.eyg` | the search helper bound as `search_lib` by the `libraries` parameter; carries the `metadata` record the registry reads |

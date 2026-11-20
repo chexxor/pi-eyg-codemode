@@ -23,12 +23,20 @@
  * their normal effects. See README.md for the metadata shape and the scope
  * table.
  *
- * Nothing is configured by hand. With no `policy` argument and no `EYG_POLICY`
- * the tool uses the policy the installed package ships
+ * Nothing is configured by hand. With no `policy` argument, no grant and no
+ * `EYG_POLICY` the tool uses the policy the installed package ships
  * (`<package>/policies/agent-roots.eyg`) and that policy's roots default to the
  * session working directory, so a first session can read and write its own
- * workspace and nothing else. Every default below is named by the file it comes
- * from; see the README table.
+ * workspace and nothing else. `resolvePolicy` and `resolveRoots` in
+ * `lib/render-helpers.mjs` hold the one order a call's policy and roots come from,
+ * and every default below is named by the file it comes from; see the README table.
+ *
+ * A refusal is the start of a negotiation, not a dead end: the result names the
+ * refused path and the exact grant that would allow it, and `/eyg-grant` is how the
+ * operator answers - a preset or module path, roots to add, and a duration of one
+ * tool call, N calls or the rest of the session. The grant is a session entry the
+ * human's command appends, never a tool parameter, so a program cannot widen itself
+ * (`notes/pi-codemode-session-grants.md`).
  *
  * Configure the runner and the policy with environment variables to point one
  * session at one policy without editing this file:
@@ -51,20 +59,27 @@ import { existsSync, readFileSync, readdirSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 import { basename, dirname, join } from "node:path";
 import {
+  argumentPolicyPath,
   buildRegistry,
   callLines,
   checkDeclaredEffects,
   classifyProbeOutput,
+  describeGrant,
   effectLine,
   effectsUsed,
   findMetadata,
   formatDuration,
+  grantEvents,
+  GRANT_ENTRY,
   prepareCallArguments,
   probeProgram,
+  refusalHints,
+  replayGrants,
   resultLines,
   resolvePolicy,
   resolveRoots,
   runnerCandidates,
+  suggestGrant,
   eygSettings,
   presetPath,
   POLICY_FIELDS,
@@ -147,6 +162,26 @@ function listModules(dir: string): string[] {
   } catch {
     return [];
   }
+}
+
+/// The presets this package ships, as the bare names a call may choose. A call may
+/// narrow itself to one of these and may not name a module of its own: a program
+/// that could write a permissive policy inside its own roots and hand the runner its
+/// path would be granting itself, which is the route the grant loop closes
+/// (`notes/pi-codemode-session-grants.md`).
+function shippedPresets(dir: string | null): string[] {
+  if (dir === null) return [];
+  return listModules(join(dir, "policies")).map((file) => file.replace(/\.eyg$/, ""));
+}
+
+/// The grants in force for the branch this call is being made on. There is no grant
+/// variable in this file: the records `/eyg-grant` appended and the eyg calls already
+/// on the branch say what is in force now, so `/tree` and a fork replay a grant and a
+/// truncated branch un-spends the calls it dropped. The current call is not on the
+/// branch yet, so it is not counted against its own grant.
+function grantState(ctx: { sessionManager?: { getBranch?: () => unknown[] } }) {
+  const branch = ctx.sessionManager && typeof ctx.sessionManager.getBranch === "function" ? ctx.sessionManager.getBranch() : [];
+  return replayGrants(grantEvents(branch as never[]));
 }
 
 /// The registry scopes that exist, in scope order. The scope order is the
@@ -277,6 +312,12 @@ export default function (pi: ExtensionAPI) {
       "`list_functions` also says whether the policy in force can perform each of them, which",
       "is advisory only: running a function whose effect is refused is not blocked, the",
       "refusal surfaces as the ordinary Error(...) value inside the program.",
+      "A refusal is an ask you make in chat, not a thing you work around: the result names",
+      "the refused path and the exact grant that would allow it. Ask the operator to run",
+      "/eyg-grant and choose a preset (or an absolute module path), the roots to add and a",
+      "duration - one tool call, N calls, or the rest of the session - with your recommendation",
+      "(the narrowest that retries the refused program), then retry the same program.",
+      "No parameter of this tool widens a policy: `policy` only narrows to a shipped preset.",
     ].join(" "),
     promptSnippet: "Run an EYG program whose every effect is decided by a host policy module",
     promptGuidelines: [
@@ -293,6 +334,7 @@ export default function (pi: ExtensionAPI) {
       "When a capability question is in the air, call `action: \"effects\"` once instead of probing effects one program at a time: it runs one probe per effect under the policy in force and answers effect | policy field | decision. Read `guides/cli_effects_reference.md` in the repository for the gate classes.",
       "Pass `timeout` in seconds when a run is longer than 30 s; the result says how long it took in wall time, so a timeout is visible rather than guessed.",
       "The effects listed for a registry function are advisory: availability is re-probed at each listing and the policy can change mid-session, and a run whose effect is refused simply gets the ordinary Error value.",
+      "When an effect is refused, report what was refused and ask the operator for the grant the result names (/eyg-grant: one call, N calls, or the rest of the session), recommending the narrowest one that retries the refused program; then retry it. Never write a policy module of your own and never look for another channel.",
     ],
 
     parameters: Type.Object({
@@ -316,7 +358,7 @@ export default function (pi: ExtensionAPI) {
       policy: Type.Optional(
         Type.String({
           description:
-            "Absolute path to the policy module for this call; default is the policy shipped in this package.",
+            "Name a preset this package ships (`agent-roots`, `deny-all`) to narrow this call to it. An absolute module path is refused: a wider policy comes from the operator's /eyg-grant, the project's eyg.policy key, or EYG_POLICY.",
         }),
       ),
       libraries: Type.Optional(
@@ -387,9 +429,19 @@ export default function (pi: ExtensionAPI) {
       if (relativeRoot !== undefined) {
         return refuseToRun(`every eyg.roots entry must be an absolute path, got ${relativeRoot}`);
       }
+      const grants = grantState(ctx);
+      const grantDetails = { grants: grants.grants, grantId: grants.active === null ? null : grants.active.id };
+      const presets = shippedPresets(dir);
+      const argumentPolicy = params.policy === undefined ? null : argumentPolicyPath(params.policy, dir);
+      if (params.policy !== undefined && argumentPolicy === null) {
+        return refuseToRun(
+          `the policy argument may only narrow this call to a preset the package ships (${presets.join(", ") || "none"}), not name a module of its own: got ${params.policy}. ` +
+            "A wider policy is the operator's to give: /eyg-grant for this session, eyg.policy in the project settings, or EYG_POLICY.",
+        );
+      }
       const chosen = resolvePolicy({
-        argument: params.policy ?? null,
-        grant: null, // the session's grant store fills this slot: see /eyg-grant and notes/pi-codemode-session-grants.md
+        argument: argumentPolicy,
+        grant: grants.policy,
         project: projectPreset,
         env: process.env.EYG_POLICY ?? null,
         packageDefault: defaultPolicy(),
@@ -426,9 +478,10 @@ export default function (pi: ExtensionAPI) {
       // One spawned program: the mode, the source and the wall-time cap. The
       // roots the default policy reads from `EYG_ALLOWED_ROOTS` are set for the
       // call and restored after it, since a spawned child inherits `process.env`.
-      // The project's `eyg.roots` win over an inherited `EYG_ALLOWED_ROOTS`, and
-      // both over the working directory - `resolveRoots` holds that order.
-      const roots = resolveRoots({ project: settings.roots, env: process.env.EYG_ALLOWED_ROOTS ?? null, cwd });
+      // The project's `eyg.roots` win over an inherited `EYG_ALLOWED_ROOTS`, both
+      // over the working directory, and a grant in force adds roots on top of the
+      // result - `resolveRoots` holds that order.
+      const roots = resolveRoots({ grant: grants.roots, project: settings.roots, env: process.env.EYG_ALLOWED_ROOTS ?? null, cwd });
       const spawn = async (mode: string, source: string, timeoutMs: number) => {
         const previousRoots = process.env.EYG_ALLOWED_ROOTS;
         process.env.EYG_ALLOWED_ROOTS = roots;
@@ -491,7 +544,7 @@ export default function (pi: ExtensionAPI) {
         ].join("\n");
         return {
           content: [{ type: "text", text }],
-          details: { gated: true, ran: true, action, policy, policySource, runner, roots },
+          details: { gated: true, ran: true, action, policy, policySource, runner, roots, ...grantDetails },
         };
       }
 
@@ -562,7 +615,7 @@ export default function (pi: ExtensionAPI) {
                     `${registryScopes(cwd, dir).map((scope) => scope.dir).join(", ")}`,
                 },
               ],
-              details: { gated: true, ran: true, action, policy, policySource, runner, roots },
+              details: { gated: true, ran: true, action, policy, policySource, runner, roots, ...grantDetails },
             };
           }
           const entry = match[0];
@@ -595,6 +648,7 @@ export default function (pi: ExtensionAPI) {
               policySource,
               runner,
               roots,
+              ...grantDetails,
               availability: Object.fromEntries(availability),
             },
           };
@@ -653,6 +707,7 @@ export default function (pi: ExtensionAPI) {
             policySource,
             runner,
             roots,
+            ...grantDetails,
             scopes: registryScopes(cwd, dir),
             availability: Object.fromEntries(availability),
             errors: registry.errors,
@@ -688,8 +743,20 @@ export default function (pi: ExtensionAPI) {
       const out = spawnResult.out;
       const duration = formatDuration(spawnResult.durationMs);
       const status = result.killed ? `timed out after ${Math.round(timeout / 1000)} s in ${duration} wall` : result.code === 0 ? `ran in ${duration} wall` : `exit ${result.code} in ${duration} wall`;
+
+      // A refusal is the ask. The model sees what was refused, where, and the exact
+      // grant that would have allowed it - and that only the operator can make it,
+      // because the tool has no field through which a program could widen itself.
+      const refusals = refusalHints(out);
+      const asks: string[] = [];
+      for (const hint of refusals) {
+        for (const line of suggestGrant(hint, { roots, policy })) {
+          if (!asks.includes(line)) asks.push(line);
+        }
+      }
+      const text = [`eyg ${mode}: ${status}`, out, asks.join("\n")].filter((part) => part !== "").join("\n");
       return {
-        content: [{ type: "text", text: `eyg ${mode}: ${status}\n${out}` }],
+        content: [{ type: "text", text }],
         details: {
           gated: true,
           ran: true,
@@ -705,9 +772,133 @@ export default function (pi: ExtensionAPI) {
           durationMs: spawnResult.durationMs,
           duration,
           roots,
+          ...grantDetails,
+          refusals,
           prelude: prelude.map((line) => line.trim()),
         },
       };
     },
   }));
+
+  // The operator's side of the loop. `/eyg-grant` is the only way a grant comes to
+  // exist: it is a command the human types, its choices go through ctx.ui, and the
+  // tool's own parameters carry no grant field, so a program cannot widen itself.
+  // The grant is appended to the session as a custom entry, which does not reach the
+  // model and lives on the branch, so a fork or a `/tree` jump decides what it covered.
+  pi.registerCommand("eyg-grant", {
+    description: "grant the eyg tool a wider policy for one call, N calls or the rest of the session (operator only)",
+    handler: async (args, ctx) => {
+      const dir = packageDir();
+      const presets = shippedPresets(dir);
+      const inForce = grantState(ctx).grants;
+      const tokens = (args ?? "").trim().split(/\s+/).filter((token) => token !== "");
+      const say = (message: string, kind: "info" | "warning" | "error" = "info") => ctx.ui.notify(message, kind);
+
+      const state = () =>
+        inForce.length === 0
+          ? "no grant is in force now"
+          : `grants in force now: ${inForce.map((grant) => describeGrant(grant)).join(" | ")}`;
+
+      if (tokens[0] === "revoke") {
+        if (inForce.length === 0) return say("no grant is in force to revoke.", "warning");
+        let id = tokens[1] ?? null;
+        if (id === null) {
+          if (!ctx.hasUI) return say(`revoke needs the grant id: /eyg-grant revoke <${inForce.map((grant) => grant.id).join(" | ")}>`, "error");
+          const labels = inForce.map((grant) => describeGrant(grant));
+          const picked = await ctx.ui.select("Revoke which grant?", labels);
+          if (picked === undefined) return say("revoke cancelled.");
+          id = inForce[labels.indexOf(picked)].id;
+        }
+        pi.appendEntry(GRANT_ENTRY, { op: "revoke", id });
+        return say(`grant ${id} is revoked: the next eyg call runs under the policy the settings name again.`);
+      }
+
+      // What the caller already typed is not asked for again, so the same command
+      // works headless: /eyg-grant deny-all 3 roots=/tmp answers without prompting.
+      let policyName: string | null = null;
+      let calls: number | null = null;
+      let sessionLong = false;
+      let roots: string[] = [];
+      for (const token of tokens) {
+        if (token.startsWith("roots=")) {
+          roots = token.slice("roots=".length).split(",").map((root) => root.trim()).filter((root) => root !== "");
+        } else if (/^[0-9]+$/.test(token)) {
+          calls = Number(token);
+        } else if (token === "one" || token === "1") {
+          calls = 1;
+        } else if (token === "session") {
+          sessionLong = true;
+        } else if (policyName === null && (token.startsWith("/") || (dir !== null && presetPath(token, dir) !== null))) {
+          policyName = token;
+        }
+      }
+
+      if (policyName === null) {
+        if (!ctx.hasUI) {
+          return say(`which policy? /eyg-grant <${presets.join(" | ")} | an absolute module path> <one | N | session> [roots=/abs,/abs]. ${state()}`, "error");
+        }
+        const options = [...presets, "an absolute module path"];
+        const picked = await ctx.ui.select("Which policy do the next eyg calls run under?", options);
+        if (picked === undefined) return say("grant cancelled.");
+        if (picked === "an absolute module path") {
+          const typed = await ctx.ui.input("Absolute path to the policy module", "/abs/path/policy.eyg");
+          if (typed === undefined || typed.trim() === "") return say("grant cancelled.");
+          policyName = typed.trim();
+        } else {
+          policyName = picked;
+        }
+      }
+      const policy = dir === null ? (policyName.startsWith("/") ? policyName : null) : presetPath(policyName, dir);
+      if (policy === null) return say(`a policy is a preset this package ships (${presets.join(", ")}) or an absolute module path, not ${policyName}`, "error");
+      if (!existsSync(policy)) return say(`no policy module at ${policy}`, "error");
+
+      if (calls === null && !sessionLong) {
+        if (!ctx.hasUI) return say(`for how long? /eyg-grant ${policyName} <one | N | session> [roots=/abs,/abs]. ${state()}`, "error");
+        const picked = await ctx.ui.select(
+          "For how long?",
+          ["one tool call (recommended: retry exactly the refused program)", "a number of tool calls", "the rest of the session (widest: every later call)"],
+        );
+        if (picked === undefined) return say("grant cancelled.");
+        if (picked.startsWith("one")) {
+          calls = 1;
+        } else if (picked.startsWith("the rest")) {
+          sessionLong = true;
+        } else {
+          const typed = await ctx.ui.input("How many tool calls?", "3");
+          if (typed === undefined || !/^[0-9]+$/.test(typed.trim())) return say("a number of calls, or cancel.", "error");
+          calls = Number(typed.trim());
+        }
+      }
+
+      const badRoot = roots.find((root) => !root.startsWith("/"));
+      if (badRoot !== undefined) return say(`every root must be an absolute path, got ${badRoot}`, "error");
+      if (roots.length === 0 && ctx.hasUI) {
+        const picked = await ctx.ui.select("Add roots for the preset that reads them?", ["no new roots (recommended)", "add absolute roots, comma separated"]);
+        if (picked === undefined) return say("grant cancelled.");
+        if (picked.startsWith("add")) {
+          const typed = await ctx.ui.input("Roots to add, comma separated, absolute", "/abs/one,/abs/two");
+          if (typed === undefined) return say("grant cancelled.");
+          roots = typed.split(",").map((root) => root.trim()).filter((root) => root !== "");
+          const relative = roots.find((root) => !root.startsWith("/"));
+          if (relative !== undefined) return say(`every root must be an absolute path, got ${relative}`, "error");
+        }
+      }
+
+      const duration = sessionLong ? "the rest of the session" : `${calls} tool call${calls === 1 ? "" : "s"}`;
+      const summary =
+        `${policy}\nfor ${duration}${roots.length > 0 ? `, adding roots ${roots.join(", ")}` : ""}\n${state()}\n` +
+        "the preset file is not changed and the program cannot widen itself: this entry is the widening";
+      if (ctx.hasUI && !(await ctx.ui.confirm("Grant this policy?", summary))) return say("grant cancelled.");
+
+      const id = `g${Date.now().toString(36)}`;
+      pi.appendEntry(GRANT_ENTRY, { op: "grant", id, policy, calls: sessionLong ? null : calls, roots });
+      const next = sessionLong
+        ? "Every later eyg call runs under it"
+        : `The next ${calls} eyg call${calls === 1 ? "" : "s"} run${calls === 1 ? "s" : ""} under it`;
+      say(
+        `grant ${id}: ${policy} for ${duration}${roots.length > 0 ? ` (roots + ${roots.join(", ")})` : ""}. ` +
+          `${next} - ask the model to retry the refused program.`,
+      );
+    },
+  });
 }

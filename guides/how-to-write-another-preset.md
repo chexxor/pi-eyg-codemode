@@ -16,11 +16,20 @@ The steps are:
 
 | in order | where it comes from |
 | --- | --- |
-| 1 | the `policy` argument of this call, when it names a module |
-| 2 | `eyg.policy` in `.pi/settings.json` - a preset shipped in this package (`agent-roots`, `deny-all`) or an absolute path to a module of your own |
-| 3 | `EYG_POLICY`, the environment variable of the pi process |
-| 4 | `policies/agent-roots.eyg`, the preset in the package, which is what you get if you set nothing |
+| 1 | the `policy` argument of this call, which may only name a preset this package ships - it narrows a call and cannot widen one |
+| 2 | a grant the operator made in this session with `/eyg-grant`, for one tool call, N calls or the rest of the session |
+| 3 | `eyg.policy` in `.pi/settings.json` - a preset shipped in this package (`agent-roots`, `deny-all`) or an absolute path to a module of your own |
+| 4 | `EYG_POLICY`, the environment variable of the pi process |
+| 5 | `policies/agent-roots.eyg`, the preset in the package, which is what you get if you set nothing |
 | if none exists | the tool refuses to run anything rather than run unchecked |
+
+A grant is the operator answering a refusal, so the widening is a human act: the tool has no
+parameter through which a program could choose a wider module, and the grant's own record is a
+session entry (`pi.appendEntry`) that the branch replays. `/eyg-grant` asks for the preset or
+module path, the roots to add to the ones the preset reads, and the duration; typed with its
+arguments (`/eyg-grant agent-roots 3 roots=/tmp`) it asks only for the confirmation, and
+`/eyg-grant revoke` ends one early. `docs/world/entities/pi.session-grants.md` carries what one
+sequence did, and `notes/pi-codemode-session-grants.md` why it sits on the operator's side.
 
 The project file is the per-project knob, and it is the one to use: a session started in
 this directory gets this directory's policy. The same key names the roots:
@@ -30,7 +39,8 @@ this directory gets this directory's policy. The same key names the roots:
 ```
 
 Roots are absolute paths and are tried in their own order - the project key, then
-`EYG_ALLOWED_ROOTS`, then the directory pi was started in - and a relative entry stops the
+`EYG_ALLOWED_ROOTS`, then the directory pi was started in, plus any root a grant in force
+adds - and a relative entry stops the
 call with `every eyg.roots entry must be an absolute path, got <entry>` rather than
 silently matching nothing. A preset name that is not one of the package's, or a roots entry
 of the wrong shape, is refused the same way, naming the key. pi reads the settings file when
