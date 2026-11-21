@@ -26,17 +26,17 @@ Set the variable for the session:
 export EYG_CODEMODE_RUNNER=<absolute path to the binary>
 ```
 
-That is the whole contract: when the variable is set, nothing else is probed. Without it,
-the tool tries three candidates in order and takes the first whose `--help` mentions
-`--policy`: `eyg` on your `PATH`, then `<the session directory>/packages/gleam_cli/dist/eyg`
-(the language repository's own build layout), then `<the session directory>/.local/eyg-checked`.
-The last one is where to put a runner this machine has and `PATH` does not carry - a symlink is
-enough, and `.local/` is gitignored so the tree stays free of machine paths. The probe is one
-process per set of candidates, so a session pays it once.
+That is the whole contract: when the variable is set, nothing else is probed. Without it, the
+tool tries one candidate: `eyg` on your `PATH`. There is no third place to park a binary - the
+package reaches those two and nothing else
+(`docs/world/entities/cli.runner-official-install-only.md`) - and the probe is one process per
+set of candidates, so a session pays it once.
 
-On this machine the third candidate is what works: a dev build of the language CLI, symlinked at
-`.local/eyg-checked`, with how it was found and what it refused in
-`docs/world/entities/cli.checked-runner-on-this-host.md` and `notes/eyg-checked-runner-on-this-host.md`.
+No officially installed build is a candidate yet: the published release's `--help` has no
+`--policy` (`docs/world/entities/gap.runner-release-lacks-policy.md`), and neither does a build
+of the published default branch (`docs/world/entities/gap.policy-runner-not-on-main.md`). So
+today this page is for a binary you built from a ref the language repository names, or for a
+machine where a release does carry the flag.
 
 A relative path is refused: the policy sees absolute paths, and a relative one resolves
 before the checks can read it.
@@ -58,11 +58,13 @@ not carry the flag. Re-run step 1 against the exact path you set.
 At the shell, one command proves both halves - the runner answers for an effect, and the
 preset answered: `test/fixtures/refusal-probe.eyg` asks for a `WriteFile` and prints what came
 back, so `<runner> run --policy <this package>/policies/deny-all.eyg test/fixtures/refusal-probe.eyg`
-prints `write_file denied by policy` and leaves no file behind (0.1 s wall, @measured 2026-11-20).
+prints `write_file denied by policy` and leaves no file behind (0.1 s wall when a runner is
+named; measured 2026-11-20 through a development build of the language CLI this tree no longer
+has).
 
 ## Not this
 
 This page does not build a CLI - <https://eyg.run/guides/install-from-source> does, and
 this package carries none of that build; if you have no binary yet, start at
-`guides/how-to-get-a-checked-runner.md`, which ends with a script you run. It also does not change
+`guides/how-to-get-a-checked-runner.md`, which says what to ask upstream. It also does not change
 what a policy allows; `guides/how-to-write-another-preset.md` does that.

@@ -49,7 +49,9 @@ of the wrong shape, is refused the same way, naming the key. pi reads the settin
 it starts, so a changed file takes effect in the next session; the tool re-reads the two
 keys on every call (`extensions/eyg-codemode.ts`, in `execute`). Measured 2026-11-20: a
 project file naming `deny-all` and one root produced `deny-all.eyg (project settings)` in
-the probe header, a write inside that root refused, and 16 probes in 0.94 s.
+the probe header, a write inside that root refused, and 16 probes in 0.94 s - through a
+development build of the language CLI this tree no longer has; reading those two keys is pinned
+by `node --test` regardless.
 
 ## Learn what one record covers
 
@@ -156,8 +158,9 @@ which one it read.
 - The language keeps a wider preset library than the two this package ships, and it is not
   installed with this package, so the preset you need is a module you write here.
 - What a preset allows at run time is checkable, not something to take on faith: run one call
-  through a `--policy` runner and read what comes back. On this machine that happened on
-  2026-11-20, with a dev build reached through the untracked `.local/eyg-checked` symlink
-  (`docs/world/entities/cli.checked-runner-on-this-host.md`); the prebuilt release on `PATH`
-  still carries no `--policy`, so on a machine that installed only the release no call runs at
-  all. `AGENTS.md` names the probe and its result.
+  through a `--policy` runner and read what comes back. No officially installed build is such a
+  runner yet (`docs/world/entities/gap.runner-release-lacks-policy.md`), so on a machine that
+  installed only the release no call runs at all. The numbers this tree recorded on 2026-11-20
+  came from a development build of the language CLI it no longer has
+  (`docs/world/entities/cli.checked-runner-on-this-host.md`, superseded). `AGENTS.md` names the
+  probe and its result.

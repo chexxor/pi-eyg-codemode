@@ -90,11 +90,11 @@ export EYG_ALLOWED_ROOTS=<absolute path to this package>,/tmp/agent-workspace
 
 The `EYG_POLICY` path is this workspace's shipped preset; the default is the same
 file resolved from the package, so setting nothing works. The prebuilt `eyg` on
-`PATH` here is v0.1.0 and predates `--policy` (measured 2026-11-18: its help has no
-`--policy`), so that candidate is never chosen; on 2026-11-20 a dev build reached this tree
-through `<cwd>/.local/eyg-checked` and the tool ran checked calls through it
-(`docs/world/entities/cli.checked-runner-on-this-host.md`). On a machine with neither, the
-probe finds no runner and the tool refuses every call.
+`PATH` here is v0.1.0 and predates `--policy` (re-measured 2026-11-21: its help has no
+`--policy`), so that candidate is never chosen and the probe finds no runner: the tool refuses
+every call. A checked call was seen on 2026-11-20 through a development build of the language
+CLI that this tree no longer points at and no longer has
+(`docs/world/entities/cli.checked-runner-on-this-host.md`, superseded).
 
 ## One-shot session, and what it costs
 
@@ -128,7 +128,7 @@ on 2026-11-18.
 | loop | command | cost, wall |
 | --- | --- | --- |
 | one EYG expression (here, the CLI on PATH) | `eyg eval -c '!int_add(1, 1)'` | 0.06 s, measured there |
-| one run with checks in force (refusal) (language repository) | `packages/gleam_cli/dist/eyg run --policy <module> -c '<write outside root>'` | 0.06-0.07 s measured there; re-run here 2026-11-20 through `.local/eyg-checked`: 0.1 s, prints `write_file denied by policy` (`AGENTS.md`'s table) |
+| one run with checks in force (refusal) (language repository) | `<a --policy runner> run --policy <module> -c '<write outside root>'` | 0.06-0.07 s measured there; not runnable on this machine today - no named runner carries the flag, and this tree starts no build (`AGENTS.md`) |
 | one unchecked write (language repository, the gap) | `eyg run -c '<WriteFile>'` | 0.06 s - do not run it here |
 | the codemode package suite (language repository) | `eyg script eyg_packages/codemode_policy/entry.eyg` | 2.3 s - not runnable here |
 | the whole EYG suite (language repository) | `eyg script entry.eyg` | 5.7 s (100 tests, 0 failed) - not runnable here |

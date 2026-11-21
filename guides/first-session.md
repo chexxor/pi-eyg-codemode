@@ -34,17 +34,19 @@ Run the check the tool runs for you, so you see it fail rather than hear it fail
 ```
 
 `0` means this package refuses every call, because a runner that does not accept `--policy`
-has no checks to answer with. The tool's candidates are `eyg` on your `PATH` and
-`<the session directory>/packages/gleam_cli/dist/eyg`, and the first one whose `--help`
+has no checks to answer with. The tool's candidates are `eyg` on your `PATH` and, if you set it,
+`EYG_CODEMODE_RUNNER` holding an absolute path, and the first one whose `--help`
 mentions the flag wins.
 
 On 2026-11-19 the release the language repository publishes answers `0`
 (`gleam_cli-v0.1.0`, read on 2026-11-19 from the latest-release page that repository publishes;
 `docs/world/entities/gap.runner-release-lacks-policy.md` carries the command that re-checks it),
-so a reader who installed today should expect the refusal below, not a run. Two ways out:
+and so does a build of its published default branch
+(`docs/world/entities/gap.policy-runner-not-on-main.md`), so a reader who installed today should
+expect the refusal below, not a run. Two ways out:
 
-- build the current CLI from source (the second install link), then
-  `export EYG_CODEMODE_RUNNER=<absolute path to that binary>`;
+- ask the language repository which ref carries `run --policy`, build that ref from source (the
+  second install link), then `export EYG_CODEMODE_RUNNER=<absolute path to that binary>`;
 - or read this package as documentation, and treat a refusal for every call as the honest
   state of the release rather than a bug to chase.
 
@@ -106,8 +108,11 @@ like a success.
 The call that finds no runner answers before your program runs:
 
 ```
-no runner that accepts `--policy` was found among eyg, <session directory>/packages/gleam_cli/dist/eyg. Gating happens in the runner, so an older CLI cannot be used: build the current one (guides/install_from_source.md) or set EYG_CODEMODE_RUNNER to its absolute path.
+no runner that accepts `--policy` was found among eyg. Checking happens in the runner, so a CLI without that flag cannot be used, and this package reaches no other binary: install the official CLI, and if what you installed has no --policy, the release predates the checks (docs/world/entities/gap.runner-release-lacks-policy.md). Besides PATH the only thing tried is a runner the operator names: EYG_CODEMODE_RUNNER=<absolute path>.
 ```
+
+That is the text a fresh session answers with (@measured 2026-11-21 by a one-shot
+`pi --print --mode json --tools eyg` call in this tree).
 
 Work down that message: set `EYG_CODEMODE_RUNNER` to a binary whose `--help` mentions the
 flag, and re-run step 2. If the policy is the wrong one rather than missing, set

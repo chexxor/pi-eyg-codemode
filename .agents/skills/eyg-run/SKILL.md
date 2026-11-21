@@ -1,7 +1,7 @@
 ---
 name: eyg-run
 description: Run, evaluate, script and type-check EYG with the CLI, and build the CLI itself. Use when you need to execute EYG, or when a command involving `eyg` fails.
-verified: 2026-11-14
+verified: 2026-11-21
 ---
 
 # Running EYG
@@ -40,13 +40,13 @@ read; the effect surface this package documents is here, in
   keep that invariant intact.
 
 ## What the CLI on this host can and cannot do
-Measured 2026-11-18: `command -v eyg` answers `$HOME/.local/bin/eyg`, and
+Measured 2026-11-18 and again 2026-11-21: `command -v eyg` answers `$HOME/.local/bin/eyg`, and
 `eyg --version` answers `eyg v0.1.0`. That build's help has no `--policy`
 (`grep -c -- '--policy' <<< "$(eyg --help 2>&1)"` prints `0`), so from
-this workspace the CLI **type-checks** (`eyg check <file>.eyg`) but **cannot check a run**. A run with checks in force needs the runner
-built in the language repository (`packages/gleam_cli/dist/eyg` after `./bin/compile`),
-which is not vendored here - so an effect-level result claimed from this tree is
-UNVERIFIED, never PASS.
+this workspace the CLI **type-checks** (`eyg check <file>.eyg`) but **cannot check a run**. A run
+with checks in force needs a CLI that accepts `--policy`; this package probes `eyg` on `PATH` and
+`EYG_CODEMODE_RUNNER`, builds nothing itself, and points at no private build, so an effect-level
+result claimed from this tree is UNVERIFIED, never PASS.
 
 ## Prove it
 

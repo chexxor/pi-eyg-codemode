@@ -48,7 +48,7 @@ Three readers, and each needs one thing from this tree:
 | you want | read |
 | --- | --- |
 | one call to try, and how to read a refusal | `guides/first-session.md` - the tutorial |
-| to get a runner that answers for an effect, starting from nothing | `guides/how-to-get-a-checked-runner.md`, with `bin/agent/build-checked-runner.sh` for you to run |
+| to get a runner that answers for an effect, starting from nothing | `guides/how-to-get-a-checked-runner.md` - which says what to ask upstream |
 | to point the tool at a CLI you built or downloaded | `guides/how-to-point-the-tool-at-your-runner.md` |
 | to change what a session may reach: roots, one host, secrets | `guides/how-to-write-another-preset.md` |
 | to read a file bigger than one result | `guides/how-to-read-in-slices.md` |
@@ -84,17 +84,13 @@ for an effect. Install one from
 pages, taken 2026-11-18, for a session that cannot load a page; the paths inside the second
 belong to the language repository, not to this tree.
 
-Then the tool has to find what you installed. It looks in exactly four places, in this order
+Then the tool has to find what you installed. It looks in exactly two places, in this order
 (`runnerCandidates` in `lib/render-helpers.mjs`, tried by `resolveRunner` in
 `extensions/eyg-codemode.ts`):
 
 1. **`EYG_CODEMODE_RUNNER`** - the absolute path to the runner. Set it and nothing else is
    probed, so installing the compiler somewhere off `PATH` is fine as long as you name it here.
 2. **`eyg` on `PATH`** - whatever `command -v eyg` finds.
-3. **`<cwd>/packages/gleam_cli/dist/eyg`** - the language repository's own layout, which only
-   helps if you run pi sessions inside a checkout of that repository.
-4. **`<cwd>/.local/eyg-checked`** - the place for a checked build this machine has and `PATH`
-   does not carry: a symlink you make, in a directory this tree gitignores.
 
 A candidate counts only when `<candidate> --help` mentions `--policy` - the probe runs once per
 session and the refusal names the remedy, so a tool that assumed a path or a version would be a
@@ -103,19 +99,20 @@ binary exists:
 
     <the eyg you installed> --help 2>&1 | grep -c -- --policy   # 0 => every call will be refused
 
-**The prebuilt route is not enough on the machine this package was developed on.** On 2026-11-18
-the release found by `command -v eyg` answered `v0.1.0`, that check printed `0`, and the release
-the language repository published the next day (`gleam_cli-v0.1.0`, read from its release feed on
-2026-11-19) predates the `--policy` flag. Until a
-release carries it there is one route: `guides/how-to-get-a-checked-runner.md`, which ends with
-`bin/agent/build-checked-runner.sh` - you run that script, the package never does - pointing the
-artifact at `EYG_CODEMODE_RUNNER` or `<cwd>/.local/eyg-checked`. Installing the tool and getting a
-refusal for every call is the honest outcome, not a bug to chase. That sentence is about a *release*:
-on 2026-11-20 a dev build of the language CLI reached this tree through the untracked
-`.local/eyg-checked` symlink and a checked call was seen - `WriteFile` performed inside the
-roots, `write_file denied by policy: /tmp/...` outside them
-(`docs/world/entities/cli.checked-runner-on-this-host.md`). What stays unproven here is the
-package in use, not the checks: no long-running session
+**Neither route is enough today.** On 2026-11-18 the release found by `command -v eyg` answered
+`v0.1.0` and that check printed `0`; `gleam_cli-v0.1.0`, the release the language repository
+published the next day (read from its release feed on 2026-11-19), predates the `--policy` flag,
+and its published default branch has no runner that answers for an effect either
+(`docs/world/entities/gap.runner-release-lacks-policy.md`,
+`docs/world/entities/gap.policy-runner-not-on-main.md`). `guides/how-to-get-a-checked-runner.md`
+says what to ask upstream. Installing the tool and getting a refusal for every call is the honest
+outcome, not a bug to chase: this package reaches `eyg` on `PATH` or a runner you name, and no
+other binary (`docs/world/entities/cli.runner-official-install-only.md`).
+
+What has been seen here, and what has not: a checked call was seen on 2026-11-20, through a
+development build of the language CLI parked in a gitignored directory and since removed
+(`docs/world/entities/cli.checked-runner-on-this-host.md`, superseded). What stays unproven is
+the package in use, not the checks: no long-running session
 (`docs/world/entities/pi.first-draft.md`), and the drift guard against
 `test/fixtures/rule_mapping.gleam` is a record of the language's security suite rather than a
 run of it.
@@ -163,7 +160,6 @@ run of it.
 | `test/fixtures/rule_mapping.gleam` | the runtime's `rule_mapping` recorded verbatim, so the guard runs without the language repository present (`test/fixtures/rule_mapping.PROVENANCE.md`: where it came from, its checksums, how to refresh it) |
 | `skills/eyg-codemode/SKILL.md` | the pi skill loaded when a model writes EYG: the forms, what a refusal means, how to ask the registry |
 | `guides/` | the reference copied from the language repository, and this package's tutorial, how-tos and reference |
-| `bin/agent/build-checked-runner.sh` | a script a person runs to build a runner that accepts `--policy` and prove it before naming it; nothing in this tree runs it |
 | `notes/`, `docs/world/`, `pi-simple-world-model/` | the decision record, the claims with the tool that checks them |
 
 ## Commands that run here

@@ -134,7 +134,9 @@ A project that declares nothing gives the child no `eyg` tool, and the spawn ans
 child's own stderr instead of pretending.
 
 @measured 2026-11-20 in a scratch project (gitignored under `.ai-work/`) whose `.pi/settings.json`
-declared this package and named `agent-roots`: one spawn ran 11 child calls, all
+declared this package and named `agent-roots` - through a development build of the language CLI
+this tree no longer has, so these rows are labelled, not re-runnable here; the argv, the child
+env and the call budget are pinned by `node --test`: one spawn ran 11 child calls, all
 `policySource: spawner`, wrote `<project>/child-inside.txt` (6 bytes) and came back with
 `write_file denied by policy: /tmp/child-outside.txt`, and no such file existed; a spawn with
 `roots: ["<project>/sub"]` wrote `sub/inside-slice.txt` and was refused at
