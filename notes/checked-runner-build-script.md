@@ -7,7 +7,7 @@ Three choices `bin/agent/build-checked-runner.sh` makes and does not argue.
 
 **A script in `bin/`, run by a person, not an effect.** This package has no effect that starts a
 shell command, and adding one to close an install gap would widen the surface the whole package
-exists to narrow. So the build lives outside the gated channel: a file in the tree that an
+exists to narrow. So the build lives outside the policy-checked channel: a file in the tree that an
 operator runs at their own shell, next to the guide that says to run it
 (`guides/how-to-get-a-checked-runner.md`). The cost is that nothing here can verify the build
 succeeds on anyone's machine - the claims about it stay about the script's presence and syntax

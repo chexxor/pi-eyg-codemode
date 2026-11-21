@@ -36,6 +36,10 @@ reworded at the same time as the paragraphs were cut to say each fact once.
   as paths, never as instructions.
 - `notes/pi_codemode_host_gate.md` keeps its filename; several claim `sources` lists and
   `test -f` checks name it, and a note's file name is not a sentence a reader parses.
+- `gateable` in the spawner preset's prose (`policies/spawner-effects.eyg`,
+  `notes/spawner-effect-allowlist.md`, `pi.spawner-preset`) names the set of effects that have
+  a policy field, as against the four unchecked ones. It is a noun for that set, not the old
+  word for the mechanism, and the four unchecked effects are the reason the set needs a name.
 - `CHANGELOG.md` keeps the entries' substance; its header says the wording was replaced on
   2026-11-19, so the record does not claim the releases used this tree's words.
 - The two `guides/` mirrors of the language's pages (`pi_codemode_agent.md`,
@@ -45,3 +49,13 @@ reworded at the same time as the paragraphs were cut to say each fact once.
   the biggest concentration of the word in the two files a new user reads most. Trigger
   to revisit: when the language's own page adopts the plainer word, the mirror should be
   re-taken from it rather than edited again.
+
+# Moved later, same rule
+
+On 2026-11-21 the milestone that added `bin/agent/audit.sh` broke the rule in its own new
+lines - "six gates" in `AGENTS.md` and in the ADR-005 draft, "a red gate" for a failing check,
+and a shell helper named `gate`. They now say six checks, a failing check, and `run_check`;
+the sweep that catches this is `grep -rnE '\bgate(s|d|ing)?\b'` over the tree, minus
+`policy-gated`, the language repository's `bin/agent/gate.sh` and `gleam-gate`, the field name
+`gated: true`, and the 2026-11-19 entry in `docs/world/traps.md`, whose own `verify` quotes the
+old wording on purpose.

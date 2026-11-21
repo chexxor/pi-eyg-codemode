@@ -36,10 +36,10 @@ fi
 failures=0
 started=$SECONDS
 
-# gate <label> <command...>: run one check, print its wall time and its exit code, and
-# remember a failure without stopping the run - an operator wants all six answers, not
+# run_check <label> <command...>: run one check, print its wall time and its exit code,
+# and remember a failure without stopping the run - an operator wants all six answers, not
 # the first one that failed.
-gate() {
+run_check() {
   local label=$1
   shift
   local from to cost status
@@ -79,12 +79,12 @@ sweep() {
 }
 
 echo "audit in $pkg"
-gate "unit test and drift guard" node --test 'test/*.mjs'
-gate "world lint" node pi-simple-world-model/bin/world_lint.mjs
-gate "world verify $verify_args" node pi-simple-world-model/bin/world_verify.mjs $verify_args
-gate "world map current" node pi-simple-world-model/bin/world_map.mjs --check
-gate "tool sees the world model" pi --world-model-check
-gate "tracked paths and names" sweep
+run_check "unit test and drift guard" node --test 'test/*.mjs'
+run_check "world lint" node pi-simple-world-model/bin/world_lint.mjs
+run_check "world verify $verify_args" node pi-simple-world-model/bin/world_verify.mjs $verify_args
+run_check "world map current" node pi-simple-world-model/bin/world_map.mjs --check
+run_check "tool sees the world model" pi --world-model-check
+run_check "tracked paths and names" sweep
 
 moved=$(git status --porcelain docs/world | head -5)
 if [[ -n "$moved" ]]; then

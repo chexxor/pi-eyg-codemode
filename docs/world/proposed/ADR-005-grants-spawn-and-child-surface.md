@@ -96,7 +96,7 @@ than hidden.
 
 All commands run in this workspace, 2026-11-20, exit code in parentheses.
 
-- `bin/agent/audit.sh` - six gates, `6/6 passed, 0 failed, 5 s wall`, of which
+- `bin/agent/audit.sh` - six checks, `6/6 passed, 0 failed, 5 s wall`, of which
   `node --test 'test/*.mjs'` 0.10 s (pass 1, fail 0: the tool allowlist, the effect-name mapping, the
   budget, the env names, argv and both render shapes), `world_verify.mjs --all` 2.14 s (77 claims,
   0 failing), the tracked-path-and-name sweep 0.01 s (no file printed). Exit 0.

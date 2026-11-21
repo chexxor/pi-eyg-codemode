@@ -19,8 +19,8 @@ another workspace at run time.**
   This package was extracted from inside it on 2026-11-18 and never goes back. Its files
   are cited as "the language repository's", never as a path this tree can open. That
   repository also carries its own agent harness, Overlay: what each harness owns is
-  `docs/world/entities/overlay.agent-harness.md`, and where the gate this package starts
-  lives inside that repository today is
+  `docs/world/entities/overlay.agent-harness.md`, and where the checked runner this package
+  starts lives inside that repository today is
   `docs/world/entities/gap.policy-runner-not-on-main.md`.
 - **The EYG language skill is not in this tree**: it is a separate pi package declared by
   path in `.pi/settings.json` - the one line of this tree that reaches outside it, and the
@@ -89,7 +89,7 @@ shell commands; a policy module decides each effect before the host performs it.
 
 | Do this | cost | measured |
 | --- | --- | --- |
-| `bin/agent/audit.sh` (a human or a cron runs it; six gates, each cost printed) | 5.70 s wall, 6/6 passed | 2026-11-20 |
+| `bin/agent/audit.sh` (a human or a cron runs it; six checks, each cost printed) | 5.70 s wall, 6/6 passed | 2026-11-20 |
 | `node --test 'test/*.mjs'` (or the single file) | 0.09 s wall, pass 1 fail 0 | 2026-11-18 |
 | `.local/eyg-checked run --policy policies/deny-all.eyg test/fixtures/refusal-probe.eyg` | 0.1 s wall, prints `write_file denied by policy` and writes nothing | 2026-11-20 |
 | `pi --print --mode json --tools eyg <prompt>` (one fresh session, one tool call) | 20-40 s wall; needs `--model`, the default model hangs | 2026-11-20 |
@@ -151,8 +151,9 @@ never put a workspace fact in a guide - a fact in two places drifts.
   workspace.
 - **Do not push, publish or release.** A remote **is** configured: `git remote -v` answers
   `chexxor  git@github.com:chexxor/pi-eyg-codemode.git` and there is no `origin`
-  (`@measured 2026-11-20`), and `git log -g refs/remotes/chexxor/main` records four
-  `update by push` entries, the latest on 2026-11-20; the record does not say who ran them. The
+  (`@measured 2026-11-20 and again 2026-11-21`), and `git reflog show --date=iso-strict
+  refs/remotes/chexxor/main` records five `update by push` entries, the latest at
+  2026-11-20T18:00:15-06:00; the record does not say who ran them. The
   rule is unchanged by the fact: pushing is not a session's act, publishing this package is the
   operator's, and `npm publish` is out of scope. Local commits are fine, and a session's work is
   done when it is committed - check `git branch -r --contains <your commit>` answers nothing
@@ -184,9 +185,10 @@ never put a workspace fact in a guide - a fact in two places drifts.
   language repository's; nothing here carries a queue. Trigger to port one: a task from the
   operator that spans several steps of its own.
 - **No CI.** There is no `.github/workflows` and no `entry.eyg` here. `bin/agent/audit.sh` is the
-  one command that runs the six gates in the table above and prints what each cost (added
-  2026-11-20, 5.70 s, 6/6); nothing in this tree runs it, so a red gate is still something a
-  person notices. Trigger for CI: the first commit that lands with a failing gate nobody saw.
+  one command that runs the six checks in the table above and prints what each cost (added
+  2026-11-20, 5.70 s, 6/6); nothing in this tree runs it, so a failing check is still
+  something a person notices. Trigger for CI: the first commit that lands with a failing
+  check nobody saw.
 - **No release and no default branch carries the checked runner.** A runner that accepts
   `--policy` is reachable here through the `.local/eyg-checked` symlink, and the language
   repository's default branch and its published release both lack it

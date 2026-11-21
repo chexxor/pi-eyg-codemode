@@ -28,4 +28,4 @@ command itself, and why a page that carries a pattern writes every literal with 
 
 **Trigger to add tooling.** The first time a session commits a leak the sweep would have caught -
 one named file, one commit, no argument needed - put the same command in `bin/agent/audit.sh`
-alongside the other gates, and move this note's command into it.
+alongside the other checks, and move this note's command into it.

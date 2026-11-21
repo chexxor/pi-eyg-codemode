@@ -53,7 +53,10 @@ session file replayed through `grantEvents`/`replayGrants` reproduces each of th
 branch cut before the first grant record replays with no grant in force at all.
 
 UNVERIFIED: the N-calls duration is pinned by the unit test and was not run live; a `/tree` jump
-in a real session was not driven, only the replay over the recorded session file.
+in a real session was not driven, only the replay over the recorded session file. That live
+proof, a time bound on a grant, and an operator's way to list the grants in force are owed
+work, carried as `docs/world/entities/gap.grant-polish-undecided.md` with a row in
+`docs/world/runbooks/runbook.next-milestone.md`.
 
 ## Not this
 

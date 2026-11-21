@@ -1069,7 +1069,7 @@ export default function (pi: ExtensionAPI) {
       if (given.unknown.length > 0) {
         return refuseToRun(
           `the child's tools may only be ${CHILD_TOOL_ALLOWLIST.join(", ")}; these are not: ${given.unknown.join(", ")}. ` +
-            "A child with bash, edit or write is a session this package does not gate.",
+            "A child with bash, edit or write is a session whose effects this package does not check.",
         );
       }
       if (given.withoutEyg) {
@@ -1117,7 +1117,7 @@ export default function (pi: ExtensionAPI) {
         }
         if (childPolicy !== basePreset) {
           return refuseToRun(
-            `an effect allowlist is enforced by policies/${NARROWING_PRESET}.eyg, the ${BASE_PRESET} preset with a gate over its fields, and this child's policy resolves to ${childPolicy} (${child.source}). ` +
+            `an effect allowlist is enforced by policies/${NARROWING_PRESET}.eyg, the ${BASE_PRESET} preset with an allowlist over its fields, and this child's policy resolves to ${childPolicy} (${child.source}). ` +
               `Replacing a policy the project made narrower with the narrowing preset would widen it, so effects combines with ${BASE_PRESET} only: omit effects to let the child run under ${childPolicy}, or ask the operator for eyg.policy ${BASE_PRESET}.`,
           );
         }
