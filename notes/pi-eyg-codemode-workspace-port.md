@@ -99,9 +99,11 @@ therefore finds no runner on this host, and the policy decision cannot be re-obs
 without building `packages/gleam_cli` from source inside the language repository — out of
 this port's scope. At the time of writing, run behaviour in this workspace was **UNVERIFIED**
 for want of a runner that checks; the inlined presets are held to the preset source
-read on 2026-11-18. Superseded on 2026-11-20: a dev build reached this tree through
-`.local/eyg-checked` and checked calls were seen
-(`docs/world/entities/cli.checked-runner-on-this-host.md`).
+read on 2026-11-18. Superseded on 2026-11-20, when a development build reached this tree through a
+candidate that no longer exists, and superseded again on 2026-11-21: the probe reaches `PATH` and
+`EYG_CODEMODE_RUNNER` only (`docs/world/entities/cli.runner-official-install-only.md`), and
+run behaviour is UNVERIFIED here again (`docs/world/entities/cli.checked-runner-on-this-host.md`,
+superseded).
 
 ## The checks run from this workspace root, `@measured 2026-11-18`
 
@@ -222,8 +224,9 @@ Read as: v0.1.0 reads `run` as a program path, so the checked call never started
 decision was therefore **not observed** from this workspace on that binary. The claims about what
 each preset does at run time were **UNVERIFIED** here at the time and said so wherever they
 appear (`docs/world/entities/cli.prebuilt-binary.md`, `docs/world/entities/pi.codemode-tool.md`,
-`AGENTS.md`, `guides/pi_codemode_agent.md`, this note); since 2026-11-20 a refusal has been
-observed through `.local/eyg-checked` (`cli.checked-runner-on-this-host`). What *is* proven here
+`AGENTS.md`, `guides/pi_codemode_agent.md`, this note); on 2026-11-20 a refusal was
+observed through a development build that is gone (`cli.checked-runner-on-this-host`, superseded),
+and this machine names no runner today. What *is* proven here
 is that both
 presets parse, carry all 18 policy fields, and type-check; that the package's extension
 resolves its own policy, library and render helpers from inside itself; and that the

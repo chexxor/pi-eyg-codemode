@@ -8,6 +8,17 @@ history, not as instructions for this tree. On 2026-11-19 the word "gate" was re
 
 ## Unreleased
 
+- **The runner probe reaches only what you can install.** `runnerCandidates` answers
+  `EYG_CODEMODE_RUNNER` when it is set and otherwise the single candidate `eyg`: the two
+  working-directory candidates (`<cwd>/packages/gleam_cli/dist/eyg` and `<cwd>/.local/eyg-checked`)
+  are gone, and so is `bin/agent/build-checked-runner.sh`. This package supports the officially
+  installed CLI and a runner the operator names, and builds nothing
+  (`docs/world/entities/cli.runner-official-install-only.md`,
+  `notes/official-installed-runner-only.md`). The consequence is carried where the numbers live:
+  every effect-level row in `docs/world/` keeps its 2026-11-20 date and names the development build
+  it came from, and the verifies that invoked that binary run only when `EYG_CODEMODE_RUNNER` names
+  a runner. `cli.checked-runner-on-this-host` is superseded by the new record.
+
 - **The reference is inside the tool.** `action: "reference"` (`code: ""`) answers the builtin set with
   its signatures and the effect surface with the policy field that decides each effect, performing
   nothing and asking the policy nothing, so it answers where no runner was found as well as where one
@@ -37,7 +48,7 @@ history, not as instructions for this tree. On 2026-11-19 the word "gate" was re
   means; `bin/agent/build-checked-runner.sh` is a script a person runs, which refuses to call its
   artifact a runner until its `--help` mentions `--policy` and the shipped `deny-all` preset has refused
   its write fixture. Nothing in this tree runs it
-  (`docs/world/entities/gap.runner-release-lacks-policy.md`, `notes/checked-runner-build-script.md`).
+  (`docs/world/entities/gap.runner-release-lacks-policy.md`).
 - **The six checks run in one command.** `bin/agent/audit.sh` runs the unit test and drift guard, the
   world lint, the claim verifies, the map check, `pi --world-model-check` and the tracked-path-and-name
   sweep, printing what each cost and whether a record moved: 5.70 s wall, 6/6, 2026-11-20.
