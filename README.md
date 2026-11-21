@@ -1,8 +1,10 @@
 # pi-eyg-codemode
 
 **Status: a first draft.** The package is written, type-checked and measured call by call, and a
-checked call has been observed end to end here (`docs/world/entities/cli.checked-runner-on-this-host.md`),
-but it has not been proved in use: no long-running session, and no comparison against the built-in
+checked call was observed once here, on 2026-11-20, through a development build this package no
+longer reaches (`docs/world/entities/cli.checked-runner-on-this-host.md`, superseded); no officially
+installed build answers for an effect yet (`docs/world/entities/cli.runner-official-install-only.md`).
+It has not been proved in use: no long-running session, and no comparison against the built-in
 JavaScript codemode measured. Treat the design as settled and the use as unproven
 (`docs/world/entities/pi.first-draft.md`).
 
