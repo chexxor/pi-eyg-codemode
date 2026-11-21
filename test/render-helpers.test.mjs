@@ -182,9 +182,10 @@ let metadata = {
   assert.equal(effectLine("Hash", null, "unchecked (computes over values it was given)"), "Hash | none | unchecked (computes over values it was given)", "an unchecked effect names no field");
 
   // Where the tool looks for a runner that checks effects. A named path ends the
-  // search; otherwise the order is the CLI on PATH, the language CLI's build output
-  // under the working directory, and `.local/eyg-checked` inside it - the place for a
-  // runner this machine has and PATH does not carry (`cli.checked-runner-on-this-host`).
+  // search; otherwise the only candidate is the CLI on PATH, because this package
+  // depends on the officially installable `eyg` and reaches no build output or other
+  // private artifact of its own (`cli.runner-official-install-only`,
+  // `gap.runner-release-lacks-policy`).
   assert.deepEqual(
     runnerCandidates("/work", { EYG_CODEMODE_RUNNER: "/opt/eyg" }),
     ["/opt/eyg"],
@@ -192,13 +193,13 @@ let metadata = {
   );
   assert.deepEqual(
     runnerCandidates("/work", { EYG_CODEMODE_RUNNER: "" }),
-    ["eyg", join("/work", "packages", "gleam_cli", "dist", "eyg"), join("/work", ".local", "eyg-checked")],
-    "an empty variable names nothing, so the search order stands",
+    ["eyg"],
+    "an empty variable names nothing, so the CLI on PATH stands",
   );
   assert.deepEqual(
     runnerCandidates("/work", {}),
-    ["eyg", join("/work", "packages", "gleam_cli", "dist", "eyg"), join("/work", ".local", "eyg-checked")],
-    "three candidates, in that order, when nothing is configured",
+    ["eyg"],
+    "one candidate when nothing is configured: the installed CLI on PATH",
   );
 
   // The config surface: what the project's `eyg` key says, and which of the five

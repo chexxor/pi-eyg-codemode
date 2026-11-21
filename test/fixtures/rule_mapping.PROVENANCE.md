@@ -2,10 +2,10 @@
 
 `rule_mapping.gleam` is copied verbatim, not rewritten:
 
-- source: `packages/gleam_cli/src/eyg/cli/overlay.gleam`, lines 695-719
-  (`pub const rule_mapping = [ ... ]`), in the language repository - wherever the operator
-  has that checkout; this tree quotes no path to it
-- `md5sum packages/gleam_cli/src/eyg/cli/overlay.gleam` = `9cb5e8ace42e1df79083bab255ee9bb1`
+- source: the language repository's CLI module `overlay.gleam`, lines 695-719
+  (`pub const rule_mapping = [ ... ]`) - wherever the operator has that checkout; this tree
+  quotes no path to it
+- `md5sum <absolute path to overlay.gleam>` = `9cb5e8ace42e1df79083bab255ee9bb1`
   (whole file, 719 lines), captured 2026-11-18
 - the block itself is `d03a718c370a2ce3c14fa33eb7166691`, 25 lines, captured 2026-11-18
 

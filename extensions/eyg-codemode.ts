@@ -582,9 +582,10 @@ export default function (pi: ExtensionAPI) {
       if (runner === null) {
         return refuseToRun(
           `no runner that accepts \`--policy\` was found among ${candidates.join(", ")}. ` +
-            "Checking happens in the runner, so an older CLI cannot be used: build the current one " +
-            "(guides/install_from_source.md), put a checked runner at <cwd>/.local/eyg-checked, " +
-            "or set EYG_CODEMODE_RUNNER to its absolute path.",
+            "Checking happens in the runner, so a CLI without that flag cannot be used, and this package " +
+            "reaches no other binary: install the official CLI, and if what you installed has no --policy, " +
+            "the release predates the checks (docs/world/entities/gap.runner-release-lacks-policy.md). " +
+            "Besides PATH the only thing tried is a runner the operator names: EYG_CODEMODE_RUNNER=<absolute path>.",
         );
       }
 
@@ -1161,7 +1162,9 @@ export default function (pi: ExtensionAPI) {
         if (runner === null) {
           return refuseToRun(
             `an effect allowlist is checked by asking the policy in force what it performs, and no runner that accepts \`--policy\` was found among ${candidates.join(", ")}. ` +
-              "Omit effects to spawn the child under its policy un-narrowed, or put a checked runner where this package can find it (guides/how-to-get-a-checked-runner.md).",
+              "Omit effects to spawn the child under its policy un-narrowed, or name a runner that accepts " +
+              "the flag with EYG_CODEMODE_RUNNER=<absolute path>; no official release carries it yet " +
+              "(docs/world/entities/gap.runner-release-lacks-policy.md).",
           );
         }
         const probeRoot = reachableRoots.split(",")[0].trim();

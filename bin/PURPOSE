@@ -1,1 +1,4 @@
-The shell scripts a human runs outside this package. Two: `agent/build-checked-runner.sh`, which builds an EYG CLI that answers for an effect and proves the artifact before naming it, and `agent/audit.sh`, which runs the six checks in `AGENTS.md`'s table and prints what each cost. Nothing in this tree runs them - the package has no effect that starts a shell command, and a build of the language repository is not this tree's work.
+The shell scripts a human runs outside this package. One: `agent/audit.sh`, which runs the
+six checks in `AGENTS.md`'s table and prints what each cost. Nothing in this tree runs it -
+the package has no effect that starts a shell command, so a check is run by a person or a
+cron, never by the tool.
