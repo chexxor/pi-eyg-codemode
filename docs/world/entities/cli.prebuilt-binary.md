@@ -23,9 +23,11 @@ Consequences for this workspace, stated as facts:
 
 - the CLI can **type-check** this package's modules (`eyg check policies/agent-roots.eyg`
   and friends, 0.43 s for both presets plus the library);
-- the CLI **cannot check a run**, so it is never the candidate the tool picks; a checked run here
-  comes from a build that does carry the flag, named by `.local/eyg-checked`
-  (`cli.checked-runner-on-this-host`);
+- the CLI **cannot check a run**, so it is never the candidate the tool picks, and today no
+  candidate qualifies here at all: every call is refused
+  (`docs/world/entities/cli.runner-official-install-only.md`). The one checked run this tree
+  recorded came from a development build of the language CLI it no longer has
+  (`docs/world/entities/cli.checked-runner-on-this-host.md`, superseded);
 - that is why the extension probes candidates instead of trusting `PATH`, and why a statement
   about what a preset allows at run time names the runner it was measured with. The release build
   on `PATH` answers for nothing: read its help (`gap.runner-release-lacks-policy` is that hole).

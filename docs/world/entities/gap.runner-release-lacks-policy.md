@@ -4,9 +4,9 @@ type: entity
 owner: delegate
 status: current
 verified_at: 2026-11-21
-verify: "! $HOME/.local/bin/eyg --help 2>&1 | grep -q -- '--policy' && test -x bin/agent/build-checked-runner.sh && grep -q -- '--policy' guides/how-to-get-a-checked-runner.md"
+verify: "! $HOME/.local/bin/eyg --help 2>&1 | grep -q -- '--policy' && test ! -e bin/agent/build-checked-runner.sh && grep -q 'No official install can answer for an effect today' guides/how-to-get-a-checked-runner.md"
 confidence: high
-sources: [README.md, docs/world/entities/cli.prebuilt-binary.md, docs/world/traps.md, guides/install_prebuilt.md, guides/how-to-get-a-checked-runner.md, bin/agent/build-checked-runner.sh, notes/checked-runner-build-script.md]
+sources: [README.md, docs/world/entities/cli.prebuilt-binary.md, docs/world/traps.md, guides/install_prebuilt.md, guides/how-to-get-a-checked-runner.md, docs/world/entities/cli.runner-official-install-only.md]
 supersedes: null
 superseded_by: null
 ---
@@ -19,7 +19,14 @@ The latest release the language repository serves is `gleam_cli-v0.1.0` (read fr
 
 The fix belongs to the language, not to this package: publish a release whose CLI accepts `--policy`, then move `cli.prebuilt-binary` and this record with the new output and re-run the effect probes.
 
-What this package can do is shorten the wait, and since 2026-11-20 it does: `guides/how-to-get-a-checked-runner.md` is the one page from a fresh clone to a checked call, and `bin/agent/build-checked-runner.sh` is the build it points at - a script a person runs, which compiles a ref the operator names and refuses to call the artifact a runner until its `--help` mentions `--policy` and the shipped `deny-all` preset has refused its write fixture (`notes/checked-runner-build-script.md`). A person who followed the one-line installer still cannot use this package, and that is the honest outcome the README states; what is no longer true is that they have no route.
+What this package does is state the hole and refuse to work around it. Since 2026-11-21 it builds
+nothing and points at nothing private: `bin/` carries one script, `agent/audit.sh`; the probe
+reaches `eyg` on `PATH` or a runner named by `EYG_CODEMODE_RUNNER`, and no other binary
+(`docs/world/entities/cli.runner-official-install-only.md`). `guides/how-to-get-a-checked-runner.md`
+ends at "no official install can answer for an effect today" and names the question to take
+upstream: which ref carries `run --policy <module.eyg>`, and when the next release includes it. A
+person who followed the one-line installer cannot use this package at all, and the README says so
+rather than offering a route around it.
 
 ## Not this
 

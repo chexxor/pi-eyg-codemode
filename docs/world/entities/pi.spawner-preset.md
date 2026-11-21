@@ -4,7 +4,7 @@ type: entity
 owner: delegate
 status: current
 verified_at: 2026-11-21
-verify: "test -x .local/eyg-checked && .local/eyg-checked check policies/spawner-effects.eyg > /dev/null && EYG_ALLOWED_ROOTS=$PWD EYG_SUBAGENT_EFFECTS=read_file,standard_out .local/eyg-checked run --policy $PWD/policies/spawner-effects.eyg test/fixtures/refusal-probe.eyg 2>&1 | grep -q 'write_file denied by policy: EYG_SUBAGENT_EFFECTS=read_file,standard_out' && env -u EYG_SUBAGENT_EFFECTS EYG_ALLOWED_ROOTS=$PWD .local/eyg-checked run --policy $PWD/policies/spawner-effects.eyg test/fixtures/refusal-probe.eyg 2>&1 | grep -q 'standard_out denied by policy: EYG_SUBAGENT_EFFECTS=$'"
+verify: "eyg check policies/spawner-effects.eyg > /dev/null && test -z \"${EYG_CODEMODE_RUNNER:-}\" || { EYG_ALLOWED_ROOTS=$PWD EYG_SUBAGENT_EFFECTS=read_file,standard_out \"$EYG_CODEMODE_RUNNER\" run --policy $PWD/policies/spawner-effects.eyg test/fixtures/refusal-probe.eyg 2>&1 | grep -q 'write_file denied by policy: EYG_SUBAGENT_EFFECTS=read_file,standard_out' && env -u EYG_SUBAGENT_EFFECTS EYG_ALLOWED_ROOTS=$PWD \"$EYG_CODEMODE_RUNNER\" run --policy $PWD/policies/spawner-effects.eyg test/fixtures/refusal-probe.eyg 2>&1 | grep -q 'standard_out denied by policy: EYG_SUBAGENT_EFFECTS=$'; }"
 confidence: high
 sources: [policies/spawner-effects.eyg, extensions/eyg-codemode.ts, lib/render-helpers.mjs, test/render-helpers.test.mjs, guides/how-to-spawn-a-subagent.md, notes/spawner-effect-allowlist.md, docs/world/entities/pi.subagent-spawn.md]
 supersedes: null
@@ -44,8 +44,10 @@ in it is the agent-roots rule or a refusal, never a rule agent-roots does not ha
 
 ## What the preset answered, probe and live
 
-Probes: `.local/eyg-checked run --policy $PWD/policies/spawner-effects.eyg <program>` in a scratch
-directory, with `EYG_ALLOWED_ROOTS` set to it, `@measured 2026-11-20`.
+Probes: `"$EYG_CODEMODE_RUNNER" run --policy $PWD/policies/spawner-effects.eyg <program>` in a scratch
+directory, with `EYG_ALLOWED_ROOTS` set to it, `@measured 2026-11-20` - through a development build
+of the language CLI this tree no longer has, so the table is a dated record and the command runs
+only when the operator names a runner. The preset itself still type-checks on the CLI on `PATH`.
 
 | `EYG_SUBAGENT_EFFECTS` | effect asked for | answer |
 | --- | --- | --- |
@@ -81,7 +83,9 @@ TUI rendering of the refusal rows - the proofs ran `--print`, and only the row s
 - how to use the parameter: `guides/how-to-spawn-a-subagent.md`.
 
 @measured 2026-11-20 by `.local/eyg-checked check policies/spawner-effects.eyg` (exit 0, the record
-printed with all 18 fields) and the probe runs in the table above (`0.15-0.33 s` each), by one live
+printed with all 18 fields; `eyg check policies/spawner-effects.eyg` on the CLI on `PATH` answers the
+same today, exit 0, re-measured 2026-11-21) and the probe runs in the table above (`0.15-0.33 s`
+each, development build), by one live
 parent session (`pi --print --mode json --offline --approve --no-session --no-context-files
 --tools eyg,eyg_subagent,read`, 154 s wall, exit 0, transcript under `.ai-work/spawn-surface/`,
 gitignored), and by `node --test 'test/*.mjs'` (pass 1, fail 0, 0.12 s: the field mapping, the

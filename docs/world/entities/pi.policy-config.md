@@ -38,7 +38,9 @@ you set nothing, and where to go to change it.
   covers, the shipped presets to copy, how to change rules, how to check the module and
   point the tool at it, and how to prove the preset answered. The roots recipe is there too.
 
-Measured 2026-11-20 in a scratch project (a fresh `pi --print` with `--tools eyg`): a
+Measured 2026-11-20 in a scratch project (a fresh `pi --print` with `--tools eyg`, through a
+development build of the language CLI this tree no longer has -
+`docs/world/entities/cli.runner-official-install-only.md`): a
 `.pi/settings.json` naming `deny-all` and one root gave the probe header
 `deny-all.eyg (project settings)`, a write inside that root came back
 `write_file denied by policy` with nothing written, 16 probes took 0.94 s, and replacing the

@@ -25,22 +25,24 @@ What "first draft" covers, precisely:
   costs in `AGENTS.md`'s table. Nothing here is a long session, and no comparison against the
   built-in JavaScript codemode has been measured.
 - **The checks have been seen working; the package has not been used.** The presets type-check,
-  the drift guard passes against its snapshot, and under a checked runner reached through
-  `.local/eyg-checked` a write inside the roots performed and a write outside them came back
-  `write_file denied by policy` (`cli.checked-runner-on-this-host`, measured 2026-11-20). What is
+  the drift guard passes against its snapshot, and under a checked run made on 2026-11-20 through
+  a development build of the language CLI this tree no longer has, a write inside the roots
+  performed and a write outside them came back
+  `write_file denied by policy` (`cli.checked-runner-on-this-host`, superseded). What is
   still missing is time: nothing here is a long session, and no comparison against the built-in
   JavaScript codemode has been measured.
 - **Version numbers say nothing about this.** `package.json` carries `1.5.0`, and `CHANGELOG.md`
   records 1.5.0 as the move to a standalone workspace - a packaging history, not a maturity claim.
 
 Trigger to move this record: sessions in real use, and a measured comparison against the built-in
-JavaScript codemode. Then replace the README's status line. The runner half of the old trigger has
-been met and is recorded in `cli.checked-runner-on-this-host`.
+JavaScript codemode. Then replace the README's status line. The runner half of the old trigger was
+met once, on 2026-11-20, and is superseded: no build this package reaches carries the flag
+(`cli.runner-official-install-only`).
 
 ## Not this
 
 Not a claim that the tool is broken - a runner that accepts the flag and is named by
-`EYG_CODEMODE_RUNNER` or by `<cwd>/.local/eyg-checked` runs the presets as written, and what
-happens when it does is recorded in `cli.checked-runner-on-this-host`. Not the gap records
+`EYG_CODEMODE_RUNNER` runs the presets as written, and what
+happened when one did is recorded in `cli.checked-runner-on-this-host` (superseded). Not the gap records
 themselves: they say which hole is open, this one says how much of this package's own prose is
 provisional.

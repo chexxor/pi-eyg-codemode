@@ -27,9 +27,10 @@ slices, ask the registry, spawn a subagent), and `tool-reference.md` is this pac
 reference - the knobs, the rows, the probes and the seam it cannot check. The README links all of
 them and carries none of their content.
 
-One guide names a shell script: `how-to-get-a-checked-runner.md` points at
-`bin/agent/build-checked-runner.sh`, which a person runs at their own shell. Nothing in this tree
-runs it - there is no effect that starts a shell command (`notes/checked-runner-build-script.md`).
+No guide tells anyone to build something. `how-to-get-a-checked-runner.md` ends at "no official
+install can answer for an effect today" and the question to take upstream
+(`docs/world/entities/cli.runner-official-install-only.md`), and `bin/` carries one script,
+`agent/audit.sh`, which a person or a cron runs (`AGENTS.md`).
 
 **The website is the source; `guides/` is an offline mirror.** The EYG documentation lives at
 <https://eyg.run> - <https://eyg.run/guides> carries install, syntax, the CLI effect reference,

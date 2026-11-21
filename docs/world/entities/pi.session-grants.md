@@ -38,7 +38,9 @@ operator chooses - one tool call, N calls, or the rest of the session - and can 
   nothing.
 
 Measured 2026-11-20 in one RPC-driven session over a scratch project (`.ai-work` is
-gitignored): the program that writes `/tmp/eyg-grant-probe.txt` came back
+gitignored; the session's runner was a development build of the language CLI this tree no longer
+has, `docs/world/entities/cli.runner-official-install-only.md`): the program that writes
+`/tmp/eyg-grant-probe.txt` came back
 `write_file denied by policy: /tmp/eyg-grant-probe.txt` with
 `policySource: project settings`, roots = the project only, `refusals: [{write_file,
 /tmp/eyg-grant-probe.txt}]` and the rows naming `/eyg-grant ... roots + /tmp`; `/eyg-grant` then

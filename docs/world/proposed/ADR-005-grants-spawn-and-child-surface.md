@@ -94,7 +94,11 @@ than hidden.
 
 ## Verification performed
 
-All commands run in this workspace, 2026-11-20, exit code in parentheses.
+All commands run in this workspace, 2026-11-20, exit code in parentheses. The
+`.local/eyg-checked` rows below ran through a development build of the language CLI reached by a
+probe candidate that no longer exists: that symlink and candidate are deleted, so those rows are a
+dated record, and the same commands now need `EYG_CODEMODE_RUNNER` naming a runner that accepts
+`--policy` (`docs/world/entities/cli.runner-official-install-only.md`).
 
 - `bin/agent/audit.sh` - six checks, `6/6 passed, 0 failed, 5 s wall`, of which
   `node --test 'test/*.mjs'` 0.10 s (pass 1, fail 0: the tool allowlist, the effect-name mapping, the

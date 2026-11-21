@@ -13,7 +13,7 @@ nothing here reads it at run time, and this tree never writes outside itself.
 
 | directory | purpose |
 | --- | --- |
-| bin/ | The shell scripts a human runs outside this package. Two: `agent/build-checked-runner.sh`, which builds an EYG CLI that answers for an effect and proves the artifact before naming it, and `agent/audit.sh`, which runs the six checks in `AGENTS.md`'s table and prints what each cost. Nothing in this tree runs them - the package has no effect that starts a shell command, and a build of the language repository is not this tree's work. |
+| bin/ | The shell scripts a human runs outside this package. One: `agent/audit.sh`, which runs the |
 | docs/ | The world model records for this workspace: docs/world/00-map.md (tier-0 index), the entity, decision and runbook pages, invariants.md, traps.md and roster.yaml. The lint, map and verify CLIs that check them live in pi-simple-world-model/. |
 | extensions/ | The one pi extension: it registers the `eyg` tool, resolves the policy, the roots and the runner from inside the package, and spawns the runner that checks every effect through argv. |
 | guides/ | Prose guides read before writing EYG, in two sets: the language reference copied from the |
@@ -38,8 +38,9 @@ nothing here reads it at run time, and this tree never writes outside itself.
 
 | id | one line | owner | verified_at |
 | --- | --- | --- | --- |
-| cli.checked-runner-on-this-host | The hole every other record in this tree pointed at - "no runner here accepts `--policy`, so no checked call has ever ... | delegate | 2026-11-21 |
+| cli.checked-runner-on-this-host | **Superseded 2026-11-21 by `docs/world/entities/cli.runner-official-install-only.md`.** The untracked symlink this ... | delegate | 2026-11-21 |
 | cli.prebuilt-binary | `command -v eyg` answers `$HOME/.local/bin/eyg` and `eyg --version` answers `eyg v0.1.0` (measured 2026-11-18). | delegate | 2026-11-21 |
+| cli.runner-official-install-only | `runnerCandidates` in `lib/render-helpers.mjs` returns two things and nothing else: the value of `EYG_CODEMODE_RUNNER` ... | delegate | 2026-11-21 |
 | codemode.effect-surface | A running program reaches the host only through effects, and the set it may perform is an intersection of three files. | delegate | 2026-11-21 |
 | gap.grant-polish-undecided | The mechanism is recorded and partly measured in `docs/world/entities/pi.session-grants.md`: a refusal names the ask, ... | delegate | 2026-11-21 |
 | gap.install-guides-name-no-policy | Neither install route - the website's pages and this tree's mirrors, `guides/install_prebuilt.md` and ... | delegate | 2026-11-21 |
@@ -76,7 +77,7 @@ nothing here reads it at run time, and this tree never writes outside itself.
 
 ## Where to look for a claim
 
-- entities: 23 · invariants: 4 · decisions: 6 · runbooks: 2 · traps: 45
+- entities: 24 · invariants: 4 · decisions: 6 · runbooks: 2 · traps: 45
 - suspect right now: ADR-002-handler-seam, overlay.agent-harness
 - re-check everything: `npm run world` · checks: `npm run world:lint` · regenerate this index: `npm run world:map`
 <!-- END GENERATED -->

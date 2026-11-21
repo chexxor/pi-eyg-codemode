@@ -17,7 +17,10 @@ try one write outside the roots, report that refusal text. Command
 (`@measured 2026-11-20`): `pi --print --mode json --offline --approve --no-session
 --no-context-files --tools eyg,read --model strata/qwen3.8-flash-next-iq3_s --thinking low
 "<task>"`. Driver, prompts and transcripts: `.ai-work/usability/` (gitignored).
-Three alternating rounds per condition, one model, `--thinking low`.
+Three alternating rounds per condition, one model, `--thinking low`. Every round ran through a
+development build of the language CLI this tree no longer has
+(`docs/world/entities/cli.runner-official-install-only.md`), so the table describes a working tool
+that no installed build provides today.
 
 | condition | calls | calls with exit != 0 | `builtin undefined` | `read` calls | wall | total written |
 | --- | --- | --- | --- | --- | --- | --- |

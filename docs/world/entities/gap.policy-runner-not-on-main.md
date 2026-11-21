@@ -4,7 +4,7 @@ type: entity
 owner: delegate
 status: current
 verified_at: 2026-11-21
-verify: "grep -q '#(\"Search\"' test/fixtures/rule_mapping.gleam && grep -q 'EYG_RULE_SOURCE' test/fixtures/rule_mapping.PROVENANCE.md && ! $HOME/.local/bin/eyg --help 2>&1 | grep -q -- '--policy' && test -f docs/world/entities/cli.checked-runner-on-this-host.md"
+verify: "grep -q '#(\"Search\"' test/fixtures/rule_mapping.gleam && grep -q 'EYG_RULE_SOURCE' test/fixtures/rule_mapping.PROVENANCE.md && ! $HOME/.local/bin/eyg --help 2>&1 | grep -q -- '--policy' && test -f docs/world/entities/cli.runner-official-install-only.md"
 confidence: high
 sources: [test/fixtures/rule_mapping.gleam, test/fixtures/rule_mapping.PROVENANCE.md, lib/render-helpers.mjs, docs/world/entities/gap.runner-release-lacks-policy.md, docs/world/entities/overlay.agent-harness.md, docs/world/entities/cli.checked-runner-on-this-host.md, docs/world/traps.md]
 supersedes: null
@@ -46,10 +46,12 @@ The fix belongs to the language: land the checked one-shot runner on its default
 publish a release that carries the flag - `gap.runner-release-lacks-policy` is the publishing
 half of the same hole. When a build of the default branch here accepts `--policy`: re-capture the
 fixture as `test/fixtures/rule_mapping.PROVENANCE.md` describes, re-run the live guard against
-that source, drop the `.local/eyg-checked` symlink, and re-run the availability probes
+that source, name the build with `EYG_CODEMODE_RUNNER` (this tree carries no symlink, no build
+script and no candidate but `PATH` and that variable -
+`docs/world/entities/cli.runner-official-install-only.md`), and re-run the availability probes
 (`action: effects`). A branch build already let the probes run once
-(`cli.checked-runner-on-this-host`); what is still owed is a run whose runner anyone else can
-build.
+(`cli.checked-runner-on-this-host`, superseded); what is still owed is a run whose runner anyone
+else can install.
 
 ## Not this
 

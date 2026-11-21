@@ -119,4 +119,7 @@ two more under `.ai-work/spawn-surface/` (`pi --print --mode json --offline --ap
 `run1c.json` and `run2.json`, all gitignored), by `ls` of the scratch project's files and of `/tmp`,
 and by `node --test 'test/*.mjs'` (pass 1, fail 0, 0.12 s: argv including `--tools`, the env
 overrides including the allowlist and the budget, the depth slots, the roots slice rule, the tool
-allowlist, the effect-name mapping and both render shapes are asserted).
+allowlist, the effect-name mapping and both render shapes are asserted). Every session above ran
+through a development build of the language CLI this tree no longer has
+(`docs/world/entities/cli.runner-official-install-only.md`), so the child's writes and refusals are
+a dated record here, not a command that runs today; the argv, env and budget assertions still run.
