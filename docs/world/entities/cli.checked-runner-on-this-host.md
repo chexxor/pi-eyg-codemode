@@ -3,7 +3,7 @@ id: cli.checked-runner-on-this-host
 type: entity
 owner: delegate
 status: current
-verified_at: 2026-11-20
+verified_at: 2026-11-21
 verify: "test -x .local/eyg-checked && [ \"$(.local/eyg-checked --help 2>&1 | grep -c -- --policy)\" -ge 1 ] && .local/eyg-checked run --policy $PWD/policies/deny-all.eyg test/fixtures/refusal-probe.eyg | grep -q 'write_file denied by policy'"
 confidence: high
 sources: [test/fixtures/refusal-probe.eyg, lib/render-helpers.mjs, extensions/eyg-codemode.ts, notes/eyg-checked-runner-on-this-host.md, docs/world/entities/gap.policy-runner-not-on-main.md]

@@ -3,7 +3,7 @@ id: ADR-002-handler-seam
 type: adr
 owner: human
 status: suspect
-verified_at: 2026-11-20
+verified_at: 2026-11-21
 verify: "grep -q 'Plan first, then act' guides/tool-reference.md && grep -q 'advanced embedding scenarios' guides/tool-reference.md"
 confidence: high
 sources: [policies/agent-roots.eyg, policies/deny-all.eyg, README.md, guides/syntax.md, notes/pi-codemode-handler-seam.md]

@@ -3,7 +3,7 @@ id: guides.index
 type: entity
 owner: delegate
 status: current
-verified_at: 2026-11-20
+verified_at: 2026-11-21
 verify: "grep -q '^name: EYG syntax guide' guides/syntax.md && grep -q '^name: Builtins reference' guides/builtins_reference.md && test -f guides/pi_codemode_agent.md && test -f guides/cli_effects_reference.md && test -f guides/first-session.md && test -f guides/tool-reference.md && test -f guides/how-to-share-functions.md && test -f guides/how-to-write-another-preset.md && test -f guides/how-to-spawn-a-subagent.md && test -f guides/how-to-get-a-checked-runner.md && grep -q 'first-session.md' README.md && grep -q 'how-to-get-a-checked-runner.md' README.md"
 confidence: high
 sources: [guides/syntax.md, guides/builtins_reference.md, guides/cli_effects_reference.md, guides/pi_codemode_agent.md, guides/first-session.md, guides/tool-reference.md, guides/how-to-share-functions.md, guides/how-to-spawn-a-subagent.md, guides/how-to-get-a-checked-runner.md, README.md]

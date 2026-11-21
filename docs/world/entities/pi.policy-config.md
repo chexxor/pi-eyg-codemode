@@ -3,7 +3,7 @@ id: pi.policy-config
 type: entity
 owner: delegate
 status: current
-verified_at: 2026-11-20
+verified_at: 2026-11-21
 verify: "grep -c 'the default preset' README.md && grep -c 'Which preset a call gets' guides/how-to-write-another-preset.md && grep -c 'eyg.policy' guides/how-to-write-another-preset.md && grep -q agent-roots .pi/settings.json && grep -q resolvePolicy extensions/eyg-codemode.ts && node pi-simple-world-model/bin/world_lint.mjs"
 confidence: high
 sources: [README.md, guides/how-to-write-another-preset.md, guides/tool-reference.md, extensions/eyg-codemode.ts, lib/render-helpers.mjs, .pi/settings.json, notes/pi-codemode-project-settings-key.md, docs/world/entities/pi.session-grants.md]

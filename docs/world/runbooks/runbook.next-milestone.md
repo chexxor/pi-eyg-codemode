@@ -3,7 +3,7 @@ id: runbook.next-milestone
 type: runbook
 owner: delegate
 status: current
-verified_at: 2026-11-20
+verified_at: 2026-11-21
 verify: "test -f docs/world/runbooks/runbook.next-milestone.md && grep -q 'gap.runner-release-lacks-policy' docs/world/runbooks/runbook.next-milestone.md && grep -q 'gap.policy-runner-not-on-main' docs/world/runbooks/runbook.next-milestone.md"
 confidence: high
 sources: [docs/world/entities/gap.runner-release-lacks-policy.md, docs/world/entities/gap.install-guides-name-no-policy.md, docs/world/entities/gap.roots-have-no-config-file.md, docs/world/entities/gap.windows-is-undocumented.md, docs/world/entities/gap.policy-runner-not-on-main.md, docs/world/entities/gap.language-skill-home-undecided.md, docs/world/decisions/ADR-004-doc-shape-for-two-readers.md]
