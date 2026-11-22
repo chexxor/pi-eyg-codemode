@@ -4,9 +4,9 @@ type: entity
 owner: delegate
 status: current
 verified_at: 2026-11-22
-verify: "node --test test/host-coverage.test.mjs > /dev/null && grep -q '^let build = (policy, ctx, body) -> {' host/guard.eyg && node bin/agent/refusal-probe.mjs 2>&1 | grep -q 'write_file denied by policy: /tmp/' && node bin/agent/refusal-probe.mjs --program test/fixtures/secret-probe.eyg --inside-roots 2>&1 | grep -q 'read_file denied by policy: .*\\.env\\.eyg' && node bin/agent/refusal-probe.mjs --program test/fixtures/unnamed-effect.eyg 2>&1 | grep -q 'unhandled effect Foo'"
+verify: "node --test test/host-coverage.test.mjs > /dev/null && grep -q '^let build = (policy, ctx, body) -> {' host/guard.eyg && node bin/agent/refusal-probe.mjs 2>&1 | grep -q 'write_file denied by policy: /tmp/' && node bin/agent/refusal-probe.mjs --program test/fixtures/secret-probe.eyg --inside-roots 2>&1 | grep -q 'read_file denied by policy: .*\\.env\\.eyg' && node bin/agent/refusal-probe.mjs --program test/fixtures/unnamed-effect.eyg 2>&1 | grep -q 'unhandled effect Foo' && node bin/agent/refusal-probe.mjs --program test/fixtures/inner-handler.eyg 2>&1 | grep -q 'what the program was answered: read_file denied by policy: /tmp/'"
 confidence: high
-sources: [host/guard.eyg, host/PURPOSE, lib/render-helpers.mjs, extensions/eyg-codemode.ts, test/host-coverage.test.mjs, test/fixtures/refusal-probe.eyg, test/fixtures/secret-probe.eyg, test/fixtures/unnamed-effect.eyg, guides/tool-reference.md, notes/pi-codemode-host-guard-contract.md]
+sources: [host/guard.eyg, host/PURPOSE, lib/render-helpers.mjs, extensions/eyg-codemode.ts, test/host-coverage.test.mjs, test/fixtures/refusal-probe.eyg, test/fixtures/secret-probe.eyg, test/fixtures/unnamed-effect.eyg, test/fixtures/inner-handler.eyg, guides/tool-reference.md, notes/pi-codemode-host-guard-contract.md]
 supersedes: null
 superseded_by: null
 ---
@@ -39,6 +39,10 @@ files the tool builds.
 5. **An inner handler can only decline.** A clause the model writes inside the guarded body sees the
    effect first, and its re-perform reaches the outer guard, which decides; with the guard refusing,
    the effect is never performed. The same holds for an effect raised inside a builtin's callback.
+   Re-runnable: `node bin/agent/refusal-probe.mjs --program test/fixtures/inner-handler.eyg` - the
+   model's own `handle ReadFile` clause re-performs the read, the answer the program gets is
+   `read_file denied by policy: /tmp/eyg-inner-handler-probe.txt`, `exit=0`, and no file exists at
+   that path (`@measured 2026-11-22`, 0.2 s).
 
 Two consequences the package had to build for:
 

@@ -27,9 +27,9 @@ copy is wrong the day the site changes - the trap that covers "a fact in two pla
 ## Decision
 
 The README states **only this package's contract** - what has to be true on your machine
-(a runner that accepts `--policy`), where the tool looks for it (the candidate list, in order,
-with `EYG_CODEMODE_RUNNER` first), what a call answers when the binary it starts does not know
-the flag, and what is UNVERIFIED until a build that knows it runs here - and links the website for
+(a CLI that runs a file), where the tool looks for it (`EYG_CODEMODE_RUNNER` first, else `PATH`), what
+a call answers when the binary it starts is missing, and what was UNVERIFIED while the checks lived in
+a build of the language rather than here - and links the website for
 every step of getting the CLI. Install commands are not quoted in the README.
 
 **Amended 2026-11-22, and this is the half that changed.** The offline copies do not stay. What a

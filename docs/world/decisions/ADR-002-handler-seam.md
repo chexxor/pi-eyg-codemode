@@ -2,16 +2,25 @@
 id: ADR-002-handler-seam
 type: adr
 owner: human
-status: current
+status: superseded
 verified_at: 2026-11-22
-verify: "grep -q 'Plan first, then act' guides/tool-reference.md && grep -q 'advanced embedding scenarios' guides/tool-reference.md"
+verify: "grep -q 'Plan first, then act' guides/tool-reference.md && grep -q '^superseded_by: ADR-006-guard-in-package' docs/world/decisions/ADR-002-handler-seam.md && grep -q 'ADR-002-handler-seam' docs/world/decisions/ADR-006-guard-in-package.md"
 confidence: high
 sources: [policies/agent-roots.eyg, policies/deny-all.eyg, README.md, notes/pi-codemode-handler-seam.md, guides/tool-reference.md]
 supersedes: null
-superseded_by: null
+superseded_by: ADR-006-guard-in-package
 ---
 
 # ADR-002: where an effect handler may be re-implemented
+
+**Superseded 2026-11-22 by `docs/world/decisions/ADR-006-guard-in-package.md`.** The choice this
+record made - that the seam sits in the policy module rather than in a program or a new tool
+parameter - stands. What changed is where the handler loop runs: the decision this record assumed
+lived in the run command, in a build that could load a policy module, and no installed build could.
+ADR-006 puts the loop in `host/guard.eyg`, which this package ships, so the policy module is
+imported by a host rather than handed to a runner. What still holds from here: `Pass(value)` may
+rewrite the argument, `Mock` answers the program and the host performs nothing, `Mock` must return
+the effect's own reply type, and the plan-then-act pair is two calls under two records.
 
 ## Context
 
@@ -63,7 +72,8 @@ to act.
   rather than infer it.
 - Simulating an effect is untyped-safe here: a `Mock` whose value is not the effect's type is a
   runtime error, not a refusal, and whether the runner checks that before performing is
-  UNVERIFIED (no `--policy` runner on this host).
+  UNVERIFIED (no build that loads a policy module was reachable from this host when this line was
+  written; the guard shapes the answer itself today - `docs/world/entities/host.guard-boundary.md`).
 - A staged session is two calls, so two runner start-ups and two rendered rows - fine at
   0.06-0.07 s each, and small next to a 44-142 s live session.
 - The plan run and the act run can disagree if the roots changed between them; the expanded row

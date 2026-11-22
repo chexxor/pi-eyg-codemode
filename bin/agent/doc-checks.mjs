@@ -17,7 +17,7 @@
 // Scope, and why each exemption exists:
 //
 //   * PROSE is README.md, AGENTS.md, guides/**, skills/**, .agents/skills/**.
-//   * CODE is extensions, lib, policies, libraries, bin, test.
+//   * CODE is extensions, lib, policies, libraries, bin, test, host.
 //   * `docs/world` and `notes/` are NOT in these checks: `world_lint.mjs` checks the
 //     records, and a note is allowed to discuss a word in order to ban it.
 //   * `CHANGELOG.md` is NOT in these checks: it is the history of names this package
@@ -42,7 +42,7 @@ import { join, posix } from "node:path";
 import { pathToFileURL } from "node:url";
 
 const SKIP_DIRS = new Set([".git", ".ai-work", "node_modules", ".local", "dist", "target"]);
-const CODE_DIRS = ["extensions", "lib", "policies", "libraries", "bin", "test"];
+const CODE_DIRS = ["extensions", "lib", "policies", "libraries", "bin", "test", "host"];
 const PROSE_FILES = ["README.md", "AGENTS.md"];
 const PROSE_DIRS = ["guides", "skills", ".agents/skills"];
 const SELF = "bin/agent/doc-checks.mjs";

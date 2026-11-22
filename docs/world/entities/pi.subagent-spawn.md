@@ -95,6 +95,9 @@ exit 143 and `refusals: []` while the child wrote its own EYG: it spent calls on
 never reached the steps that would have been refused. A proof whose child must hit a boundary hands
 the child programs to paste (`guides/how-to-spawn-a-subagent.md`).
 
+A third run `@measured 2026-11-22` re-took that row through the guard this package ships and the
+three results came back the same; that table now lives in `docs/world/entities/pi.spawner-policy.md`.
+
 UNVERIFIED:
 `EYG_CODEMODE_PI`, which was never needed because `pi` is on PATH here; a spawn from an untrusted
 project (the `--approve` path was only reached from a trusted one); the rendered rows in a TUI - the

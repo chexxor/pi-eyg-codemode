@@ -14,11 +14,11 @@ superseded_by: null
 
 ## Context
 
-Until 2026-11-22 the tool asked the CLI to do the deciding: it spawned
-`<binary> run --policy <module.eyg> -c <program>` and treated a refusal as the runner's answer.
-That put the boundary in a binary this package does not own, and the flag existed in exactly one
-place - a development build of the language CLI on this operator's machine, parked in an untracked
-symlink. The installed release (`eyg v0.1.0`) has no such flag, and neither the language
+Until 2026-11-22 the tool asked the CLI to do the deciding: it named a policy module and the program
+inline in the same argv, and treated a refusal as the runner's answer.
+That put the boundary in a binary this package does not own, and the request was understood in exactly
+one place - a development build of the language CLI on this operator's machine, parked in an untracked
+symlink. The installed release (`eyg v0.1.0`) understands no such request, and neither the language
 repository's `main` nor its published release carries it
 (`docs/world/entities/gap.policy-runner-not-on-main.md`,
 `docs/world/entities/gap.runner-release-lacks-policy.md`). So the package shipped a check it could

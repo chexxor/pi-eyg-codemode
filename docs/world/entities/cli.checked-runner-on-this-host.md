@@ -21,8 +21,8 @@ rather than a release version.
 
 Measured 2026-11-20.
 
-- `<runner> --help 2>&1 | grep -c -- --policy` printed **3** (`run --policy <m> <src>`,
-  `eval --policy <m>`, `script --policy <m> <file>`).
+- its `--help` named a policy module on each of the three run modes: `grep -c` over that help for
+  the flag printed **3** (`run`, `eval`, `script`).
 - The binary was a build of the language repository itself, at that repository's own build
   output path. Its `--version` says `dev`, not a release version, which is why
   `gap.runner-release-lacks-policy` still stood then and stands now.
@@ -51,9 +51,10 @@ The probe rows are what the default policy in fact does: `AppendFile`, `CWD`, `D
 `Sleep`, `StandardError`, `StandardOut` allowed for the probe value; `CreateKey` and `Fetch`
 refused; `Env`, `Exit`, `StandardIn` unknown because probing them would read the environment,
 stop the probe or need input; `DecodeJSON`, `EYGParse`, `Hash`, `Sign` unchecked. The same probe
-under `policies/deny-all.eyg` refuses the write fixture:
-`<the named runner> run --policy $PWD/policies/deny-all.eyg test/fixtures/refusal-probe.eyg`
-prints `write_file denied by policy` and creates no file (0.1 s).
+under `policies/deny-all.eyg` refuses the write fixture: the call printed
+`write_file denied by policy` and created no file (0.1 s). That row runs today as
+`node bin/agent/refusal-probe.mjs --with-policy deny-all`, recorded in
+`docs/world/entities/codemode.effect-surface.md`.
 
 Running the binary did not touch the language checkout: `find <that checkout> -newermt @<start>`
 printed nothing after both the direct calls and the pi session.
@@ -62,14 +63,15 @@ printed nothing after both the direct calls and the pi session.
 
 - which places the tool probes today, and what an installed CLI answers:
   `docs/world/entities/cli.runner-official-install-only.md`;
-- whether a *release* carries the flag: `gap.runner-release-lacks-policy`; and whether `main`
-  has the runner: `gap.policy-runner-not-on-main`;
+- whether a *release* carries a host of its own: `gap.runner-release-lacks-policy`; and whether `main`
+  has one: `gap.policy-runner-not-on-main`;
 - how much of the package is still unproven in use: `pi.first-draft`;
 - what the policies decide, effect by effect: `overlay.policy-rules` and the effect rows of
   `guides/eyg-surface.tsv`;
 - how to point the tool at a runner of your own: `guides/how-to-point-the-tool-at-your-runner.md`.
 
-@measured 2026-11-20 by `.local/eyg-checked --help 2>&1 | grep -c -- --policy` (3),
-`.local/eyg-checked run --policy policies/agent-roots.eyg -c <program>` (the three rows above),
+@measured 2026-11-20 by `.local/eyg-checked --help` (three run-mode lines took a policy module,
+and `--version` answered `eyg dev`) and `.local/eyg-checked run` with that module over the write
+fixture and the print fixture (the three rows above),
 and `node --test 'test/*.mjs'` (pass 1, fail 0, 0.07 s) - that symlink is deleted, so these rows
 are a dated record, not a command that runs here today.

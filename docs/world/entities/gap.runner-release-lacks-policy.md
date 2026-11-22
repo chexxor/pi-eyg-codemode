@@ -2,34 +2,43 @@
 id: gap.runner-release-lacks-policy
 type: entity
 owner: delegate
-status: current
+status: superseded
 verified_at: 2026-11-22
-verify: "test -x $HOME/.local/bin/eyg && ! $HOME/.local/bin/eyg --help 2>&1 | grep -q -- '--policy' && ! $HOME/.local/bin/eyg run --policy $PWD/policies/deny-all.eyg -c '!int_add(1, 1)' 2>&1 | grep -q '^2$' && grep -q 'did not understand `run --policy <module.eyg>`' guides/how-to-point-the-tool-at-your-runner.md && test ! -e bin/agent/build-checked-runner.sh"
+verify: "grep -qF '[mode, entryPath]' extensions/eyg-codemode.ts && grep -q 'return \\[\"eyg\"\\]' lib/render-helpers.mjs && test -x $HOME/.local/bin/eyg && $HOME/.local/bin/eyg --version | grep -q 'v0.1.0' && ! $HOME/.local/bin/eyg --help 2>&1 | grep -qi policy && test ! -e bin/agent/build-checked-runner.sh"
 confidence: high
-sources: [README.md, docs/world/entities/cli.prebuilt-binary.md, docs/world/traps.md, docs/world/entities/cli.runner-official-install-only.md]
+sources: [README.md, docs/world/entities/cli.prebuilt-binary.md, docs/world/traps.md, docs/world/entities/cli.runner-official-install-only.md, docs/world/decisions/ADR-006-guard-in-package.md]
 supersedes: null
-superseded_by: null
+superseded_by: cli.runner-official-install-only
 ---
 
-# Gap: the release published today has no build that knows the flag
+# Gap closed: the release published today is enough for this package
 
-The latest release the language repository serves is `gleam_cli-v0.1.0` (read from its release feed on 2026-11-19), and that build's help has no `--policy` (`! $HOME/.local/bin/eyg --help 2>&1 | grep -q -- '--policy'`, run 2026-11-19). Re-run on 2026-11-21 against the installed binary: `eyg run --policy policies/deny-all.eyg -c '!int_add(1, 1)'` answers `error: no such file: <cwd>/run` instead of `2`, which is the binary reading the mode word as a file name because it has no such flag. So **a person who follows the one-line installer cannot use this package at all** - every call names the install instead of running a program.
+This page recorded the hole: the latest release the language repository serves is
+`gleam_cli-v0.1.0` (read from its release feed on 2026-11-19), that build's help named no policy
+module (`! $HOME/.local/bin/eyg --help 2>&1 | grep -qi policy`, re-run 2026-11-22), and a call this
+package used to start - a one-shot run asked to load a policy module - ended
+`error: no such file: <cwd>/run`, the binary reading the mode word as a file name. So a person who
+followed the one-line installer could not use this package at all: every call named the install
+instead of running a program.
 
-## What to do about it
+It closed on 2026-11-22, and not because the release changed: the per-effect checks moved into
+`host/guard.eyg`, which this package ships, so the tool asks the installed CLI for `run <entry>` and
+nothing else (`docs/world/decisions/ADR-006-guard-in-package.md`,
+`docs/world/entities/cli.runner-official-install-only.md`). The command above checks the opposite of
+what it used to: it passes because the argv this package builds carries no such request, because the
+binary on `PATH` is the one the tool starts, and because that binary still knows nothing about policy
+modules - which is now information about the language, not an obstacle here.
 
-The fix belongs to the language, not to this package: publish a release whose CLI accepts `--policy`, then move `cli.prebuilt-binary` and this record with the new output and re-run the effect probes.
-
-What this package does is state the hole and refuse to work around it. It builds
-nothing and points at nothing private: `bin/` carries one script, `agent/audit.sh`; the tool starts
-`eyg` on `PATH` or a binary named by `EYG_CODEMODE_RUNNER`, and no other binary
-(`docs/world/entities/cli.runner-official-install-only.md` records the one line such a call ends
-with, and the command that produced it). The question to take upstream is which ref carries
-`run --policy <module.eyg>`, and when the next release includes it. A
-person who followed the one-line installer cannot use this package at all, and the README says so
-rather than offering a route around it.
+What the language still owes, and this package no longer waits on, is in
+`docs/world/entities/gap.policy-runner-not-on-main.md`. What this tree never did about the old hole
+is worth keeping: it built nothing and pointed at nothing private - `bin/` carried one script,
+`agent/audit.sh`, and the deleted build script is still absent (`test ! -e
+bin/agent/build-checked-runner.sh`).
 
 ## Not this
 
-It is not a claim that this package is broken: a build that knows `--policy`, wherever the
-user puts it, works once `EYG_CODEMODE_RUNNER` names it. It is not the trap that a one-shot
-`eyg run -c` is not checked (`docs/world/traps.md`), which is about the CLI's own default.
+It is not a claim that the release is broken: it produces a CLI that runs programs, and this package
+now uses it as-is. It is not the trap that a one-shot `eyg run` started by a person is not checked
+(`docs/world/traps.md`), which is about the CLI's own default. The installed-binary facts today - which
+places the tool tries, and what a call ends with when the binary is missing - are
+`docs/world/entities/cli.runner-official-install-only.md`.

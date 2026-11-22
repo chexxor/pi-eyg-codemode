@@ -4,9 +4,9 @@ type: runbook
 owner: delegate
 status: current
 verified_at: 2026-11-22
-verify: "test -f docs/world/runbooks/runbook.next-milestone.md && grep -q 'gap.runner-release-lacks-policy' docs/world/runbooks/runbook.next-milestone.md && grep -q 'gap.policy-runner-not-on-main' docs/world/runbooks/runbook.next-milestone.md && grep -q 'gap.grant-polish-undecided' docs/world/runbooks/runbook.next-milestone.md && grep -q 'gap.policy-record-extension' docs/world/runbooks/runbook.next-milestone.md"
+verify: "test -f docs/world/runbooks/runbook.next-milestone.md && grep -q 'gap.windows-is-undocumented' docs/world/runbooks/runbook.next-milestone.md && grep -q 'gap.policy-runner-not-on-main' docs/world/runbooks/runbook.next-milestone.md && grep -q 'gap.grant-polish-undecided' docs/world/runbooks/runbook.next-milestone.md && grep -q 'gap.policy-record-extension' docs/world/runbooks/runbook.next-milestone.md"
 confidence: high
-sources: [docs/world/entities/gap.runner-release-lacks-policy.md, docs/world/entities/gap.install-guides-name-no-policy.md, docs/world/entities/gap.roots-have-no-config-file.md, docs/world/entities/gap.windows-is-undocumented.md, docs/world/entities/gap.policy-runner-not-on-main.md, docs/world/entities/gap.language-skill-home-undecided.md, docs/world/entities/gap.grant-polish-undecided.md, docs/world/entities/gap.policy-record-extension.md, docs/world/decisions/ADR-004-doc-shape-for-two-readers.md]
+sources: [docs/world/entities/gap.windows-is-undocumented.md, docs/world/entities/gap.policy-runner-not-on-main.md, docs/world/entities/gap.language-skill-home-undecided.md, docs/world/entities/gap.grant-polish-undecided.md, docs/world/entities/gap.policy-record-extension.md, docs/world/decisions/ADR-004-doc-shape-for-two-readers.md, docs/world/decisions/ADR-006-guard-in-package.md]
 supersedes: null
 superseded_by: null
 ---
@@ -19,13 +19,10 @@ the new evidence rather than leaving it suspect.
 
 | gap claim | what is missing | the first step |
 | --- | --- | --- |
-| `gap.runner-release-lacks-policy` | a published CLI that accepts `--policy`, which is what makes this package usable at all | publish the release, then re-run the effect probes and move `cli.prebuilt-binary` |
-| `gap.install-guides-name-no-policy` | a page that takes a working CLI to a runner this package finds | write `guides/how-to-point-the-tool-at-your-runner.md`, then file the same gap against the website |
-| `gap.roots-have-no-config-file` | a per-project place for the roots, so a session does not inherit the cwd by surprise | decide the shape (a `roots` key in `.pi/settings.json`), then implement it in the extension and its test |
 | `gap.windows-is-undocumented` | anything at all about Windows beyond the release asset's name | run one Windows session and record the rows; fix the environment hand-off if it fails |
-| `gap.policy-runner-not-on-main` | the checked one-shot runner in the language's default branch, not only in a branch of it | land it there and publish it (the row above), then re-capture `test/fixtures/rule_mapping.gleam` and re-run the live guard against that source |
+| `gap.policy-runner-not-on-main` | a host of the language's own in its default branch, not only in a branch of it | land it there and publish it, then re-capture `test/fixtures/rule_mapping.gleam` and re-run the live guard against that source; this package is unblocked meanwhile (`docs/world/decisions/ADR-006-guard-in-package.md`) |
 | `gap.language-skill-home-undecided` | a decision about where the EYG language-skill package lives: the sibling checkout declared by path, a copy inside this package, or a published package declared by name | read `notes/pi-codemode-language-skill-packaging.md`; if the upstream `SKILL.md` front-matter fix has landed, re-run the A/B recorded in `usability.without-language-skill`; then write the choice as a decision record in `docs/world/decisions/` named for the topic, which retires the row |
-| `gap.grant-polish-undecided` | the grant polish the child-surface milestone parked: a live proof of the N-call duration, any time bound on a grant, and a way for the operator to list the grants in force without starting one | drive one RPC session that spends a 2-call grant and record it in `pi.session-grants.md`; then decide the expiry shape in a note before coding it, and add the listing subcommand with a `guides/tool-reference.md` row |
+| `gap.grant-polish-undecided` | the grant polish the child-surface milestone parked: a live proof of the N-call duration, any time bound on a grant, a way for the operator to list the grants in force without starting one, and the wording of the ask a refusal prints - seen live 2026-11-22 suggesting a "root" cut out of a refusal reason (`EYG_SUBAGENT_EFFECTS=read_file,standard_out...`, `/home`) | drive one RPC session that spends a 2-call grant and record it in `pi.session-grants.md`; fix the ask's text where the reason names no path, which is a change to the row builder and its test, not to a policy |
 | `gap.policy-record-extension` | a way to extend or override the policy record the host loaded, so changing one handler stops meaning copying a file | ask the language for the shape named in `notes/pi-eyg-codemode-policy-record-extension.md`; when a release carries it, shrink `policies/spawner-effects.eyg` to the handlers it changes and move the record with the new count |
 
 The audit that produced this list is `ADR-004-doc-shape-for-two-readers`. Two further gaps are

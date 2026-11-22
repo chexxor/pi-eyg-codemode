@@ -21,7 +21,7 @@ returning problem strings, so a test can point it at a fixture tree, and
 file is the only thing that runs them (`bin/PURPOSE`).
 
 The checks cover two sets. PROSE is `README.md`, `AGENTS.md`, `guides/`, `skills/`,
-`.agents/skills/`. CODE is `extensions`, `lib`, `policies`, `libraries`, `bin`, `test`. Three
+`.agents/skills/`. CODE is `extensions`, `lib`, `policies`, `libraries`, `bin`, `test`, `host`. Three
 exemptions are deliberate and stated in the file's header comment: `docs/world/` and `notes/`
 belong to `world_lint.mjs`, a note is allowed to name a word in order to ban it
 (`notes/wording-the-checks-not-the-gate.md` is such a note), and `CHANGELOG.md` is the history of

@@ -16,22 +16,26 @@ superseded_by: null
 `guides/how-to-write-a-policy.md` tells an operator to copy the shipped policy nearest what
 they need and change the handlers, and `policies/spawner-effects.eyg` does exactly that inside
 the package: it is `agent-roots.eyg` with an allowlist over its fields, written out whole. The
-hole is the copying itself. 75 non-comment lines of `policies/agent-roots.eyg` appear verbatim
-in `policies/spawner-effects.eyg` - `verify` counts them - so every rule change is two edits,
-and the drift between the copies is a cost already named in
+hole is the copying itself. 68 of the 84 non-comment lines of `policies/agent-roots.eyg` appear
+verbatim in `policies/spawner-effects.eyg` - `verify` counts them - so every rule change is two
+edits, and the drift between the copies is a cost already named in
 `notes/spawner-effect-allowlist.md`.
 
 What is missing is a way to extend or override **the record the host loaded**: in the operator's
 spelling, `{ WebSearch: my_search } \ existing_policy`, register a handler for a field the
 loaded policy does not carry, or replace one it does, without owning its file. EYG has record
-update for a record the program holds as a value, and it only overwrites fields already present;
-a policy module is not such a value, and importing one asks its top-level effects of the running
-program. `notes/pi-eyg-codemode-policy-record-extension.md` carries the measurement, what was
-rejected and why, and the trigger that closes this record: a language release in which a
-`--policy` module can extend or override the record another module returned.
+update for a record the program holds as a value, and it only overwrites fields already present.
+What changed on 2026-11-22 is the second half of that sentence: a policy module *is* imported now -
+the generated entry imports `host/guard.eyg`, the policy module and the program module - and a
+module's top-level effects are not performed on the way in, so importing one no longer asks them of
+the running program (`docs/world/entities/host.guard-boundary.md`). Importing still gives no way to
+name the record another module returned, which is the hole. The measurement, what was rejected and
+why are in `notes/pi-eyg-codemode-policy-record-extension.md`; the trigger that closes this record
+is a language release in which one policy module can extend or override the record another module
+returned.
 
-This package cannot close it. The compiler and the runner are the language repository's, and
-this tree builds neither (`AGENTS.md`); nothing here adds a language feature, and no shipped
+This package cannot close it. The compiler and the CLI are the language repository's, and this tree
+builds neither (`AGENTS.md`); nothing here adds a language feature, and no shipped
 policy is loosened to imitate one.
 
 ## Not this

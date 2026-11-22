@@ -56,27 +56,33 @@ a newline kept `signature, greet, greeting` in dependency order; the write progr
 type-checked, made `.pi/eyg-variables/` and wrote three modules; the prelude lines imported them
 back and `eval` answered `"a\"b\\c\td\ne!"` for `greet("!")`; the module for `greet` imported its
 sibling as `./signature.eyg` and carried no machine path; a write aimed at a directory that does not
-exist printed its reason and came back as not kept. `node --test 'test/*.mjs'` (39 tests, pass 39,
+exist printed its reason and came back as not kept. `node --test 'test/*.mjs'` (43 tests, pass 43,
 fail 0) pins the refusal rows, the name refusals, the branch replay, and the two-half rule.
 
-Seen live 2026-11-22 in one fresh one-shot session (`pi --print --mode json --tools eyg --offline
---approve --no-session --no-context-files --no-skills`, 17 s, over a scratch project whose
+Seen live 2026-11-22 in one fresh one-shot session (`pi --print --mode json --model <model> --tools
+eyg --offline --no-session --no-context-files`, 15.5 s, over a scratch project whose
 `.pi/eyg-variables/note.eyg` existed before the session started): `extern: "bogus"` answered
 `extern must name one of user, workspace, session, got bogus`, and `extern` on `action: "effects"`
 answered `it belongs on action run or eval, not effects` - both before a program was spawned. Every
 later call carried `let {note} = import "<scratch>/.pi/eyg-variables/note.eyg"` in
 `details.prelude` and `note (workspace)` in `details.kept`, so the binding on disk was aliased by
-name with no `libraries` argument. Both of those calls ended
-`nothing kept: the program exited 1, so its bindings were not written`, because the installed
-binary read the mode word as a file name.
+name with no `libraries` argument.
 
-UNVERIFIED from here: an `extern` call of this package's tool performing a write, and a policy
-module deciding one. No officially installed build takes `--policy`, so on this host every call
-through the tool is refused before a program runs
-(`docs/world/entities/cli.runner-official-install-only.md`); the writes in the paragraph above
-landed precisely because no policy was loaded, and the camelCase name refusal was not reached in
-the live session for the same reason - the unit test pins that row. The feature stays unproved in
-use, as the package does (`docs/world/entities/pi.first-draft.md`).
+The same session closed the hole this record used to carry as UNVERIFIED: a call through this
+package's tool performed the write a kept binding needs, and the policy in force decided it. Call 5
+asked for `extern: "session"` on a binding `let probe_live = !int_multiply(7, 6)` and answered
+`variables: [{name: probe_live, scope: session, written: true}]`; call 6, with no `libraries`
+argument, printed `42` and carried `prelude: ["let probe_live = !int_multiply(7, 6)"]` and
+`kept: ["probe_live (session)"]` (`@measured 2026-11-22;
+`.ai-work/live-tool/PROOF-live-tool-2026-11-22.md`, gitignored, quotes the rows). A session-scope
+keep writes no file at all, so what that round trip proves is the store and the replay, not the
+policy's hand on the write.
+
+UNVERIFIED from here: a **file** scope (`workspace` or `user`) kept through the tool under a policy
+that refuses its path - the rows that would show the refusal are pinned by the unit test
+(`variableWriteOutcomes`), and the generated write program was run outside the tool by
+`bin/agent/check-variable-shapes.mjs`, which loads no policy. The feature stays unproved in use
+under a refusal, as the package does (`docs/world/entities/pi.first-draft.md`).
 
 ## Not this
 

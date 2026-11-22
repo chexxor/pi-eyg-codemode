@@ -97,20 +97,27 @@ than hidden.
 All commands run in this workspace, 2026-11-20, exit code in parentheses. The
 `.local/eyg-checked` rows below ran through a development build of the language CLI reached by a
 probe candidate that no longer exists: that symlink and candidate are deleted, so those rows are a
-dated record, and the same commands now need `EYG_CODEMODE_RUNNER` naming a runner that accepts
-`--policy` (`docs/world/entities/cli.runner-official-install-only.md`).
+dated record. The same two facts run today with no build of the language at all, because
+`host/guard.eyg` decides the effects and `node bin/agent/refusal-probe.mjs` reproduces one call
+re-runnable here (`docs/world/entities/pi.spawner-policy.md`).
 
 - `bin/agent/audit.sh` - six checks, `6/6 passed, 0 failed, 5 s wall`, of which
   `node --test 'test/*.mjs'` 0.10 s (pass 1, fail 0: the tool allowlist, the effect-name mapping, the
   budget, the env names, argv and both render shapes), `world_verify.mjs --all` 2.14 s (77 claims,
   0 failing), the tracked-path-and-name sweep 0.01 s (no file printed). Exit 0.
-- `test -x .local/eyg-checked && .local/eyg-checked check policies/spawner-effects.eyg && EYG_ALLOWED_ROOTS=$PWD
-  EYG_SUBAGENT_EFFECTS=read_file,standard_out .local/eyg-checked run --policy $PWD/policies/spawner-effects.eyg
-  test/fixtures/refusal-probe.eyg 2>&1 | grep -q 'write_file denied by policy: EYG_SUBAGENT_EFFECTS=read_file,standard_out'
-  && env -u EYG_SUBAGENT_EFFECTS EYG_ALLOWED_ROOTS=$PWD .local/eyg-checked run --policy $PWD/policies/spawner-effects.eyg
-  test/fixtures/refusal-probe.eyg 2>&1 | grep -q 'standard_out denied by policy: EYG_SUBAGENT_EFFECTS=$'`
-  - the policy type-checks with 18 fields, an allowlist refusal names the whole list, and an unset list
-    refuses the first gateable effect the program asks for. Exit 0 (0.33 s).
+- The policy type-checked (18 fields then), and the write probe under it answered
+  `write_file denied by policy: EYG_SUBAGENT_EFFECTS=read_file,standard_out` with the list set and
+  `standard_out denied by policy: EYG_SUBAGENT_EFFECTS=` with it unset - an allowlist refusal names
+  the whole list, and an unset list refuses the first effect the program asks for. Exit 0 (0.33 s),
+  through the deleted build.
+- The same two facts, re-run 2026-11-22 on the installed CLI: `eyg check policies/spawner-effects.eyg`
+  (19 fields), then
+  `node bin/agent/refusal-probe.mjs --with-policy spawner-effects --fields read_file,standard_out`
+  answering `write_file denied by policy: EYG_SUBAGENT_EFFECTS=read_file,standard_out`, and the same
+  with no `--fields` on `test/fixtures/refusal-abort.eyg` answering
+  `Aborted with reason: "write_file denied by policy: EYG_SUBAGENT_EFFECTS="` - an unset list names no
+  field, and a program whose print is refused can still report that through the abort path. Exit 0
+  (0.4 s for the three).
 - One live parent session with `tools`, `effects`, `max_calls: 6` and roots narrowed to a slice:
   154 s wall, exit 0, child answered in 53.61 s with 3 `eyg` calls, budget unspent; a read inside the
   slice printed the file, a write inside it was refused by the allowlist, a read outside the slice was

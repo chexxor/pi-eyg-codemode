@@ -32,7 +32,8 @@ Two exemptions, both in the checker and both stated where they apply:
 What the rule moved rather than deleted: `.agents/skills/eyg-run/SKILL.md` used to open "What the
 CLI on this host can and cannot do" with "Measured 2026-11-18 and again 2026-11-21: `command -v
 eyg` answers `$HOME/.local/bin/eyg` ...". It now says what a session does with the fact - whether
-the CLI on `PATH` carries `--policy` decides whether a run can be checked at all - and points at
+the CLI on `PATH` is the one that runs every call, because the checks are a program this package
+ships and a runtime decision is re-runnable with one command - and points at
 `docs/world/entities/cli.prebuilt-binary.md`, which carries the capture and the command that
 re-runs it. `guides/eyg-surface.tsv` lost its capture line for the same reason; its header names
 `test/fixtures/surface.PROVENANCE.md`, and that page carries the date and the checksum

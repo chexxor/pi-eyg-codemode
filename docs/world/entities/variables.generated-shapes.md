@@ -38,9 +38,9 @@ removed unless `--keep` names it.
 
 What it does **not** prove: that a policy decided the write. The script starts `eyg run <file>` with
 no policy module, so those writes are the CLI performing what the program asked. The policy half of
-the claim is `docs/world/entities/pi.variable-scopes.md`, which labels its own proof as not-live for
-the same reason: no build this host can install takes `--policy`
-(`docs/world/entities/cli.runner-official-install-only.md`).
+the claim lives in `docs/world/entities/pi.variable-scopes.md`, which proves a keep through the tool
+live for `extern: "session"` - a scope that writes no file - and labels a file scope kept under a
+refusal as not live.
 
 ## Not this
 

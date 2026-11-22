@@ -105,6 +105,8 @@ refusal_probe() {
     grep -q 'unhandled effect Foo' || return 1
   node bin/agent/refusal-probe.mjs --with-policy spawner-effects --program test/fixtures/refusal-abort.eyg |
     grep -q 'write_file denied by policy: EYG_SUBAGENT_EFFECTS=' || return 1
+  node bin/agent/refusal-probe.mjs --program test/fixtures/inner-handler.eyg |
+    grep -q 'what the program was answered: read_file denied by policy: /tmp/' || return 1
   return 0
 }
 

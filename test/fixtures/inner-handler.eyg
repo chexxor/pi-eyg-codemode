@@ -1,0 +1,20 @@
+// A handler written by the model, inside the guarded body. It sees the read first, and its own
+// re-perform reaches the outer guard: under `policies/agent-roots.eyg` the path is outside the
+// roots, so the refusal the program gets names the guard's reason and nothing is read. This is
+// boundary fact 5 of `docs/world/entities/host.guard-boundary.md`, and the reason a program cannot
+// opt out of the checks by handling its own effects.
+// Run: node bin/agent/refusal-probe.mjs --program test/fixtures/inner-handler.eyg
+let text = handle ReadFile((request, resume) -> {
+  let again = perform ReadFile({ path: request.path, offset: request.offset, limit: request.limit })
+  match again {
+    Ok(_) -> { resume(Ok(!string_to_binary("inner clause read the file itself"))) }
+    Error(why) -> { resume(Error(why)) }
+  }
+}, (_) -> {
+  let outer = perform ReadFile({ path: "/tmp/eyg-inner-handler-probe.txt", offset: 0, limit: 10 })
+  match outer {
+    Ok(_) -> { "the read was performed" }
+    Error(why) -> { !string_append("what the program was answered: ", why) }
+  }
+})
+perform StandardOut(text)

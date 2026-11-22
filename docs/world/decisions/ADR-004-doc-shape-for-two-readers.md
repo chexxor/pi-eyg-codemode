@@ -45,9 +45,9 @@ The two documentation principles this audit applies:
 
 The language's how-to stays delegated (ADR-003). What the delegation does **not** cover is
 this package's own requirement. The website's install pages verify only
-`eyg eval -c '!int_add(1, 1)'` and never mention `--policy`; the repository's
+`eyg eval -c '!int_add(1, 1)'` and say nothing about a host that decides an effect; the repository's
 `releases/latest` serves `gleam_cli-v0.1.0` (fetched 2026-11-19), which is the build whose
-`--help` has no `--policy` on this host (`docs/world/traps.md` trap-17, and the page copy this
+`--help` names no policy module on this host (`docs/world/traps.md` trap-17, and the page copy this
 tree then carried quoted the same one-line installer). So the recommended install
 route hands a new reader a CLI this package's probe rejects, and the README says so in a
 paragraph framed as "this host".
@@ -82,7 +82,7 @@ Reader 1 (a person installing the package):
   left the new phrase undefined - the same trap the last audit found, one word later.
 - **The blocking fact is host-shaped.** "The prebuilt route is not enough on this host" reads
   as one machine, while the fetched release page shows the latest published release is the
-  build without `--policy`. For reader 1 that is not a footnote, it is the first thing they
+  build that loads no policy module. For reader 1 that is not a footnote, it is the first thing they
   would hit.
 - **No troubleshooting entry.** "Every call is refused" is named as the honest outcome in the
   README, and nothing tells the reader what to check or where to report it.
@@ -136,7 +136,12 @@ Reader 2 (the model that writes EYG):
 ## Consequences
 
 + Reader 1 reaches a first effect call in one page and knows, at the top of the README, that the
-  release published today has no build that knows `--policy`.
+  release published today has no build that loads a policy module. **Closed from this side on
+  2026-11-22:** the checks moved into `host/guard.eyg`, so a plain installed CLI is enough for this
+  package (`docs/world/decisions/ADR-006-guard-in-package.md`, and
+  `docs/world/entities/gap.install-guides-name-no-policy.md` is superseded). The audit's other
+  findings - the tutorial, the how-tos, the troubleshooting entry - stand as filled or open exactly
+  as written above.
 + Filled on 2026-11-19: `guides/first-session.md` is the tutorial, the four `guides/how-to-*.md`
   pages are the how-tos, and `guides/tool-reference.md` carries the reference this package's README
   used to hold; `guides/PURPOSE` names the two sets in `guides/`, and two claim verifies moved from

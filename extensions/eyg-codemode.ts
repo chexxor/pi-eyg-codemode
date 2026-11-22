@@ -1216,7 +1216,7 @@ export default function (pi: ExtensionAPI) {
       effects: Type.Optional(
         Type.Array(
           Type.String({
-            description: 'Effect names the child may perform, e.g. ["ReadFile","Search","StandardOut"]. Each must be an effect the policy in force already performs for this session, and the list is enforced by the spawner-effects policy - agent-roots narrowed to those fields - so every name you omit is refused and no name can open the network. `Search` shares the `read_file` field with `ReadFile`. DecodeJSON, EYGParse, Hash and Sign are not policy fields and no policy can forbid them, so naming or omitting them changes nothing. Omit the list to leave the child its policy\'s whole surface.',
+            description: 'Effect names the child may perform, e.g. ["ReadFile","Search","StandardOut"]. Each must be an effect the policy in force already performs for this session, and the list is enforced by the spawner-effects policy - agent-roots narrowed to those fields - so every name you omit is refused and no name can open the network. `Search` is decided by its own `search` field, so naming `ReadFile` does not let a child search. DecodeJSON, EYGParse, Hash and Sign are not policy fields and no policy can forbid them, so naming or omitting them changes nothing. Omit the list to leave the child its policy\'s whole surface.',
           }),
         ),
       ),

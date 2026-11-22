@@ -22,7 +22,11 @@ shipped policy reads `EYG_ALLOWED_ROOTS`, which is set and restored around the c
 
 ## What to do about it
 
-Two steps, in order: run one session on Windows with a `--policy` build and record the rows and the provenance line; if the environment hand-off fails, the fix is a flag the tool passes rather than an environment variable, which is a change to the extension and its test, not to the docs. Confidence is `medium` because the asset exists in the release and the platform behaviour has never been observed here.
+Two steps, in order: run one session on Windows and record the rows and the provenance line; if the
+environment hand-off fails, the fix is a value written into the generated entry rather than an
+environment variable, which is a change to the extension and its test, not to the docs. Confidence
+is `medium` because the asset exists in the release and the platform behaviour has never been
+observed here.
 
 Trigger: the first Windows user of this package, or the operator's own move onto Windows.
 
