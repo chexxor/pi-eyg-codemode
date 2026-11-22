@@ -65,18 +65,18 @@ shell commands; a policy module decides each effect before the host performs it.
   `notes/pi-codemode-host-guard-contract.md`).
 - Policy resolution: the order is stated once, in the table "Which policy a call gets" in
   `guides/how-to-write-a-policy.md`, and it is one function - `resolvePolicy` in
-  `lib/render-helpers.mjs:391`, used at `extensions/eyg-codemode.ts:687`. A slot that names no
+  `lib/render-helpers.mjs:428`, used at `extensions/eyg-codemode.ts:687`. A slot that names no
   module is skipped, and when none names one the tool refuses rather than running unchecked. The
   call's `policy` argument sits outside that chain: it is
   honoured only when it names the policy the chain already chose or `NARROWEST_POLICY_FILE`
-  (`narrows` in `lib/render-helpers.mjs:369`, used at `:408`), and anything else comes back
+  (`narrows` in `lib/render-helpers.mjs:406`, used at `:445`), and anything else comes back
   `refusedArgument` (`extensions/eyg-codemode.ts:702`, and `:1297` for a child's policy).
 - The binary is chosen by name, not by asking it what it can do: `EYG_CODEMODE_RUNNER` (an
   absolute path), else `eyg` on PATH - two places, no third (`runnerCandidates` in
-  `lib/render-helpers.mjs:326`, used at `extensions/eyg-codemode.ts:749` and `:1408`). Nothing
+  `lib/render-helpers.mjs:363`, used at `extensions/eyg-codemode.ts:749` and `:1408`). Nothing
   is asked of it but the mode word and a file this package wrote; a missing binary, or one with
   no such mode command, ends the call with one line naming the install and quoting the command
-  that was run (`runnerFailureLine` in `lib/render-helpers.mjs:569`).
+  that was run (`runnerFailureLine` in `lib/render-helpers.mjs:606`).
 - **Nothing here waits on a build of the language.** The installed CLI runs every call:
   `eyg --version` answers `eyg v0.1.0` and `eyg run <the entry this package writes>` runs the
   guard (`@measured 2026-11-22`), so what a shipped policy decides at runtime is re-runnable

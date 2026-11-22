@@ -128,15 +128,22 @@ let metadata = {
 
 test("probe programs: what the availability probe asks, and how the answer is read", () => {
   const read = probeProgram("ReadFile", "/abs/root");
-  assert.match(read, /^perform ReadFile\(\{path: "\/abs\/root\/\.eyg-codemode-probe", offset: 0, limit: 0\}\)$/, "a read at a path that cannot exist, under the root the policy advertises");
+  assert.match(read, /perform ReadFile\(\{path: "\/abs\/root\/\.eyg-codemode-probe", offset: 0, limit: 0\}\)/, "a read at a path that cannot exist, under the root the policy advertises");
+  assert.match(read, /let probe_reply = /, "the reply is bound, because the refusal is the Error branch of it");
+  assert.match(read, /Error\(why\) -> \{ !never\(perform Abort\(why\)\) \}/, "the refusal is aborted with, so its text reaches the output whatever the standard_out rule says");
   assert.equal(probeArguments("WriteFile", "/abs/root").includes("/abs/root\""), true, "a write names the root itself, a directory, so it cannot create a file");
   assert.equal(probeArguments("MakeDirectory", "/abs/root"), "\"/abs/root\"", "a directory that already exists is made without changing anything");
   assert.equal(probeProgram("Env", "/abs/root"), null, "an effect that must not be probed answers unknown");
+  for (const name of ["CWD", "Sleep", "StandardOut", "StandardError"]) {
+    assert.equal(probeProgram(name, "/abs/root"), null, `${name} answers a refusal with the same value a pass is, so no probe tells them apart`);
+  }
   const fetch = probeProgram("Fetch", "/abs/root");
-  assert.match(fetch, /^perform Fetch\(/, "Fetch is probed as a whole program");
+  assert.match(fetch, /perform Fetch\(/, "Fetch is probed as a whole program");
   assert.match(fetch, /eyg-codemode-probe\.invalid/, "against a host under the reserved TLD, which can never resolve");
   const fallback = probeProgram("ReadDirectory", "");
   assert.match(fallback, /\/dev\/null/, "with no root the impossible path is /dev/null, which is never a directory");
+  const now = probeProgram("Now", "/abs/root");
+  assert.equal(now, "perform Now({})", "an effect the guard refuses by aborting needs no wrapper: the runtime prints the reason");
 });
 
 test("back-compat for a session resumed from an older version of the package", () => {
@@ -794,6 +801,8 @@ test("kept bindings: a module that does not parse comes back with the fix", () =
   assert.equal(rows.length, 2, "one line for what is wrong, one for what to do");
   assert.match(rows[0], /the kept binding in \/work\/\.pi\/eyg-variables\/note\.eyg is not readable EYG: unexpected end of input/, "the file and the runner's reason");
   assert.match(rows[1], /define note again with an extern call, or delete the file with DeleteFile/, "and the fix, in this tool's own terms");
+  const scratch = 'error: Aborted with reason: "failed to parse source from location: /tmp/pi-eyg-codemode/1-a-1/program.eyg error: unexpected `}` at position 94"';
+  assert.deepEqual(variableImportProblems(scratch, []), [], "a program this call wrote is not a kept binding: its own parse error is the runner's message, not an ask to redefine a binding");
   assert.deepEqual(variableImportProblems(abort, ["/elsewhere/module.eyg"]), [], "a parse error in some other file is not blamed on a kept binding");
   assert.deepEqual(variableImportProblems("eyg run: ran in 0.10 s wall\n5", []), [], "a run that parsed everything says nothing");
 });
