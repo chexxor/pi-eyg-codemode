@@ -1,6 +1,6 @@
 ---
 name: pi-eyg-codemode and the language repository's Overlay harness
-description: Two harnesses sit on one set of checks; when to use which, what wrapping an external runner costs this package, and what it still cannot show on a machine without a checked runner
+description: Two harnesses sit on one set of checks; when to use which, what wrapping an external runner costs this package, and what it still cannot show on a machine with no build that knows `--policy`
 date: 2026-11-19
 ---
 *(The comparison was read off the language repository on 2026-11-19 by reading that checkout

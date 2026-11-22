@@ -1,5 +1,5 @@
 ---
-id: pi.spawner-preset
+id: pi.spawner-policy
 type: entity
 owner: delegate
 status: current
@@ -79,7 +79,7 @@ TUI rendering of the refusal rows - the proofs ran `--print`, and only the row s
 - the spawn itself, its tools and its call budget: `docs/world/entities/pi.subagent-spawn.md`;
 - the effect surface and which effects carry no field: `docs/world/entities/codemode.effect-surface.md`;
 - why a preset is written out whole rather than importing its base: `notes/spawner-effect-allowlist.md`,
-  `notes/pi-codemode-preset-inlining.md`;
+  `notes/pi-codemode-policy-inlining.md`;
 - how to use the parameter: `guides/how-to-spawn-a-subagent.md`.
 
 @measured 2026-11-20 by `.local/eyg-checked check policies/spawner-effects.eyg` (exit 0, the record

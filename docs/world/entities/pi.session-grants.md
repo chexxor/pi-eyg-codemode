@@ -6,7 +6,7 @@ status: current
 verified_at: 2026-11-22
 verify: "grep -q 'eyg-grant' extensions/eyg-codemode.ts && grep -q GRANT_ENTRY lib/render-helpers.mjs && grep -q argumentPolicyPath extensions/eyg-codemode.ts && node --test test/render-helpers.test.mjs"
 confidence: high
-sources: [extensions/eyg-codemode.ts, lib/render-helpers.mjs, test/render-helpers.test.mjs, notes/pi-codemode-session-grants.md, guides/how-to-write-another-preset.md, guides/tool-reference.md]
+sources: [extensions/eyg-codemode.ts, lib/render-helpers.mjs, test/render-helpers.test.mjs, notes/pi-codemode-session-grants.md, guides/how-to-write-a-policy.md, guides/tool-reference.md]
 ---
 # The in-session grant loop
 
@@ -63,7 +63,7 @@ work, carried as `docs/world/entities/gap.grant-polish-undecided.md` with a row 
 ## Not this
 
 - the order a call's preset and roots come from: `docs/world/entities/pi.policy-config.md` and
-  `guides/how-to-write-another-preset.md`;
+  `guides/how-to-write-a-policy.md`;
 - why a rule lives in the policy module at all: `docs/world/decisions/ADR-002-handler-seam.md`;
 - the four trade-offs behind the loop: `notes/pi-codemode-session-grants.md`.
 

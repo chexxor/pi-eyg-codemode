@@ -6,7 +6,7 @@ status: current
 verified_at: 2026-11-22
 verify: "grep -q 'UNVERIFIED: the N-calls duration' docs/world/entities/pi.session-grants.md && grep -q 'grant.used < grant.calls' lib/render-helpers.mjs && ! grep -qE 'tokens\\[0\\] === .(status|list|show)' extensions/eyg-codemode.ts && grep -q 'gap.grant-polish-undecided' docs/world/runbooks/runbook.next-milestone.md"
 confidence: high
-sources: [extensions/eyg-codemode.ts, lib/render-helpers.mjs, test/render-helpers.test.mjs, docs/world/entities/pi.session-grants.md, docs/world/runbooks/runbook.next-milestone.md, notes/pi-codemode-session-grants.md, guides/how-to-write-another-preset.md]
+sources: [extensions/eyg-codemode.ts, lib/render-helpers.mjs, test/render-helpers.test.mjs, docs/world/entities/pi.session-grants.md, docs/world/runbooks/runbook.next-milestone.md, notes/pi-codemode-session-grants.md, guides/how-to-write-a-policy.md]
 supersedes: null
 superseded_by: null
 ---
@@ -46,7 +46,7 @@ first unattended run (`pi --print`) that takes a grant nobody is there to revoke
 
 **3. The operator cannot see the grants in force without starting one.** What exists:
 `/eyg-grant revoke [id]` (`extensions/eyg-codemode.ts:1329-1340`, one line in
-`guides/how-to-write-another-preset.md:32`), one-line descriptions with the spend in
+`guides/how-to-write-a-policy.md:32`), one-line descriptions with the spend in
 `describeGrant` (`lib/render-helpers.mjs:395`), and a `grants in force: ...` row in every eyg
 call's output (`lib/render-helpers.mjs:600`), so the session sees the state even though a
 grant entry itself never reaches the model. What does not: a listing subcommand. `state()`,

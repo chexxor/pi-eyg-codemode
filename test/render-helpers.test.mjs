@@ -11,7 +11,7 @@
  */
 
 import assert from "node:assert/strict";
-import { argumentPolicyPath, budgetRefusal, builtinErrors, builtinHintRows, builtinRows, callBudget, callLines, checkDeclaredEffects, CHILD_TOOL_ALLOWLIST, classifyProbeOutput, COLLAPSED_SOURCE_LINES, childAnswer, childArgv, childCalls, childEnvOverrides, childRefusalRows, childTools, describeGrant, EFFECT_ALLOWLIST_ENV, effectFieldsFor, effectLine, effectsUsed, eygCallCount, eygSettings, findMetadata, fieldsOutside, formatDuration, grantEvents, GRANT_ENTRY, GUIDE_BUILTINS, GUIDE_EFFECTS, GUIDE_SYNTAX, isUnder, MAX_CALLS_ENV, outsideRoot, prepareCallArguments, shippedPolicyPath, probeArguments, probeProgram, POLICY_FIELDS, referenceLines, refusalHints, replayGrants, resolvePolicy, resolveRoots, resultLines, ruleMappingEffects, rootsInside, runnerCandidates, sessionDepth, spawnerPolicy, spawnerRoots, subagentCallLines, subagentResultRows, suggestGrant } from "../lib/render-helpers.mjs";
+import { argumentPolicyPath, budgetRefusal, builtinErrors, builtinHintRows, builtinRows, callBudget, callLines, checkDeclaredEffects, CHILD_TOOL_ALLOWLIST, classifyProbeOutput, COLLAPSED_SOURCE_LINES, childAnswer, childArgv, childCalls, childEnvOverrides, childRefusalRows, childTools, describeGrant, EFFECT_ALLOWLIST_ENV, effectFieldsFor, effectLine, effectsUsed, eygCallCount, eygSettings, findMetadata, fieldsOutside, formatDuration, grantEvents, GRANT_ENTRY, GUIDE_BUILTINS, GUIDE_EFFECTS, GUIDE_SYNTAX, isUnder, MAX_CALLS_ENV, outsideRoot, prepareCallArguments, shippedPolicyPath, probeArguments, probeProgram, POLICY_FIELDS, referenceLines, refusalHints, replayGrants, resolvePolicy, resolveRoots, resultLines, ruleMappingEffects, rootsInside, runnerCandidates, runnerFailureLine, sessionDepth, spawnerPolicy, spawnerRoots, subagentCallLines, subagentResultRows, suggestGrant } from "../lib/render-helpers.mjs";
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
 
@@ -200,6 +200,35 @@ let metadata = {
     runnerCandidates("/work", {}),
     ["eyg"],
     "one candidate when nothing is configured: the installed CLI on PATH",
+  );
+
+  // The one line a spawn gets when it ran no program at all (`runnerFailureLine`).
+  // The first case is the real output of an `eyg` that predates `--policy`: it reads the
+  // mode word as a file name rather than rejecting the flag, captured on 2026-11-21 by
+  // `eyg eval --policy policies/deny-all.eyg -c '!int_add(1, 1)'` in this tree.
+  assert.match(
+    runnerFailureLine({
+      runner: "eyg",
+      mode: "eval",
+      output: "error: no such file: /srv/app/eval\nhint: check the path and that the file exists, relative to the current working directory",
+    }) ?? "",
+    /did not understand `eval --policy <module\.eyg>`.*EYG_CODEMODE_RUNNER=<absolute path>/s,
+    "a binary that reads the mode as a file name gets the install line",
+  );
+  assert.equal(
+    runnerFailureLine({ runner: "/opt/eyg", mode: "run", output: "spawn /opt/eyg ENOENT" }),
+    "no eyg binary found at /opt/eyg: install the EYG CLI so that `eyg` is on PATH, or name one with EYG_CODEMODE_RUNNER=<absolute path>.",
+    "a binary that is not there names where the tool looks",
+  );
+  assert.equal(
+    runnerFailureLine({ runner: "eyg", mode: "run", output: "error: builtin undefined: !nope_such" }),
+    null,
+    "a program error is not reported as an install problem",
+  );
+  assert.equal(
+    runnerFailureLine({ runner: "eyg", mode: "run", output: "error: no such file: /srv/app/notes.md" }),
+    null,
+    "a missing file inside a program is not the mode word, so no install line",
   );
 
   // The config surface: what the project's `eyg` key says, and which of the six

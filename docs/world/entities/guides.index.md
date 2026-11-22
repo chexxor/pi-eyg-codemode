@@ -4,9 +4,9 @@ type: entity
 owner: delegate
 status: current
 verified_at: 2026-11-22
-verify: "grep -q '^name: EYG syntax guide' guides/syntax.md && grep -q '^name: Builtins reference' guides/builtins_reference.md && test -f guides/pi_codemode_agent.md && test -f guides/cli_effects_reference.md && test -f guides/first-session.md && test -f guides/tool-reference.md && test -f guides/how-to-share-functions.md && test -f guides/how-to-write-another-preset.md && test -f guides/how-to-spawn-a-subagent.md && test -f guides/how-to-get-a-checked-runner.md && grep -q 'first-session.md' README.md && grep -q 'how-to-get-a-checked-runner.md' README.md"
+verify: "grep -q '^name: EYG syntax guide' guides/syntax.md && grep -q '^name: Builtins reference' guides/builtins_reference.md && test -f guides/pi_codemode_agent.md && test -f guides/cli_effects_reference.md && test -f guides/first-session.md && test -f guides/tool-reference.md && test -f guides/how-to-share-functions.md && test -f guides/how-to-write-a-policy.md && test -f guides/how-to-spawn-a-subagent.md && test -f guides/how-to-point-the-tool-at-your-runner.md && grep -q 'first-session.md' README.md && grep -q 'how-to-point-the-tool-at-your-runner.md' README.md"
 confidence: high
-sources: [guides/syntax.md, guides/builtins_reference.md, guides/cli_effects_reference.md, guides/pi_codemode_agent.md, guides/first-session.md, guides/tool-reference.md, guides/how-to-share-functions.md, guides/how-to-spawn-a-subagent.md, guides/how-to-get-a-checked-runner.md, README.md]
+sources: [guides/syntax.md, guides/builtins_reference.md, guides/cli_effects_reference.md, guides/pi_codemode_agent.md, guides/first-session.md, guides/tool-reference.md, guides/how-to-share-functions.md, guides/how-to-spawn-a-subagent.md, guides/how-to-point-the-tool-at-your-runner.md, README.md]
 supersedes: null
 superseded_by: null
 ---
@@ -20,16 +20,17 @@ every `!builtin`, `cli_effects_reference.md` is the full effect reference for th
 `install_from_source.md` plus `install_prebuilt.md` say how the CLI reaches a user - they
 describe the language repository's build, not a command that runs here.
 
-The **package set** was written here on 2026-11-19 and is not a copy of anything: `first-session.md`
-is the tutorial a new user follows to one call, the `how-to-*.md` pages carry the six things the
-reference implies (get a checked runner, point at your runner, write another preset, read in
-slices, ask the registry, spawn a subagent), and `tool-reference.md` is this package's own
+The **package set** was written here and is not a copy of anything: `first-session.md`
+is the tutorial a new user follows to one call, the `how-to-*.md` pages carry the five things the
+reference implies (point the tool at your binary, write a policy, read in
+slices, share functions, spawn a subagent), and `tool-reference.md` is this package's own
 reference - the knobs, the rows, the probes and the seam it cannot check. The README links all of
 them and carries none of their content.
 
-No guide tells anyone to build something. `how-to-get-a-checked-runner.md` ends at "no official
-install can answer for an effect today" and the question to take upstream
-(`docs/world/entities/cli.runner-official-install-only.md`), and `bin/` carries one script,
+No guide tells anyone to build something. `guides/how-to-point-the-tool-at-your-runner.md` starts
+from a binary you already have, and the install routes end at the website with the check to run
+before believing an install worked (`docs/world/entities/gap.install-guides-name-no-policy.md`), and
+`bin/` carries one script,
 `agent/audit.sh`, which a person or a cron runs (`AGENTS.md`).
 
 **The website is the source; `guides/` is an offline mirror.** The EYG documentation lives at

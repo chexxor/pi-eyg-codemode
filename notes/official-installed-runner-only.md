@@ -8,9 +8,9 @@ Three choices `runnerCandidates` in `lib/render-helpers.mjs` makes and the code 
 It replaces `notes/eyg-checked-runner-on-this-host.md` and `notes/checked-runner-build-script.md`,
 both deleted with the thing they argued for.
 
-**A probe candidate is a promise about who may build the runner.** Until 2026-11-21 the probe tried
-four places, two of them built from the working directory: `<cwd>/packages/gleam_cli/dist/eyg` and
-`<cwd>/.local/eyg-checked`. Both existed for one honest reason - a checked runner on this machine is
+**A candidate list is a promise about who may supply the binary.** Until 2026-11-21 it tried
+four names, two of them built from the working directory: `<cwd>/packages/gleam_cli/dist/eyg` and
+`<cwd>/.local/eyg-checked`. Both existed for one honest reason - the only build on this machine that knew `--policy` was
 a build output of the language repository, and naming its path in tracked files is forbidden here -
 and the reason was real. The cost was invisible: a candidate the package itself probes makes a
 private build a *supported* install route, so every number measured through it reads as current, the
@@ -23,7 +23,7 @@ installer writes. `EYG_CODEMODE_RUNNER` stays because naming a binary is an act 
 not one this package guesses at - set it and nothing else is probed. Nothing else is tried: no
 directory-derived candidate, no vendored binary, no build step in `bin/`. That is what makes the
 honest sentence true rather than aspirational: a fresh clone of this package refuses every call, and
-`guides/how-to-get-a-checked-runner.md` says whose release closes it.
+`docs/world/entities/cli.runner-official-install-only.md` says whose release closes it.
 
 **Deleting the route does not delete the numbers it produced.** Every effect-level row in
 `docs/world/` keeps its 2026-11-20 date and now names the development build it came from; the record

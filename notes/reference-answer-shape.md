@@ -19,7 +19,7 @@ the name, the rest of the row travels with it - because a signature may contain 
 points at `action: "effects"` for what the preset in force decides. Asking the policy 19 questions
 to answer "what is the surface" would make the cheap question cost a probe run, and would make the
 answer depend on a runner being present. As it is, the action spawns nothing, so it answers on a
-machine whose every run is refused with `no runner that accepts \`--policy\`` - which is exactly
+machine whose every run ends with the line naming the install - which is exactly
 when a new user most needs to know what the surface is.
 
 **The `read` tool sentence.** The rows say pi's own `read` tool is not policy-gated while `ReadFile`

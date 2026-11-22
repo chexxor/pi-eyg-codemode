@@ -163,7 +163,7 @@ argument record, `let _ =` binding before a following expression, no infix opera
 `guides/syntax.md` and `guides/cli_effects_reference.md` are the language and effect
 reference; the policy vocabulary is written out inside this package's presets
 (`policies/agent-roots.eyg`, `policies/deny-all.eyg`) rather than imported - see
-`notes/pi-codemode-preset-inlining.md` for why, and for the fact that the language
+`notes/pi-codemode-policy-inlining.md` for why, and for the fact that the language
 workspace's preset library and its security suite are no longer reachable from here.
 
 The presets this package ships are those two. The language repository's richer set
@@ -192,7 +192,7 @@ write performed inside the roots and one refused outside them. What stays UNVERI
 there (`bin/agent/gate.sh gleam_cli`), the suite in `eyg_packages/codemode_policy/`, and
 `scripts/mutation-check.mjs`, which loosens one rule of the preset library at a time
 and requires the security suite to fail. This tree carries the *record* of those results
-(`test/fixtures/rule_mapping.gleam` plus `notes/pi-codemode-preset-inlining.md`), not the
+(`test/fixtures/rule_mapping.gleam` plus `notes/pi-codemode-policy-inlining.md`), not the
 test. Point the tool at a runner of your own, re-run the probes, and let the claims move with
 the output.
 

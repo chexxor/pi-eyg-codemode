@@ -30,7 +30,7 @@ snapshot of its rule table.
   is written out inside `policies/agent-roots.eyg` and `policies/deny-all.eyg`: deny-by-
   default plus `read_write(roots)`-shaped rules, `hide_secrets` for `.env.eyg`, and the
   `Mock(Error(...))` refusal shape that carries the reason back to the program.
-  See `notes/pi-codemode-preset-inlining.md` for what was inlined and what the language
+  See `notes/pi-codemode-policy-inlining.md` for what was inlined and what the language
   workspace's security suite no longer covers.
 - What a rule may answer is the contract that makes a handler re-implementable
   (`policies/agent-roots.eyg` read 2026-11-18): `Pass(value)` performs with the value handed

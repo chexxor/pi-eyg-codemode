@@ -7,7 +7,7 @@ steps. Five of them, each with what you should see. If you only want the answer 
 The steps are:
 
 1. [Install the CLI](#install-the-cli)
-2. [Check that the CLI answers for an effect](#check-that-the-cli-answers-for-an-effect)
+2. [Check that the CLI knows the command](#check-that-the-cli-knows-the-command)
 3. [Ask what the policy allows](#ask-what-the-policy-allows)
 4. [Read a file, and print what you got](#read-a-file-and-print-what-you-got)
 5. [Write outside the roots, and read the refusal](#write-outside-the-roots-and-read-the-refusal)
@@ -25,25 +25,25 @@ eyg eval -c '!int_add(1, 1)'
 and it prints `2`. That proves the binary runs; it does not prove this package can use
 it, which is step 2.
 
-## Check that the CLI answers for an effect
+## Check that the CLI knows the command
 
-Run the check the tool runs for you, so you see it fail rather than hear it fail:
+This package always asks the binary for a policy, so the check is whether the binary knows
+that command:
 
 ```sh
 <the eyg you installed> --help 2>&1 | grep -c -- --policy
 ```
 
-`0` means this package refuses every call, because a runner that does not accept `--policy`
-has no checks to answer with. The tool's candidates are `eyg` on your `PATH` and, if you set it,
-`EYG_CODEMODE_RUNNER` holding an absolute path, and the first one whose `--help`
-mentions the flag wins.
+`0` means every call will be refused: the binary has no flag to carry a policy, so the run
+would have no checks in it, and this package will not start one. The binary it starts is
+`eyg` on your `PATH` or, if you set it, `EYG_CODEMODE_RUNNER` holding an absolute path -
+two places and no third (`guides/how-to-point-the-tool-at-your-runner.md`).
 
-On 2026-11-19 the release the language repository publishes answers `0`
-(`gleam_cli-v0.1.0`, read on 2026-11-19 from the latest-release page that repository publishes;
-`docs/world/entities/gap.runner-release-lacks-policy.md` carries the command that re-checks it),
-and so does a build of its published default branch
-(`docs/world/entities/gap.policy-runner-not-on-main.md`), so a reader who installed today should
-expect the refusal below, not a run. Two ways out:
+Neither official install route carries the flag today: not the published release
+(`docs/world/entities/gap.runner-release-lacks-policy.md` has the command that re-checks it)
+nor a build of the published default branch
+(`docs/world/entities/gap.policy-runner-not-on-main.md`), so expect the refusal in the last
+section rather than a run. Two ways forward:
 
 - ask the language repository which ref carries `run --policy`, build that ref from source (the
   second install link), then `export EYG_CODEMODE_RUNNER=<absolute path to that binary>`;
@@ -59,16 +59,15 @@ it came from, and the roots in force. The decisions are `available`, `refused`,
 `Exit` and `StandardIn` are reported `unknown` because probing them would read your
 environment, stop the probe, or swallow the runner's input.
 
-Under the preset this package ships, `policies/agent-roots.eyg`, the answers you want are:
+Under the policy this package ships, `policies/agent-roots.eyg`, the answers you want are:
 file effects `available` inside the session directory, `refused` outside it, `fetch`
 refused everywhere, and `DecodeJSON`, `EYGParse`, `Hash`, `Sign` shown with `none` as their
-field because no preset can forbid them.
+field because no policy can forbid them.
 
 ## Read a file, and print what you got
 
 `ReadFile` hands back `Binary`, and printing needs a `String`, so both fallibilities show
-up. This program is the shape, and it type-checks (`eyg check` on it answered `{}` on
-2026-11-19):
+up. This program is the shape, and it type-checks (`eyg check` on it answers `{}`):
 
 ```eyg
 match perform ReadFile({path: "/abs/path/to/a/file", offset: 0, limit: 500}) {
@@ -105,17 +104,19 @@ like a success.
 
 ## If every call is refused
 
-The call that finds no runner answers before your program runs:
+A binary with no `--policy` flag reads the mode word as a file name, so your program never
+runs and the row ends with one line:
 
 ```
-no runner that accepts `--policy` was found among eyg. Checking happens in the runner, so a CLI without that flag cannot be used, and this package reaches no other binary: install the official CLI, and if what you installed has no --policy, the release predates the checks (docs/world/entities/gap.runner-release-lacks-policy.md). Besides PATH the only thing tried is a runner the operator names: EYG_CODEMODE_RUNNER=<absolute path>.
+the eyg binary this tool started did not understand `run --policy <module.eyg>` and read `run` as a file name, so no policy ran and nothing was performed: the install predates the flag this package needs, so install a newer release of the EYG CLI or name a binary that accepts the flag with EYG_CODEMODE_RUNNER=<absolute path>.
 ```
 
-That is the text a fresh session answers with (@measured 2026-11-21 by a one-shot
-`pi --print --mode json --tools eyg` call in this tree).
+That is what a fresh session answers with, and
+`docs/world/entities/cli.runner-official-install-only.md` keeps the run that showed it. A
+missing binary rather than an old one answers `no eyg binary found at <where the tool looked>`.
 
-Work down that message: set `EYG_CODEMODE_RUNNER` to a binary whose `--help` mentions the
-flag, and re-run step 2. If the policy is the wrong one rather than missing, set
+Work down that message: set `EYG_CODEMODE_RUNNER` to a binary that carries the flag, and
+re-run step 2. If the policy is the wrong one rather than missing, set
 `EYG_POLICY` to an absolute module path or pass the `policy` argument; a relative path is
 refused. To see which policy, runner and roots answered, expand the row (`Ctrl+O`), whose
 last line reads `policy: <path> (<source>) runner: <path> roots: <path>`.
@@ -123,7 +124,7 @@ last line reads `policy: <path> (<source>) runner: <path> roots: <path>`.
 ## What to read next
 
 - `guides/cli_effects_reference.md` - every effect, its policy field and its argument type.
-- `guides/how-to-write-another-preset.md` - a session that works somewhere else, or that may
+- `guides/how-to-write-a-policy.md` - a session that works somewhere else, or that may
   reach the network.
 - `guides/how-to-point-the-tool-at-your-runner.md` - a CLI you built yourself.
 - `docs/world/decisions/ADR-004-doc-shape-for-two-readers.md` - why the docs are cut the way

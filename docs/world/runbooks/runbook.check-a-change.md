@@ -29,9 +29,9 @@ here.
 6. A claim whose command fails is `status: suspect` with the date it was caught; only a
    human promotes it back.
 
-What this workspace can check: an effect running or being refused, through a runner that accepts
-`--policy` - seen here on 2026-11-20 (`cli.checked-runner-on-this-host`), and the command is in
-`AGENTS.md`'s table. What it cannot check is the release route: the prebuilt CLI on `PATH` has no
+What this workspace can check: an effect running or being refused, through a build that knows
+`--policy` - seen here on 2026-11-20 (`cli.checked-runner-on-this-host`, superseded), and the
+command that saw it is in that record. What it cannot check is the release route: the prebuilt CLI on `PATH` has no
 `--policy` (`cli.prebuilt-binary`, `gap.runner-release-lacks-policy`), so on a machine with only
 that binary nothing runs at all and every statement about run behaviour must be reported
 UNVERIFIED there, never as a PASS.

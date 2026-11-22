@@ -39,7 +39,7 @@ date: YYYY-MM-DD
 
 ## Style reference
 `notes/pi_codemode_host_gate.md`, `notes/pi_codemode_runner_probe.md`,
-`notes/pi_codemode_registry_probe.md`, `notes/pi-codemode-preset-inlining.md`.
+`notes/pi_codemode_registry_probe.md`, `notes/pi-codemode-policy-inlining.md`.
 
 ## At the end of a session
 For each note you touched: still true - keep it and update `date:`; fixed by a

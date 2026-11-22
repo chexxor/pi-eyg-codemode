@@ -1,5 +1,5 @@
 ---
-name: pi-codemode-preset-inlining
+name: pi-codemode-policy-inlining
 description: Why the policy modules carry their preset inline instead of importing eyg_packages/overlay/policy.eyg, and the check that shows the inlined preset is the same decision
 date: 2026-11-18
 ---

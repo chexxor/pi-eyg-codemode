@@ -1,9 +1,9 @@
 ---
 name: pi-codemode-runner-probe-and-roots
-description: Why pi-eyg-codemode probes its runner for --policy, why the preset refuses when roots are unset, and why the context-budget package is project-local here
+description: Why pi-eyg-codemode once probed its runner for --policy (that half is superseded), why the policy refuses when roots are unset, and why the context-budget package is project-local here
 date: 2026-11-16
 ---
-*(Carried from the language repository, 2026-11-16: the runner probe and its costs were measured there. The CLI on `PATH` here still has no `--policy`; the probe now finds no candidate at all - it reaches `PATH` and `EYG_CODEMODE_RUNNER` and nothing else (`docs/world/entities/cli.runner-official-install-only.md`, `notes/official-installed-runner-only.md`). It did succeed once, on 2026-11-20, through a development build since deleted: `docs/world/entities/cli.checked-runner-on-this-host.md`, superseded.)*
+*(Carried from the language repository, 2026-11-16: the runner probe and its costs were measured there. The CLI on `PATH` here still has no `--policy`; the probe now finds no candidate at all - it reaches `PATH` and `EYG_CODEMODE_RUNNER` and nothing else (`docs/world/entities/cli.runner-official-install-only.md`, `notes/official-installed-runner-only.md`). It did succeed once, on 2026-11-20, through a development build since deleted: `docs/world/entities/cli.checked-runner-on-this-host.md`, superseded. The probe itself was removed on 2026-11-21: the tool starts the named binary and reads what it says back (`notes/runner-not-probed.md`).)*
 
 Three trade-offs that the code states but does not argue.
 

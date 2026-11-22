@@ -8,6 +8,21 @@ history, not as instructions for this tree. On 2026-11-19 the word "gate" was re
 
 ## Unreleased
 
+- **No probe, one line.** The tool stopped asking the binary what it can do before running it. The
+  binary is chosen by name (`EYG_CODEMODE_RUNNER`, else `eyg` on `PATH`), every command line carries
+  `--policy <module.eyg>`, and a binary too old for the flag — which reads the mode word as a file
+  name rather than rejecting the option — is answered with one line naming the install
+  (`runnerFailureLine` in `lib/render-helpers.mjs`), as is a binary that is not there at all.
+  `guides/how-to-get-a-checked-runner.md` is deleted, `guides/how-to-point-the-tool-at-your-runner.md`
+  is the one page, and `guides/first-session.md` quotes the line. `runnerFailureLine` and the two
+  candidate rules are pinned by unit assertions (`docs/world/entities/cli.runner-official-install-only.md`,
+  `notes/runner-not-probed.md`).
+- **The `policy` argument can no longer widen a call.** It is honoured only when it names the policy
+  the other slots already chose, or the narrowest policy this package ships (`deny-all.eyg`);
+  anything else comes back `refusedArgument` and the refusal names the name it refused. A spawner
+  naming a child's policy is held to the same rule
+  (`docs/world/entities/pi.policy-config.md`).
+
 - **The runner probe reaches only what you can install.** `runnerCandidates` answers
   `EYG_CODEMODE_RUNNER` when it is set and otherwise the single candidate `eyg`: the two
   working-directory candidates (`<cwd>/packages/gleam_cli/dist/eyg` and `<cwd>/.local/eyg-checked`)
@@ -42,12 +57,11 @@ history, not as instructions for this tree. On 2026-11-19 the word "gate" was re
   in two parent sessions: one with the roots narrowed to a slice, where the allowlist refusal and the
   roots refusal both came back in the parent's report and the child's `read` tool read the file outside
   the slice; one where a budget of 2 stopped the third call (`docs/world/entities/pi.subagent-spawn.md`,
-  `docs/world/entities/pi.spawner-preset.md`, `notes/spawner-effect-allowlist.md`).
-- **One page from a fresh clone to a checked runner, and the build it points at.**
-  `guides/how-to-get-a-checked-runner.md` names the candidates the tool probes and what each answer
-  means; `bin/agent/build-checked-runner.sh` is a script a person runs, which refuses to call its
-  artifact a runner until its `--help` mentions `--policy` and the shipped `deny-all` preset has refused
-  its write fixture. Nothing in this tree runs it
+  `docs/world/entities/pi.spawner-policy.md`, `notes/spawner-effect-allowlist.md`).
+- **(Removed later in the same release.)** *One page from a fresh clone to a build that runs checks,
+  and the build it pointed at.* `guides/how-to-get-a-checked-runner.md` named the candidates the tool
+  probed, and `bin/agent/build-checked-runner.sh` was a script a person ran. Both are gone: the probe
+  went with them, and the install pages point at the website
   (`docs/world/entities/gap.runner-release-lacks-policy.md`).
 - **The six checks run in one command.** `bin/agent/audit.sh` runs the unit test and drift guard, the
   world lint, the claim verifies, the map check, `pi --world-model-check` and the tracked-path-and-name

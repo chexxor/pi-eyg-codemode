@@ -6,7 +6,7 @@ status: current
 verified_at: 2026-11-22
 verify: "grep -q 'name: .eyg_subagent.' extensions/eyg-codemode.ts && grep -q SPAWNER_POLICY_ENV lib/render-helpers.mjs && grep -q rootsInside extensions/eyg-codemode.ts && grep -q DEPTH_ENV extensions/eyg-codemode.ts && grep -q childTools extensions/eyg-codemode.ts && grep -q CHILD_TOOL_ALLOWLIST lib/render-helpers.mjs && grep -q EFFECT_ALLOWLIST_ENV lib/render-helpers.mjs && grep -q MAX_CALLS_ENV lib/render-helpers.mjs && grep -q callBudget extensions/eyg-codemode.ts && grep -q getActiveTools extensions/eyg-codemode.ts && node --test test/render-helpers.test.mjs"
 confidence: high
-sources: [extensions/eyg-codemode.ts, lib/render-helpers.mjs, test/render-helpers.test.mjs, policies/spawner-effects.eyg, guides/how-to-spawn-a-subagent.md, notes/pi-codemode-subagent-spawn.md, notes/spawner-effect-allowlist.md, docs/world/entities/pi.session-grants.md, docs/world/entities/pi.spawner-preset.md]
+sources: [extensions/eyg-codemode.ts, lib/render-helpers.mjs, test/render-helpers.test.mjs, policies/spawner-effects.eyg, guides/how-to-spawn-a-subagent.md, notes/pi-codemode-subagent-spawn.md, notes/spawner-effect-allowlist.md, docs/world/entities/pi.session-grants.md, docs/world/entities/pi.spawner-policy.md]
 ---
 # A session can spawn one child session, inside its own reach
 
@@ -33,7 +33,7 @@ spawner could not do itself, so delegating work never widens reach.
   tool this session does not have is refused by name (`childTools` → `unknown`, `withoutEyg`,
   `parentMissing`). `effects` is validated by the existing `action: "effects"` probe under the policy
   *and the roots this session actually has*, and is enforced by a shipped narrowing preset, not by a
-  promise (`docs/world/entities/pi.spawner-preset.md`). `max_calls` travels as
+  promise (`docs/world/entities/pi.spawner-policy.md`). `max_calls` travels as
   `EYG_SUBAGENT_MAX_CALLS` (`MAX_CALLS_ENV`) because pi has no flag that caps tool calls, and is
   enforced inside the child's own copy of the `eyg` tool: `callBudget(process.env, chain.depth)`
   compares the budget with `eygCallCount(sessionBranch(pi, ctx))`, the same scan a grant is spent by,
@@ -106,10 +106,10 @@ and by the refusal text in `extensions/eyg-codemode.ts`, never asked for live.
 
 - the grant the operator gives this session: `docs/world/entities/pi.session-grants.md`;
 - the order a call's preset and roots come from: `docs/world/entities/pi.policy-config.md` and
-  `guides/how-to-write-another-preset.md`;
+  `guides/how-to-write-a-policy.md`;
 - why the child's boundary is built the way it is: `notes/pi-codemode-subagent-spawn.md`, and for the
   allowlist, budget and tool set: `notes/spawner-effect-allowlist.md`;
-- what the effect allowlist enforces and how it was probed: `docs/world/entities/pi.spawner-preset.md`;
+- what the effect allowlist enforces and how it was probed: `docs/world/entities/pi.spawner-policy.md`;
 - how to use the tool: `guides/how-to-spawn-a-subagent.md`.
 
 @measured 2026-11-20 by five one-shot parent sessions under `.ai-work/subagent/` (`pi --print

@@ -19,8 +19,8 @@ another workspace at run time.**
   This package was extracted from inside it on 2026-11-18 and never goes back. Its files
   are cited as "the language repository's", never as a path this tree can open. That
   repository also carries its own agent harness, Overlay: what each harness owns is
-  `docs/world/entities/overlay.agent-harness.md`, and where the checked runner this package
-  starts lives inside that repository today is
+  `docs/world/entities/overlay.agent-harness.md`, and which ref of that repository carries a
+  build that knows `run --policy` is
   `docs/world/entities/gap.policy-runner-not-on-main.md`.
 - **The EYG language skill is not in this tree**: it is a separate pi package declared by
   path in `.pi/settings.json` - the one line of this tree that reaches outside it, and the
@@ -34,9 +34,9 @@ another workspace at run time.**
 ## The layout, and what each directory is for
 
 `extensions/` the one pi extension (registers the `eyg` tool, resolves policy/roots/runner,
-spawns the runner that checks every effect through argv) · `lib/` the plain-JavaScript shapes shared by the
+spawns the binary that decides every effect through argv) · `lib/` the plain-JavaScript shapes shared by the
 tool and its tests · `libraries/` the EYG modules bound by the tool's `libraries`
-parameter · `policies/` the policy presets, one record, one rule per refusable effect, inlined
+parameter · `policies/` the policies this package ships, one record, one handler per refusable effect, inlined
 · `skills/` the pi skill a model reads before writing EYG · `test/` the unit test and the
 recorded `rule_mapping` snapshot the drift guard compares against · `guides/` the prose
 reference · `notes/` the trade-offs the code cannot show · `docs/world/` the claims with
@@ -50,30 +50,38 @@ shell commands; a policy module decides each effect before the host performs it.
 
 - The tool spawns `<runner> <mode> --policy <module.eyg> -c <source>` through argv - no
   shell in between, so quoting cannot be a route around the checks.
-- Policy resolution order: the `policy` argument, then `EYG_POLICY`, then the package's own
-  `policies/agent-roots.eyg`, and if none exists the tool refuses rather than running
-  unchecked (`extensions/eyg-codemode.ts:372-377`).
-- The runner is probed, not assumed: the candidates are `EYG_CODEMODE_RUNNER` (an absolute path)
-  and then `eyg` on PATH - two places, no third - and a candidate qualifies only when its
-  `--help` mentions `--policy` (`runnerCandidates` in `lib/render-helpers.mjs`, used at
-  `extensions/eyg-codemode.ts:576` and `:1142`). This package supports the officially installed
-  CLI and a runner the operator names, and reaches no other binary
+- Policy resolution order: a grant the operator made this session, then the policy a spawner
+  named for this session, then the project's `eyg.policy` key, then `EYG_POLICY`, then the
+  package's own `policies/agent-roots.eyg`; if none names a module the tool refuses rather than
+  running unchecked (`resolvePolicy` in `lib/render-helpers.mjs:314`, used at
+  `extensions/eyg-codemode.ts:500`). The call's `policy` argument sits outside that chain: it is
+  honoured only when it names the policy the chain already chose or `NARROWEST_POLICY_FILE`
+  (`lib/render-helpers.mjs:286`, `narrows` at `:293`), and anything else comes back
+  `refusedArgument` (`extensions/eyg-codemode.ts:515`, and `:1022` for a child's policy).
+- The binary is chosen by name, not by asking it what it can do: `EYG_CODEMODE_RUNNER` (an
+  absolute path), else `eyg` on PATH - two places, no third (`runnerCandidates` in
+  `lib/render-helpers.mjs`, used at `extensions/eyg-codemode.ts:562` and `:1141`). Every argv
+  carries `--policy`, so a build too old for the flag says so itself and the call ends with one
+  line naming the install (`runnerFailureLine` in `lib/render-helpers.mjs`). This package supports
+  the officially installed CLI and a binary the operator names, and reaches no other binary
   (`docs/world/entities/cli.runner-official-install-only.md`).
-- **No installed CLI answers for an effect yet, and nothing here works around that.** The CLI on
-  PATH checks nothing: `eyg --version` answers `eyg v0.1.0` and `grep -c -- '--policy
+- **No officially installed CLI knows the `--policy` flag yet, and nothing here works around
+  that.** The CLI on PATH runs programs but has no flag to carry a policy: `eyg --version` answers
+  `eyg v0.1.0` and `grep -c -- '--policy
   <<< "$(eyg --help 2>&1)"'` prints `0` (`@measured 2026-11-21`), and the language repository's
   release and default branch both lack the flag (`gap.runner-release-lacks-policy`,
-  `gap.policy-runner-not-on-main`). A checked call was seen on this machine on 2026-11-20, through
-  a development build of the language CLI that this tree no longer points at and no longer has
+  `gap.policy-runner-not-on-main`). One build that knew the flag has been seen on this machine,
+  a development build this tree no longer points at
   (`docs/world/entities/cli.checked-runner-on-this-host.md`, superseded). Until the language
-  ships a `--policy` build, a statement about what a preset allows at runtime is not re-runnable
-  here: report the recorded number with its date and its provenance, never as a fresh result.
+  ships a build with the flag, a statement about what a shipped policy allows at runtime is not
+  re-runnable here: report the recorded number with its date and its provenance, never as a fresh
+  result.
 - Env: `EYG_CODEMODE_RUNNER` (absolute runner path), `EYG_POLICY` (absolute module path),
-  `EYG_ALLOWED_ROOTS` (comma-separated absolute roots, read by the default preset),
+  `EYG_ALLOWED_ROOTS` (comma-separated absolute roots, read by the default policy),
   `EYG_CODEMODE_TIMEOUT` (ms, default 30000, cap 120000); the tool's `timeout` parameter is
   in **seconds** (default 30, max 120).
 - The effect surface: 23 effects, 19 named by a policy field, 4 unchecked
-  (`DecodeJSON`, `EYGParse`, `Hash`, `Sign`) available under every preset including deny-all;
+  (`DecodeJSON`, `EYGParse`, `Hash`, `Sign`) available under every shipped policy including deny-all;
   `Search` shares the `read_file` field. The drift guard compares
   `POLICY_FIELDS` in `lib/render-helpers.mjs` against `test/fixtures/rule_mapping.gleam`
   (a recorded snapshot of the language repository's `overlay.gleam`, md5
@@ -133,18 +141,18 @@ never put a workspace fact in a guide - a fact in two places drifts.
 
 ## Hard rules
 
-- **Nothing tracked may contain credentials.** `.env.eyg` files are denied by both presets
-  and must stay out of the tree; do not copy a token into a note, a claim, a commit message
-  or a guide.
+- **Nothing tracked may contain credentials.** `.env.eyg` files are denied by the default policy
+  and by the narrowest one, and must stay out of the tree; do not copy a token into a note, a
+  claim, a commit message or a guide.
 - **Say each fact once.** A sentence carries one new fact; when a neighbour only restates
   it - in other words, as emphasis, or as a gloss under a link whose URL already says it -
   delete the restatement and keep the link. `install from <url>`, not `install from the
   docs, not from this README, the website is the source`. Check it by hand: name the
   paragraph's key noun, grep the paragraph, a hit in two sentences is one too many.
 - **EYG reaches the outside world only through effects**, and the checks are host-side: a
-  program cannot opt out of it by writing different code. Do not loosen a preset to get
-  past a boundary - name the boundary, and if a preset must change, say why in a note and
-  change the whole preset, one rule per effect.
+  program cannot opt out of it by writing different code. Do not loosen a policy to get
+  past a boundary - name the boundary, and if a policy must change, say why in a note and
+  change the whole policy, one handler per effect.
 - **Bash is not the work.** EYG does not have an effect to run shell commands; bash here is
   for reading this tree and for work EYG cannot express, not for doing the work the operator
   asked for.
@@ -191,7 +199,7 @@ never put a workspace fact in a guide - a fact in two places drifts.
   2026-11-20, 5.70 s, 6/6); nothing in this tree runs it, so a failing check is still
   something a person notices. Trigger for CI: the first commit that lands with a failing
   check nobody saw.
-- **No release and no default branch carries the checked runner.** The published release and the
+- **No release and no default branch carries a build that knows `--policy`.** The published release and the
   default branch both lack `--policy` (`gap.policy-runner-not-on-main`,
   `gap.runner-release-lacks-policy`), so a fresh clone of this package on any machine gets no
   working `eyg` tool until the language ships one, and this package starts no build of its own.

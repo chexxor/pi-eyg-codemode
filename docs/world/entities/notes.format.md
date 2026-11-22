@@ -4,9 +4,9 @@ type: entity
 owner: delegate
 status: current
 verified_at: 2026-11-22
-verify: "for f in notes/*.md; do grep -q ^name: $f || exit 1; done && grep -q ^date: notes/pi-codemode-preset-inlining.md && ls notes/pi-eyg-codemode-*.md"
+verify: "for f in notes/*.md; do grep -q ^name: $f || exit 1; done && grep -q ^date: notes/pi-codemode-policy-inlining.md && ls notes/pi-eyg-codemode-*.md"
 confidence: high
-sources: [notes/pi-codemode-preset-inlining.md, notes/pi_codemode_host_gate.md, AGENTS.md]
+sources: [notes/pi-codemode-policy-inlining.md, notes/pi_codemode_host_gate.md, AGENTS.md]
 supersedes: null
 superseded_by: null
 ---

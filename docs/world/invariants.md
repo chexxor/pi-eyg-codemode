@@ -27,7 +27,7 @@ status: current
 verified_at: 2026-11-22
 verify: "for f in notes/*.md; do grep -q ^name: $f || exit 1; done"
 confidence: high
-sources: [notes/pi-codemode-preset-inlining.md, AGENTS.md]
+sources: [notes/pi-codemode-policy-inlining.md, AGENTS.md]
 supersedes: null
 superseded_by: null
 ---
@@ -61,7 +61,7 @@ status: current
 verified_at: 2026-11-22
 verify: "! grep -q 'import \"' policies/agent-roots.eyg && ! grep -q 'import \"' policies/deny-all.eyg"
 confidence: high
-sources: [policies/agent-roots.eyg, policies/deny-all.eyg, notes/pi-codemode-preset-inlining.md]
+sources: [policies/agent-roots.eyg, policies/deny-all.eyg, notes/pi-codemode-policy-inlining.md]
 supersedes: null
 superseded_by: null
 ---

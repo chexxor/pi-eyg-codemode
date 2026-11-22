@@ -4,9 +4,9 @@ type: entity
 owner: delegate
 status: current
 verified_at: 2026-11-22
-verify: "grep -q -- '--policy' guides/how-to-get-a-checked-runner.md && grep -q -- '--policy' guides/how-to-point-the-tool-at-your-runner.md && ! grep -q -- '--policy' guides/install_prebuilt.md && ! grep -q -- '--policy' guides/install_from_source.md"
+verify: "grep -q -- '--policy' guides/how-to-point-the-tool-at-your-runner.md && grep -q -- '--policy' README.md && ! grep -q -- '--policy' guides/install_prebuilt.md && ! grep -q -- '--policy' guides/install_from_source.md"
 confidence: high
-sources: [guides/install_prebuilt.md, guides/install_from_source.md, guides/how-to-get-a-checked-runner.md, guides/how-to-point-the-tool-at-your-runner.md, README.md, docs/world/decisions/ADR-003-doc-delegation.md]
+sources: [guides/install_prebuilt.md, guides/install_from_source.md, docs/world/entities/cli.runner-official-install-only.md, guides/how-to-point-the-tool-at-your-runner.md, README.md, docs/world/decisions/ADR-003-doc-delegation.md]
 supersedes: null
 superseded_by: null
 ---
@@ -17,10 +17,15 @@ Neither install route - the website's pages and this tree's mirrors, `guides/ins
 
 ## What to do about it
 
-The half this tree owns is closed as of 2026-11-20 and re-written on 2026-11-21: two pages carry the requirement and its check. `guides/how-to-point-the-tool-at-your-runner.md` starts from a working CLI and ends with the tool finding it; `guides/how-to-get-a-checked-runner.md` starts from nothing, names the two places the tool probes and ends at "no official install can answer for an effect today" plus the question to take upstream. The mirrors still answer `0` for `--policy`, which is correct: they are dated copies of the website's pages and ADR-003 says the website wins.
+The half this tree owns is closed: two pages carry the requirement and its check.
+`guides/how-to-point-the-tool-at-your-runner.md` starts from a binary you have and ends with the
+tool finding it, quoting the one line a call ends with when the binary does not know the flag;
+README.md's install section states the check to run before believing an install worked. The
+mirrors still answer `0` for `--policy`, which is correct: they are dated copies of the website's
+pages and ADR-003 says the website wins.
 
 Upstream, the same gap sits in the language's install pages: their verify step proves the binary
-runs (`eyg eval -c '!int_add(1, 1)'`), not that it answers for an effect. Filing it there is the
+runs (`eyg eval -c '!int_add(1, 1)'`), not that it knows `--policy`. Filing it there is the
 operator's, since this tree does not write to the language repository. Trigger: the next time one
 of those website pages is edited.
 

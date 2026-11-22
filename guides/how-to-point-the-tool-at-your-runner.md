@@ -1,70 +1,57 @@
 # Point the tool at a CLI you built or downloaded
 
-You have a binary that accepts `--policy` and you want this package to use it instead of
-refusing. Three steps, and one check that proves it worked.
+The `eyg` tool starts one binary to run every program, and it must accept
+`run --policy <module.eyg>`: `--policy` is what carries the policy into the run, so a binary
+without that flag cannot run a program with checks in it. Two steps and one proof.
 
-The steps are:
-
-1. [Confirm the binary answers for an effect](#confirm-the-binary-answers-for-an-effect)
-2. [Name it](#name-it)
-3. [Prove the tool found it](#prove-the-tool-found-it)
-
-## Confirm the binary answers for an effect
-
-```sh
-<your binary> --help 2>&1 | grep -c -- --policy
-```
-
-A candidate counts only when that number is not `0`; the tool spawns `<candidate> --help`
-and looks for the flag. A candidate that cannot be spawned is not a runner at all.
-
-## Name it
-
-Set the variable for the session:
+## Name the binary
 
 ```sh
 export EYG_CODEMODE_RUNNER=<absolute path to the binary>
 ```
 
-That is the whole contract: when the variable is set, nothing else is probed. Without it, the
-tool tries one candidate: `eyg` on your `PATH`. There is no third place to park a binary - the
-package reaches those two and nothing else
-(`docs/world/entities/cli.runner-official-install-only.md`) - and the probe is one process per
-set of candidates, so a session pays it once.
-
-No officially installed build is a candidate yet: the published release's `--help` has no
-`--policy` (`docs/world/entities/gap.runner-release-lacks-policy.md`), and neither does a build
-of the published default branch (`docs/world/entities/gap.policy-runner-not-on-main.md`). So
-today this page is for a binary you built from a ref the language repository names, or for a
-machine where a release does carry the flag.
-
-A relative path is refused: the policy sees absolute paths, and a relative one resolves
+That is the whole contract. When the variable is set, that path is the binary. Without it,
+the tool starts `eyg` on your `PATH`. There is no third place to park a binary: the package
+reaches those two and nothing else (`docs/world/entities/cli.runner-official-install-only.md`).
+A relative path is refused - the policy sees absolute paths, and a relative one resolves
 before the checks can read it.
 
-## Prove the tool found it
-
-Make one call that performs an effect - `action: "effects"` answers without running
-anything - and expand the row (`Ctrl+O`). Its last line reads
-`policy: <path> (<source>) runner: <path> roots: <path>`. The runner you named is the
-proof, and the refusal message below is the counter-proof:
+Nothing is asked of the binary before the run: the flag is in every command line the tool
+builds, and a binary that does not know it says so in its own output. That output ends the
+call with one line:
 
 ```
-no runner that accepts `--policy` was found among ...
+the eyg binary this tool started did not understand `run --policy <module.eyg>` and read `run` as a file name, so no policy ran and nothing was performed: the install predates the flag this package needs, so install a newer release of the EYG CLI or name a binary that accepts the flag with EYG_CODEMODE_RUNNER=<absolute path>.
 ```
 
-If you see that message, the binary is not where the name says it is, or its `--help` does
-not carry the flag. Re-run step 1 against the exact path you set.
+A binary that is not there at all answers `no eyg binary found at <where the tool looked>`.
 
-At the shell, one command proves both halves - the runner answers for an effect, and the
-preset answered: `test/fixtures/refusal-probe.eyg` asks for a `WriteFile` and prints what came
-back, so `<runner> run --policy <this package>/policies/deny-all.eyg test/fixtures/refusal-probe.eyg`
-prints `write_file denied by policy` and leaves no file behind (0.1 s wall when a runner is
-named; measured 2026-11-20 through a development build of the language CLI this tree no longer
-has).
+Neither officially installed build carries the flag: not the published release
+(`docs/world/entities/gap.runner-release-lacks-policy.md`), not a build of the published
+default branch (`docs/world/entities/gap.policy-runner-not-on-main.md`). So this page is for
+a binary built from a ref the language repository names, or for a machine where a release
+does carry the flag.
+
+## Prove this package found it
+
+Make one call that asks a question rather than changing anything - `action: "effects"`
+answers without running a program - and expand the row (`Ctrl+O`). Its last line reads
+`policy: <path> (<source>) runner: <path> roots: <path>`: the runner named there is the
+proof, and the line quoted above is the counter-proof.
+
+At the shell, this package's own fixture is the same proof in one command:
+
+```sh
+$EYG_CODEMODE_RUNNER run --policy <this package>/policies/deny-all.eyg test/fixtures/refusal-probe.eyg
+```
+
+It prints `write_file denied by policy` and leaves no file behind; the fixture is
+`test/fixtures/refusal-probe.eyg`.
 
 ## Not this
 
-This page does not build a CLI - <https://eyg.run/guides/install-from-source> does, and
-this package carries none of that build; if you have no binary yet, start at
-`guides/how-to-get-a-checked-runner.md`, which says what to ask upstream. It also does not change
-what a policy allows; `guides/how-to-write-another-preset.md` does that.
+- getting a CLI in the first place: <https://eyg.run/guides/install-a-prebuilt-binary> and
+  <https://eyg.run/guides/install-from-source>; this package carries no build of its own;
+- changing what the policy allows once the binary runs: `guides/how-to-write-a-policy.md`;
+- the language's install pages themselves, which this tree does not own
+  (`docs/world/decisions/ADR-003-doc-delegation.md`).

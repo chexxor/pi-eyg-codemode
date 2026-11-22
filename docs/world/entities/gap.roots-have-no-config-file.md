@@ -6,7 +6,7 @@ status: superseded
 verified_at: 2026-11-22
 verify: "grep -q agent-roots .pi/settings.json && grep -q resolveRoots extensions/eyg-codemode.ts"
 confidence: high
-sources: [extensions/eyg-codemode.ts, lib/render-helpers.mjs, .pi/settings.json, guides/how-to-write-another-preset.md, notes/pi-codemode-project-settings-key.md, docs/world/entities/pi.policy-config.md]
+sources: [extensions/eyg-codemode.ts, lib/render-helpers.mjs, .pi/settings.json, guides/how-to-write-a-policy.md, notes/pi-codemode-project-settings-key.md, docs/world/entities/pi.policy-config.md]
 supersedes: null
 superseded_by: pi.policy-config
 ---
@@ -22,7 +22,7 @@ It closed on 2026-11-20, on the operator's request. `.pi/settings.json` now carr
 key - `policy` (a preset name or an absolute module path) and `roots` (absolute paths) - the
 tool reads it on every call through `eygSettings`, `presetPath`, `resolvePolicy` and
 `resolveRoots` in `lib/render-helpers.mjs`, and the shape, both orders and the refusal
-messages are in `guides/how-to-write-another-preset.md`. The command above checks the opposite
+messages are in `guides/how-to-write-a-policy.md`. The command above checks the opposite
 of what it used to: it passes because the key is there and the extension reads it.
 
 Two things this does not settle. A session cannot widen its own boundary while it runs - the

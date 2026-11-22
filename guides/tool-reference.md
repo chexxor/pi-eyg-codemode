@@ -8,7 +8,7 @@ The language's own effect and syntax references are `guides/cli_effects_referenc
 The sections:
 
 - [What the tool decides, and in what order](#what-the-tool-decides-and-in-what-order)
-- [What a preset rule answers with](#what-a-preset-rule-answers-with)
+- [What a policy handler answers with](#what-a-policy-handler-answers-with)
 - [Plan first, then act, with the same program](#plan-first-then-act-with-the-same-program)
 - [The effect surface, answered rather than remembered](#the-effect-surface-answered-rather-than-remembered)
 - [The language surface, answered rather than remembered](#the-language-surface-answered-rather-than-remembered)
@@ -20,12 +20,12 @@ The sections:
 
 | knob | default | resolved from |
 | --- | --- | --- |
-| policy module | `policies/agent-roots.eyg` inside the installed package, the path taken from `import.meta.url` | `lib/render-helpers.mjs` (`resolvePolicy`), used by `extensions/eyg-codemode.ts`; the order is stated in `guides/how-to-write-another-preset.md` |
-| project key | nothing set: the package default and the working directory | `eyg.policy` (a preset name such as `agent-roots`, or an absolute module path) and `eyg.roots` (absolute paths) in `.pi/settings.json`; pi merges global and project settings and keeps keys it does not know, and the tool re-reads both keys on every call |
-| roots | the session working directory, exported as `EYG_ALLOWED_ROOTS` for the call and restored after it | `lib/render-helpers.mjs` (`resolveRoots`): the roots a spawner narrowed this session to, then `eyg.roots`, then `EYG_ALLOWED_ROOTS`, then the working directory, plus the roots of a grant in force; the preset reads the variable |
-| widening for the rest of the session | nothing widened: a refusal stays a refusal | the operator's `/eyg-grant` command (`extensions/eyg-codemode.ts`), whose record `replayGrants` in `lib/render-helpers.mjs` reads back off the session branch; the order is in `guides/how-to-write-another-preset.md` |
+| policy module | `policies/agent-roots.eyg` inside the installed package, the path taken from `import.meta.url` | `lib/render-helpers.mjs` (`resolvePolicy`), used by `extensions/eyg-codemode.ts`; the order is stated in `guides/how-to-write-a-policy.md` |
+| project key | nothing set: the package default and the working directory | `eyg.policy` (a shipped policy name such as `agent-roots`, or an absolute module path) and `eyg.roots` (absolute paths) in `.pi/settings.json`; pi merges global and project settings and keeps keys it does not know, and the tool re-reads both keys on every call |
+| roots | the session working directory, exported as `EYG_ALLOWED_ROOTS` for the call and restored after it | `lib/render-helpers.mjs` (`resolveRoots`): the roots a spawner narrowed this session to, then `eyg.roots`, then `EYG_ALLOWED_ROOTS`, then the working directory, plus the roots of a grant in force; the policy reads the variable |
+| widening for the rest of the session | nothing widened: a refusal stays a refusal | the operator's `/eyg-grant` command (`extensions/eyg-codemode.ts`), whose record `replayGrants` in `lib/render-helpers.mjs` reads back off the session branch; the order is in `guides/how-to-write-a-policy.md` |
 | a second session | none started | the `eyg_subagent` tool (`extensions/eyg-codemode.ts`): `pi --print --mode json --tools <tools>` built as argv, its boundary from `childEnvOverrides` and checked by `rootsInside` and `childTools`, its effect allowlist enforced by `policies/spawner-effects.eyg`, its call budget by `callBudget`, its report parsed by `childCalls`/`childAnswer`; `guides/how-to-spawn-a-subagent.md` |
-| runner | `EYG_CODEMODE_RUNNER` (an absolute path) when set, else `eyg` on PATH; a candidate counts only when its `--help` advertises `--policy` | `lib/render-helpers.mjs` (`runnerCandidates`), used by `extensions/eyg-codemode.ts` (`resolveRunner`) |
+| runner | `EYG_CODEMODE_RUNNER` (an absolute path) when set, else `eyg` on PATH | `lib/render-helpers.mjs` (`runnerCandidates`, and `runnerFailureLine` for a binary that does not know `--policy`), used by `extensions/eyg-codemode.ts` |
 | mode | `run`; `eval` is pure and prints the value | `extensions/eyg-codemode.ts`. `action` selects what the call does - `run`, `eval`, `effects`, `reference`, `list_functions`, `describe_function` (`ACTIONS`) - and `prepareCallArguments` in `lib/render-helpers.mjs` maps `mode` from sessions resumed before the rename |
 | timeout | 30 s default, 120 s cap; the parameter is `timeout` in **seconds** | `extensions/eyg-codemode.ts` |
 | argv | `[mode, "--policy", policy, "-c", code]`, spawned with no shell in between | `extensions/eyg-codemode.ts` |
@@ -34,7 +34,7 @@ The sections:
 | --- | --- |
 | `EYG_POLICY` | absolute path to another policy module for the session |
 | `EYG_ALLOWED_ROOTS` | comma-separated absolute roots, replacing the session directory |
-| `EYG_CODEMODE_RUNNER` | absolute path to a runner that accepts `--policy` |
+| `EYG_CODEMODE_RUNNER` | absolute path to the binary the tool starts; it must know `run --policy <module.eyg>` |
 | `EYG_CODEMODE_TIMEOUT` | milliseconds for one call (the variable keeps its unit; the parameter does not) |
 | `EYG_CODEMODE_PI` | absolute path to the `pi` CLI, for the session `eyg_subagent` starts; default `pi` on PATH |
 | `EYG_SUBAGENT_POLICY` | the policy a spawner chose for a child session, read only when the depth marker says this package started the process |
@@ -42,8 +42,8 @@ The sections:
 | `EYG_SUBAGENT_MAX_CALLS` | how many `eyg` calls the child's own tool will answer for, read at depth >= 1 |
 | `EYG_CODEMODE_DEPTH` | set by `eyg_subagent` for the child: `1` in a child, and a child at depth 1 is refused a child of its own |
 
-The orders - which preset a call gets, and which roots it reads - are stated once, in
-`guides/how-to-write-another-preset.md`. Both are printed in every expanded row, and a refused
+The orders - which policy a call gets, and which roots it reads - are stated once, in
+`guides/how-to-write-a-policy.md`. Both are printed in every expanded row, and a refused
 call adds what the collapsed row shows too: the path it was denied, the policy that denied it,
 and the `/eyg-grant` that would have allowed it.
 
@@ -52,21 +52,21 @@ A policy module may read the environment; the program under it may not. The modu
 program is under (`policies/agent-roots.eyg:144`), and that is why a token belongs in a
 policy module rather than in a program (`guides/pi_codemode_agent.md`).
 
-## What a preset rule answers with
+## What a policy handler answers with
 
 `policies/agent-roots.eyg` is the default (files under the roots, nothing else).
 `policies/deny-all.eyg` is the narrowest record there is: it refuses every effect except
 `Now`, `Random`, `Sleep`, `Flip`, `StandardOut`, `StandardError` and `Exit`.
 `policies/spawner-effects.eyg` is `agent-roots.eyg` with an allowlist over its fields, installed for a child
-session whose spawner named `effects`; it is the third shipped preset and the only one that is not
-chosen by an operator (`docs/world/entities/pi.spawner-preset.md`). All three are one
-record, one rule per refusable effect, **written out in full and importing nothing**; the
-vocabulary used to be imported from the language repository and was inlined on 2026-11-18 so
-the package owns its whole decision (`notes/pi-codemode-preset-inlining.md`, and `docs/world/traps.md`
-for the trap inlining prevents). `guides/how-to-write-another-preset.md` is the how-to over
+session whose spawner named `effects`; it is the third shipped policy and the only one that is not
+chosen by an operator (`docs/world/entities/pi.spawner-policy.md`). All three are one
+record, one handler per refusable effect, **written out in full and importing nothing**; the
+vocabulary used to be imported from the language repository and was inlined so
+the package owns its whole decision (`notes/pi-codemode-policy-inlining.md`, and `docs/world/traps.md`
+for the trap inlining prevents). `guides/how-to-write-a-policy.md` is the how-to over
 changing one of them.
 
-A rule is a function the host calls with the value the program asked for. It answers one of
+A handler is a function the host calls with the value the program asked for. It answers one of
 three things:
 
 - **`Pass(value)`** - perform, with what you hand back. The value may be rewritten, which is
@@ -81,11 +81,11 @@ three things:
   `Mock(Error({}))` because `CWD` returns a `Result`.
 - **a wrapper** - a function that takes a rule and returns one, for example
   `hide_secrets(under("read_file", roots, request_path))`, which refuses `.env.eyg` before the
-  roots are consulted. Handlers compose by application, and the composed rule is still one field.
+  roots are consulted. Handlers compose by application, and the composed handler is still one field.
 
-The path a rule inspects differs by effect: `read_directory`, `delete_file` and `make_directory`
+The path a handler inspects differs by effect: `read_directory`, `delete_file` and `make_directory`
 carry a bare path string; `read_file`, `write_file` and `append_file` carry a record with a
-`path` field. Each effect has exactly one field in the record a preset builds - the 18 of them,
+`path` field. Each effect has exactly one field in the record a policy builds - the 18 of them,
 as mapped in the language repository's `rule_mapping` and recorded for this package in
 `POLICY_FIELDS` (`lib/render-helpers.mjs`): `append_file`, `create_key`, `cwd`, `delete_file`,
 `env`, `exit`, `fetch`, `flip`, `make_directory`, `now`, `random`, `read_directory`, `read_file`,
@@ -93,11 +93,11 @@ as mapped in the language repository's `rule_mapping` and recorded for this pack
 effect under the `read_file` field.
 
 Four effects have no policy field at all - `DecodeJSON`, `EYGParse`, `Hash`, `Sign` - so no
-preset, this package's or any other, can forbid them (`docs/world/traps.md`,
+policy, this package's or any other, can forbid them (`docs/world/traps.md`,
 `docs/world/entities/codemode.effect-surface.md`).
 
 Two vocabularies, and only one of them is this package's. The **host layer** is the record this
-tool loads: one field per effect, rules answering `Pass`/`Mock`. The **language layer** is
+tool loads: one field per effect, handlers answering `Pass`/`Mock`. The **language layer** is
 documented on the website (<https://eyg.run/guides/effect-access-policies>, read 2026-11-18):
 an `overlay.access` package applied *inside* a program - `access.apply(policy, (_) -> { perform ... })`
 - whose fields answer `Allow({})`, `Mock(value)` or `Deny(reason)`, with helpers such as

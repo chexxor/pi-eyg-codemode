@@ -72,7 +72,7 @@ boundary work - give the child a slice and a task that names a path one level up
 `effects` names the effects the child may perform, as effect names (`["ReadFile", "StandardOut"]`).
 It is not a request you make and hope the child obeys: it is enforced by `policies/spawner-effects.eyg`,
 the narrowing preset the tool installs for that child in place of `agent-roots.eyg`, and the child runs
-under it whether or not it behaves (`docs/world/entities/pi.spawner-preset.md`). Three facts about it,
+under it whether or not it behaves (`docs/world/entities/pi.spawner-policy.md`). Three facts about it,
 each of which the tool will tell you rather than let you discover:
 
 - **it removes reach, it never adds it.** `Fetch`, `StandardIn` and `CreateKey` stay refused allowlist

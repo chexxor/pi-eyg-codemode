@@ -110,4 +110,4 @@ shadowed one is still named so an override is visible.
 - `search` already walks for names. Write your own set when the answer differs, not when the
   walk does.
 - A set is not a policy. What its effects may do is the preset's decision, in
-  `guides/how-to-write-another-preset.md`.
+  `guides/how-to-write-a-policy.md`.

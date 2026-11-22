@@ -6,7 +6,7 @@ status: current
 verified_at: 2026-11-22
 verify: "test -f extensions/eyg-codemode.ts && grep -q -- '\"--policy\"' extensions/eyg-codemode.ts && grep -q 'join(dir, \"policies\", \"agent-roots.eyg\")' extensions/eyg-codemode.ts && grep -q 'renderCall:' extensions/eyg-codemode.ts && grep -q 'prepareArguments' extensions/eyg-codemode.ts && grep -q 'DEFAULT_TIMEOUT_S' extensions/eyg-codemode.ts && grep -q 'list_functions' extensions/eyg-codemode.ts && grep -q '\"reference\", \"list_functions\"' extensions/eyg-codemode.ts && grep -q 'buildRegistry' extensions/eyg-codemode.ts && test -f lib/render-helpers.mjs && grep -q 'export function callLines' lib/render-helpers.mjs && grep -q 'defaultTools' .pi/settings.json && grep -q '\"-builtin:codemode\"' .pi/settings.json && test -f libraries/search.eyg && test -f notes/pi_codemode_registry_probe.md && ! grep -q 'import \"' policies/agent-roots.eyg"
 confidence: high
-sources: [extensions/eyg-codemode.ts, policies/agent-roots.eyg, policies/deny-all.eyg, package.json, lib/render-helpers.mjs, README.md, .pi/settings.json, guides/pi_codemode_agent.md, notes/pi_codemode_host_gate.md, notes/pi_codemode_registry_probe.md, notes/pi-codemode-preset-inlining.md]
+sources: [extensions/eyg-codemode.ts, policies/agent-roots.eyg, policies/deny-all.eyg, package.json, lib/render-helpers.mjs, README.md, .pi/settings.json, guides/pi_codemode_agent.md, notes/pi_codemode_host_gate.md, notes/pi_codemode_registry_probe.md, notes/pi-codemode-policy-inlining.md]
 supersedes: null
 superseded_by: null
 ---
@@ -28,19 +28,23 @@ program whose every effect is decided by the policy in force before the host per
   module file the extension was loaded from), `defaultPolicy()` is
   `join(dir, "policies", "agent-roots.eyg")`, and the roots default to the session
   working directory, exported as `EYG_ALLOWED_ROOTS` for the one call and restored
-  after it. Resolution order is `policy` argument, `EYG_POLICY`, package default, and
-  the tool says which one it used.
-- The runner is probed, not assumed: a candidate is usable only if its `--help`
-  advertises `--policy`, because the check lives in the runner and the prebuilt release
-  on `PATH` predates that flag. **That candidate fails the probe**: `$HOME/.local/bin/eyg`
-  (v0.1.0) has no `--policy` in its help, so the tool does not pick it, and there is no third
+  after it. Resolution order is a grant the operator made this session, the policy a spawner named
+  for this session, the project's `eyg.policy` key, `EYG_POLICY`, the package default, and
+  the tool says which one it used; the call's `policy` argument sits outside that chain and is
+  honoured only when it can narrow it (`pi.policy-config`).
+- The binary is chosen by name, not by asking it what it can do: `EYG_CODEMODE_RUNNER`, else `eyg`
+  on `PATH`, and every command line carries `--policy`. The check lives in the binary, and the
+  prebuilt release
+  on `PATH` predates that flag. **That install cannot run a program**: `$HOME/.local/bin/eyg`
+  (v0.1.0) has no `--policy` in its help, so it reads the mode word as a file name, and there is no third
   place to look: the probe reaches `PATH` and `EYG_CODEMODE_RUNNER` and nothing else
-  (`cli.runner-official-install-only`, whose rule is pinned by three assertions in the unit
+  (`cli.runner-official-install-only`, whose rule is pinned by four assertions in the unit
   test). A checked call was seen on 2026-11-20 through a development build of the language CLI
   this tree no longer has (`cli.checked-runner-on-this-host`, superseded), so every effect-level
   number in this tree is dated to that day and labelled. `EYG_CODEMODE_RUNNER`
-  overrides the probe. Using a runner without the flag runs unchecked and mis-parses
-  the argv - it reads `run` as a program path.
+  names the binary instead of a search. Using a binary without the flag runs unchecked and
+  mis-parses
+  the argv - it reads `run` as a program path, which is what the one line names.
 - The tool renders like the built-in `bash` tool: `renderCall` and `renderResult` are
   registered on it, and the shapes they paint live in `lib/render-helpers.mjs` as
   `{tone, text}` rows (`callLines`, `resultLines`) that the extension only colours.
@@ -77,9 +81,9 @@ program whose every effect is decided by the policy in force before the host per
   roots named in `EYG_ALLOWED_ROOTS` with the preset written out inline, one rule per
   effect that can be refused, denying `.env.eyg`. `policies/deny-all.eyg` and
   `policies/spawner-effects.eyg` are the other shipped presets, the second one enforcing a child
-  session's effect allowlist (`docs/world/entities/pi.spawner-preset.md`).
+  session's effect allowlist (`docs/world/entities/pi.spawner-policy.md`).
   The presets were inlined from the language repository's `overlay/policy.eyg` on
-  2026-11-18 (`notes/pi-codemode-preset-inlining.md`).
+  2026-11-18 (`notes/pi-codemode-policy-inlining.md`).
 - A refusal is reported, not swallowed: the runner exits 1 with the reason on stderr,
   and the tool result carries `gated: true, ran: true, exit: 1` plus the reason.
 

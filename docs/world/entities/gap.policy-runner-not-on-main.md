@@ -13,7 +13,7 @@ superseded_by: null
 
 # Gap: the language's default branch has no runner that checks an effect, though a branch build on this machine does
 
-The one-shot checked runner this package starts — `eyg run --policy <module.eyg>` — is not in
+The one-shot run this package starts — `eyg run --policy <module.eyg>` — is not in
 the language repository's `main` as that checkout sits on this machine, and it is not in the CLI
 installed on `PATH`. Measured 2026-11-19 by reading that checkout read-only (`AGENTS.md` forbids
 running `git` there, so its branch is read from its `.git/HEAD`, which answers

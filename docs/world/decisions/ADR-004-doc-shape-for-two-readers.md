@@ -57,7 +57,7 @@ paragraph framed as "this host".
 | kind | this tree has it in | this tree lacks |
 | --- | --- | --- |
 | tutorial | nothing | `guides/first-session.md` |
-| how-to | nothing; the goals sit in README sections written as reference | `guides/how-to-point-the-tool-at-your-runner.md`, `guides/how-to-write-another-preset.md`, `guides/how-to-read-in-slices.md`, `guides/how-to-share-functions.md` |
+| how-to | nothing; the goals sit in README sections written as reference | `guides/how-to-point-the-tool-at-your-runner.md`, `guides/how-to-write-a-policy.md`, `guides/how-to-read-in-slices.md`, `guides/how-to-share-functions.md` |
 | reference | `guides/cli_effects_reference.md`, `guides/syntax.md`, `guides/builtins_reference.md`, the README tables, `AGENTS.md`'s command table | - |
 | explanation | the README's prose, `notes/`, `docs/world/decisions/` | - |
 
@@ -134,7 +134,7 @@ Reader 2 (the model that writes EYG):
 ## Consequences
 
 + Reader 1 reaches a first effect call in one page and knows, at the top of the README, that the
-  release published today cannot answer for an effect.
+  release published today has no build that knows `--policy`.
 + Filled on 2026-11-19: `guides/first-session.md` is the tutorial, the four `guides/how-to-*.md`
   pages are the how-tos, and `guides/tool-reference.md` carries the reference this package's README
   used to hold; `guides/PURPOSE` names the two sets in `guides/`, and two claim verifies moved from

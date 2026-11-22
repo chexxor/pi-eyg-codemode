@@ -6,7 +6,7 @@ status: proposed
 verified_at: 2026-11-22
 verify: "grep -q 'eyg-grant' extensions/eyg-codemode.ts && grep -q 'replayGrants' lib/render-helpers.mjs && grep -q childTools extensions/eyg-codemode.ts && grep -q callBudget extensions/eyg-codemode.ts && grep -q getActiveTools extensions/eyg-codemode.ts && test -f policies/spawner-effects.eyg && test -f docs/world/proposed/ADR-005-grants-spawn-and-child-surface.md"
 confidence: high
-sources: [extensions/eyg-codemode.ts, lib/render-helpers.mjs, policies/spawner-effects.eyg, docs/world/entities/pi.session-grants.md, docs/world/entities/pi.subagent-spawn.md, docs/world/entities/pi.spawner-preset.md, notes/pi-codemode-session-grants.md, notes/pi-codemode-subagent-spawn.md, notes/spawner-effect-allowlist.md, docs/world/decisions/ADR-002-handler-seam.md]
+sources: [extensions/eyg-codemode.ts, lib/render-helpers.mjs, policies/spawner-effects.eyg, docs/world/entities/pi.session-grants.md, docs/world/entities/pi.subagent-spawn.md, docs/world/entities/pi.spawner-policy.md, notes/pi-codemode-session-grants.md, notes/pi-codemode-subagent-spawn.md, notes/spawner-effect-allowlist.md, docs/world/decisions/ADR-002-handler-seam.md]
 supersedes: null
 superseded_by: null
 ---
@@ -24,7 +24,7 @@ answer for itself:
    built from the spawner's own reach (`docs/world/entities/pi.subagent-spawn.md`).
 3. **the child's surface** - the spawner names the child's tools, the effects its policy allows, and a
    call budget, enforced by a third shipped preset and by the child's own tool
-   (`docs/world/entities/pi.spawner-preset.md`).
+   (`docs/world/entities/pi.spawner-policy.md`).
 
 Read together they answer one question an operator asks before trusting an agent with tools: *who may
 make a call wider, and who may make it narrower.* ADR-002 settled where the decision lives (the policy
@@ -124,7 +124,7 @@ dated record, and the same commands now need `EYG_CODEMODE_RUNNER` naming a runn
 
 - what a policy rule may return, and why a refusal is a value: `docs/world/decisions/ADR-002-handler-seam.md`;
 - the mechanism's shape as built: `docs/world/entities/pi.session-grants.md`,
-  `docs/world/entities/pi.subagent-spawn.md`, `docs/world/entities/pi.spawner-preset.md`;
+  `docs/world/entities/pi.subagent-spawn.md`, `docs/world/entities/pi.spawner-policy.md`;
 - the per-decision trade-offs: `notes/pi-codemode-session-grants.md`,
   `notes/pi-codemode-subagent-spawn.md`, `notes/spawner-effect-allowlist.md`;
 - how to use any of it: `guides/how-to-spawn-a-subagent.md`, `guides/tool-reference.md`.

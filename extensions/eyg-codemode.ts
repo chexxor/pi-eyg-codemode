@@ -41,15 +41,16 @@
  * Configure the runner and the policy with environment variables to point one
  * session at one policy without editing this file:
  *
- *   EYG_CODEMODE_RUNNER   absolute path to the runner (default: probe, below)
+ *   EYG_CODEMODE_RUNNER   absolute path to the runner (default: `eyg` on PATH)
  *   EYG_POLICY            absolute path to the policy module (default: the package's)
  *   EYG_ALLOWED_ROOTS     comma separated absolute roots for the default policy
  *   EYG_CODEMODE_TIMEOUT  ms for one call (default 30000, capped at 120000)
  *
- * A runner must accept `run --policy <module.eyg>`: `--policy` is the whole
- * gate, and a run without it is ungated (`notes/pi_codemode_host_gate.md`
- * records why a policy inside the program is not a restriction). The probe is
- * the cheapest honest test that the gate exists at all.
+ * The runner must accept `run --policy <module.eyg>`: `--policy` is what makes the run
+ * checked, and a run without it is ungated (`notes/pi_codemode_host_gate.md`
+ * records why a policy inside the program is not a restriction). Nothing is asked of the
+ * binary in advance: every argv this tool builds carries the flag, and a binary too old
+ * for it says so, which `runnerFailureLine` turns into one line the model can act on.
  */
 
 import { defineTool, type ExtensionAPI, type Theme } from "@earendil-works/pi-coding-agent";
@@ -99,6 +100,7 @@ import {
   resolvePolicy,
   resolveRoots,
   runnerCandidates,
+  runnerFailureLine,
   rootsInside,
   sessionDepth,
   spawnerPolicy,
@@ -316,40 +318,11 @@ function paint(theme: Theme, segments: { tone: string; text: string }[]) {
   }).join("");
 }
 
-/// The runner: named by the environment, otherwise the first candidate that
-/// actually accepts the policy flag. `--policy` is the whole check, so probing
-/// rather than assuming is the only way to know the check exists. The candidate
-/// order lives in `runnerCandidates` in `lib/render-helpers.mjs`, where the tests
-/// read it. Cached: the probe is one process, and a session makes many tool calls.
-const runnerProbe: { candidates: string[]; runner: string | null } = {
-  candidates: [],
-  runner: null,
-};
-
-async function resolveRunner(
-  candidates: string[],
-  exec: (binary: string, args: string[]) => Promise<{ stdout: string; stderr: string; code: number }>,
-): Promise<string | null> {
-  if (runnerProbe.candidates.length === candidates.length &&
-    runnerProbe.candidates.every((c, i) => c === candidates[i])) {
-    return runnerProbe.runner;
-  }
-  for (const candidate of candidates) {
-    try {
-      const probe = await exec(candidate, ["--help"]);
-      if (/\-\-policy/.test(probe.stdout + probe.stderr)) {
-        runnerProbe.candidates = candidates;
-        runnerProbe.runner = candidate;
-        return candidate;
-      }
-    } catch {
-      // A candidate that cannot be spawned is not a runner.
-    }
-  }
-  runnerProbe.candidates = candidates;
-  runnerProbe.runner = null;
-  return null;
-}
+/// The runner this call starts is the first candidate `runnerCandidates` names - the path
+/// the operator named, else `eyg` on `PATH`. The candidate order lives in
+/// `lib/render-helpers.mjs`, where the tests read it. Nothing is asked of the binary
+/// before the run: `--policy` is in every argv this tool builds, and a binary that does
+/// not know that command is answered with one line (`runnerFailureLine`).
 
 export default function (pi: ExtensionAPI) {
   pi.registerTool(defineTool({
@@ -586,20 +559,7 @@ export default function (pi: ExtensionAPI) {
       }
 
       const candidates = runnerCandidates(cwd, process.env);
-      const exec = async (binary: string, args: string[]) => {
-        const result = await pi.exec(binary, args, { signal: null, timeout: PROBE_TIMEOUT_MS, cwd });
-        return { stdout: result.stdout ?? "", stderr: result.stderr ?? "", code: result.code ?? 1 };
-      };
-      const runner = await resolveRunner(candidates, exec);
-      if (runner === null) {
-        return refuseToRun(
-          `no runner that accepts \`--policy\` was found among ${candidates.join(", ")}. ` +
-            "Checking happens in the runner, so a CLI without that flag cannot be used, and this package " +
-            "reaches no other binary: install the official CLI, and if what you installed has no --policy, " +
-            "the release predates the checks (docs/world/entities/gap.runner-release-lacks-policy.md). " +
-            "Besides PATH the only thing tried is a runner the operator names: EYG_CODEMODE_RUNNER=<absolute path>.",
-        );
-      }
+      const runner = candidates[0];
 
       // One spawned program: the mode, the source and the wall-time cap. The
       // roots the default policy reads from `EYG_ALLOWED_ROOTS` are set for the
@@ -613,6 +573,9 @@ export default function (pi: ExtensionAPI) {
         process.env.EYG_ALLOWED_ROOTS = roots;
         const startedAt = Date.now();
         try {
+          // A binary that is not there at all comes back as a failed spawn whose stderr
+          // names `ENOENT` (`pi.exec` does not throw for it), which `runnerFailureLine`
+          // turns into the one line the model can act on.
           const result = await pi.exec(runner, [mode, "--policy", policy, "-c", source], { signal, timeout: timeoutMs, cwd });
           return {
             result,
@@ -657,6 +620,10 @@ export default function (pi: ExtensionAPI) {
           }
           const outcome = await spawn("run", program, probeTimeoutMs);
           probes = probes + 1;
+          // One probe is enough to learn the binary cannot answer the question at all, in
+          // which case the other rows would be the same sentence repeated.
+          const cannotAnswer = outcome.result.code === 0 ? null : runnerFailureLine({ runner, mode: "run", output: outcome.out });
+          if (cannotAnswer !== null) return refuseToRun(cannotAnswer);
           const verdict = classifyProbeOutput(outcome.out);
           const answer =
             verdict === "available" ? "allowed for the probe value" :
@@ -885,7 +852,10 @@ export default function (pi: ExtensionAPI) {
       // path, which a session that cannot read outside its roots cannot act on.
       const invented = builtinErrors(out);
       const hints = builtinHintRows(invented).map((row) => row.map((segment) => segment.text).join(""));
-      const text = [`eyg ${mode}: ${status}`, out, asks.join("\n"), hints.join("\n")].filter((part) => part !== "").join("\n");
+      // A run that failed because the binary does not know the command this tool built is
+      // not a program error, and the fix is an install, not a rewrite of the program.
+      const cannotRun = result.code === 0 ? null : runnerFailureLine({ runner, mode, output: out });
+      const text = [`eyg ${mode}: ${status}`, out, cannotRun === null ? "" : cannotRun, asks.join("\n"), hints.join("\n")].filter((part) => part !== "").join("\n");
       return {
         content: [{ type: "text", text }],
         details: {
@@ -1179,15 +1149,7 @@ export default function (pi: ExtensionAPI) {
             }
           }
         };
-        const runner = await resolveRunner(candidates, exec);
-        if (runner === null) {
-          return refuseToRun(
-            `an effect allowlist is checked by asking the policy in force what it performs, and no runner that accepts \`--policy\` was found among ${candidates.join(", ")}. ` +
-              "Omit effects to spawn the child under its policy un-narrowed, or name a runner that accepts " +
-              "the flag with EYG_CODEMODE_RUNNER=<absolute path>; no official release carries it yet " +
-              "(docs/world/entities/gap.runner-release-lacks-policy.md).",
-          );
-        }
+        const runner = candidates[0];
         const probeRoot = reachableRoots.split(",")[0].trim();
         const performed: string[] = [];
         for (const name of checkedEffects) {
@@ -1204,6 +1166,15 @@ export default function (pi: ExtensionAPI) {
             continue;
           }
           const probed = await exec(runner, ["run", "--policy", parentPolicy, "-c", program]);
+          if (probed.code !== 0) {
+            const cannotAnswer = runnerFailureLine({ runner, mode: "run", output: probed.stdout + "\n" + probed.stderr });
+            if (cannotAnswer !== null) {
+              return refuseToRun(
+                `an effect allowlist is checked by asking the policy in force what it performs, and this session cannot ask it. ${cannotAnswer} ` +
+                  "Omit effects to spawn the child under its policy un-narrowed.",
+              );
+            }
+          }
           if (classifyProbeOutput(probed.stdout + "\n" + probed.stderr) === "refused") continue;
           if (!performed.includes(field)) performed.push(field);
         }

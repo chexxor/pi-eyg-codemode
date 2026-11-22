@@ -45,7 +45,7 @@ nothing here reads it at run time, and this tree never writes outside itself.
 | gap.grant-polish-undecided | The mechanism is recorded and partly measured in `docs/world/entities/pi.session-grants.md`: a refusal names the ask, ... | delegate | 2026-11-22 |
 | gap.install-guides-name-no-policy | Neither install route - the website's pages and this tree's mirrors, `guides/install_prebuilt.md` and ... | delegate | 2026-11-22 |
 | gap.language-skill-home-undecided | `.pi/settings.json` declares the EYG language-skill pi package by path, one directory above this one (`@measured ... | delegate | 2026-11-22 |
-| gap.policy-runner-not-on-main | The one-shot checked runner this package starts — `eyg run --policy <module.eyg>` — is not in the language repository's ... | delegate | 2026-11-22 |
+| gap.policy-runner-not-on-main | The one-shot run this package starts — `eyg run --policy <module.eyg>` — is not in the language repository's `main` as ... | delegate | 2026-11-22 |
 | gap.roots-have-no-config-file | This page recorded the hole: the roots in force were the session working directory or `EYG_ALLOWED_ROOTS`, ... | delegate | 2026-11-22 |
 | gap.runner-release-lacks-policy | The latest release the language repository serves is `gleam_cli-v0.1.0` (read from its release feed on 2026-11-19), and ... | delegate | 2026-11-22 |
 | gap.windows-is-undocumented | `guides/install_prebuilt.md` offers `eyg-windows-x64.exe` as a release asset, and `README.md` mentions Windows nowhere. | delegate | 2026-11-22 |
@@ -58,7 +58,7 @@ nothing here reads it at run time, and this tree never writes outside itself.
 | pi.policy-config | Two questions the operator asked, answered in the tree: which policy the package uses if you set nothing, and where to ... | delegate | 2026-11-22 |
 | pi.reference-action | `action: "reference"` (`code: ""`) prints the language surface the session is writing against: `eyg reference: 29 ... | delegate | 2026-11-22 |
 | pi.session-grants | A refused effect is an ask the model makes in chat and the operator answers with `/eyg-grant`, registered by ... | delegate | 2026-11-22 |
-| pi.spawner-preset | `policies/spawner-effects.eyg` is the third preset this package ships: `agent-roots.eyg` with an allowlist check over ... | delegate | 2026-11-22 |
+| pi.spawner-policy | `policies/spawner-effects.eyg` is the third preset this package ships: `agent-roots.eyg` with an allowlist check over ... | delegate | 2026-11-22 |
 | pi.subagent-spawn | `eyg_subagent`, registered by `extensions/eyg-codemode.ts`, starts a second pi session in the same working directory ... | delegate | 2026-11-22 |
 | usability.without-language-skill | One task, run in fresh one-shot sessions over two scratch projects whose `.pi/settings.json` differ only in whether the ... | delegate | 2026-11-22 |
 | world-model.package | `pi-simple-world-model/` is a pi package carried in this workspace as a copy, declared per project in ... | delegate | 2026-11-22 |
@@ -77,7 +77,7 @@ nothing here reads it at run time, and this tree never writes outside itself.
 
 ## Where to look for a claim
 
-- entities: 24 · invariants: 4 · decisions: 6 · runbooks: 2 · traps: 45
-- suspect right now: ADR-002-handler-seam, overlay.agent-harness
+- entities: 24 · invariants: 4 · decisions: 6 · runbooks: 2 · traps: 47
+- suspect right now: ADR-002-handler-seam, gap.runner-release-lacks-policy, overlay.agent-harness, pi.policy-config
 - re-check everything: `npm run world` · checks: `npm run world:lint` · regenerate this index: `npm run world:map`
 <!-- END GENERATED -->

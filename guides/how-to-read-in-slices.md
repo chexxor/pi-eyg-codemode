@@ -85,7 +85,7 @@ documents rather than ones observed here.
   never contents, and a listed name is not permission to read that path
   (`guides/cli_effects_reference.md`).
 - A read you expected and did not get is the preset's decision, not the file's: see
-  `guides/how-to-write-another-preset.md`, where a path ending `.env.eyg` is refused by both
+  `guides/how-to-write-a-policy.md`, where a path ending `.env.eyg` is refused by both
   shipped presets.
 - A whole file at once is one `ReadFile` with a `limit` above the size. Slicing is about the
   row you read back, not about a file too big to exist.

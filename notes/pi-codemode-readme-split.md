@@ -23,7 +23,7 @@ in `guides/`, and `guides/PURPOSE` says which set each file belongs to.
 
 What stays in the README is what only the README can carry: what the package is, who reads
 it, the words a reader cannot look up elsewhere, the one fact that has to be true on their
-machine (the published release cannot answer for an effect, and the action that resolves it),
+machine (no published release build knows the flag that carries a policy, and the README says so),
 what the package installs, and the pointer to `AGENTS.md`'s command table. Everything else is
 a link.
 
