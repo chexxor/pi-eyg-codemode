@@ -3,11 +3,12 @@
 // in the CLI knows about this file. The tool writes a per-call entry that imports
 // it, the policy and the program, and calls `build`:
 //
-//   let g = import "<this file>"
+//   let guard = import "<this file>"
 //   let policy = import "<policy module>"
-//   g.build(policy.rules({roots: [...], cwd: "..."}), (_) -> {
-//     let m = import "<program file written for this call>"
-//     m.run({})
+//   let ctx = {roots: [...], cwd: "...", fields: [...]}
+//   guard.build(policy.rules(ctx), ctx, (_) -> {
+//     let program = import "<program file written for this call>"
+//     program.run({})
 //   })
 //
 // # Why a handler per effect

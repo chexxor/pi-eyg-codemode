@@ -165,7 +165,7 @@ test("the effect surface: the recorded rule_mapping parses, one row per effect",
     `  #("DecodeJSON", policy.Unchecked),\n` +
     `  #("WriteFile", policy.PolicyField("write_file")),`;
   assert.equal(ruleMappingEffects(fixture).join(","), "AppendFile,DecodeJSON,WriteFile", "both halves of the mapping parse, in file order");
-  assert.equal(effectLine("Search", "read_file", "allowed for the probe value"), "Search | read_file | allowed for the probe value", "one row per effect");
+  assert.equal(effectLine("Search", "search", "allowed for the probe value"), "Search | search | allowed for the probe value", "one row per effect");
   assert.equal(effectLine("Hash", null, "unchecked (computes over values it was given)"), "Hash | none | unchecked (computes over values it was given)", "an unchecked effect names no field");
 
 });
@@ -192,17 +192,18 @@ test("where the tool looks for a runner, and the one line a spawn that ran nothi
   );
 
   // The one line a spawn gets when it ran no program at all (`runnerFailureLine`).
-  // The first case is the real output of an `eyg` that predates `--policy`: it reads the
-  // mode word as a file name rather than rejecting the flag, captured on 2026-11-21 by
-  // `eyg eval --policy policies/deny-all.eyg -c '!int_add(1, 1)'` in this tree.
+  // The first case is measured output of a binary with no such command: `eyg bogus
+  // entry.eyg` answers `no such file: <cwd>/bogus`, because the CLI's fallback form is
+  // `<file> [args...]` and it read the mode word as a file name (2026-11-22).
   assert.match(
     runnerFailureLine({
       runner: "eyg",
       mode: "eval",
+      entry: "/tmp/pi-eyg-codemode/1/entry.eyg",
       output: "error: no such file: /srv/app/eval\nhint: check the path and that the file exists, relative to the current working directory",
     }) ?? "",
-    /did not understand `eval --policy <module\.eyg>`.*EYG_CODEMODE_RUNNER=<absolute path>/s,
-    "a binary that reads the mode as a file name gets the install line",
+    /has no `eval` command.*`eyg eval \/tmp\/pi-eyg-codemode\/1\/entry\.eyg`.*EYG_CODEMODE_RUNNER=<absolute path>/s,
+    "a binary that reads the mode as a file name gets the install line, quoting the command it ran",
   );
   assert.equal(
     runnerFailureLine({ runner: "/opt/eyg", mode: "run", output: "spawn /opt/eyg ENOENT" }),
@@ -392,8 +393,8 @@ test("a subagent: argv, tools, effect fields and the environment it starts with"
   assert.equal(childTools(["read"], null).parentChecked, false, "when the harness does not say what the parent has, that half of the check is skipped and says so");
   assert.deepEqual(
     effectFieldsFor(["ReadFile", "Search", "StandardOut", "NoSuchEffect", "Hash"]).fields,
-    ["read_file", "standard_out"],
-    "effect names map to policy fields, and Search shares read_file with ReadFile, so the field list deduplicates",
+    ["read_file", "search", "standard_out"],
+    "effect names map to policy fields, and a search has its own field, so naming ReadFile does not grant Search",
   );
   assert.deepEqual(effectFieldsFor(["NoSuchEffect"]).unknown, ["NoSuchEffect"], "an effect the CLI does not have is named back");
   assert.deepEqual(effectFieldsFor(["Hash"]).unchecked, ["Hash"], "an effect no policy can forbid is reported, not enforced");
@@ -527,11 +528,14 @@ test("the rows a subagent spawn renders: the ask, and what came back", () => {
 });
 test("the drift guard: POLICY_FIELDS against the recorded rule_mapping", () => {
   // The drift guard. This workspace is the pi package on its own, so the runtime
-  // that owns `rule_mapping` is not in this tree: the guard compares `POLICY_FIELDS`
-  // against the recorded snapshot in test/fixtures/rule_mapping.gleam (provenance in
-  // test/fixtures/rule_mapping.PROVENANCE.md), and when EYG_RULE_SOURCE names a real
-  // runtime source it reads that as well and fails if the runtime drifted from the
-  // snapshot. Without the variable the live check is skipped and says so below.
+  // that owns `rule_mapping` is not in this tree: the guard compares the effect labels
+  // and the unchecked set of `POLICY_FIELDS` against the recorded snapshot in
+  // test/fixtures/rule_mapping.gleam (provenance in test/fixtures/rule_mapping.PROVENANCE.md),
+  // and when EYG_RULE_SOURCE names a real runtime source it reads that as well and fails
+  // if the runtime drifted from the snapshot. Without the variable the live check is
+  // skipped and says so below. The snapshot's field column is not compared: the checks run
+  // in `host/guard.eyg` now, and its fields are this package's, which
+  // `test/host-coverage.test.mjs` proves are the fields the guard reads.
   const snapshot = readFileSync(join(import.meta.dirname, "fixtures", "rule_mapping.gleam"), "utf8");
   const advertised = Object.keys(POLICY_FIELDS).join(",");
   assert.equal(ruleMappingEffects(snapshot).join(","), advertised, "the advertised surface is the recorded rule_mapping, in order");
@@ -600,7 +604,7 @@ test("the drift check over the surface file: four inputs, and a planted rename a
   assert.ok(renamed.some((p) => p.includes("row not in the inputs: effect\tWriteFileX")), "and an invented one is an extra row");
   assert.ok(renamed.some((p) => p === "the file does not match what the generator rebuilds"), "and the byte-for-byte rebuild notices");
 
-  const dropped = surfaceDriftProblems(text.replace("effect\tSearch\tread_file\t\n", ""));
+  const dropped = surfaceDriftProblems(text.replace("effect\tSearch\tsearch\t\n", ""));
   assert.ok(dropped.some((p) => p.includes("missing row: effect\tSearch")), "a deleted effect row is caught by the recorded mapping");
 
   const builtinRenamed = surfaceDriftProblems(text.replace("builtin\t!int_add\tIntegers\t", "builtin\t!int_addx\tIntegers\t"));

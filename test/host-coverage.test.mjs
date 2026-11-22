@@ -9,6 +9,8 @@ import { readFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 import { dirname, join } from "node:path";
 
+import { contextLiteral, entryProgram, ENTRY_FILE, GUARD_FILE, programModule, PROGRAM_FILE } from "../lib/render-helpers.mjs";
+
 const here = dirname(fileURLToPath(import.meta.url));
 const tree = join(here, "..");
 
@@ -88,4 +90,41 @@ test("no shipped policy reads the environment or imports outside the package", (
     assert.equal(/\bperform\b/.test(code), false, `${name} performs an effect`);
     assert.equal(/\bimport\b/.test(code), false, `${name} imports a module`);
   }
+});
+
+// The other half of the boundary: what the tool writes and spawns for one call. The
+// guard only decides a program that runs inside it, so the entry and the argv are part
+// of the contract, and they are pinned here rather than only in the TypeScript.
+test("one call is three files and one argv, with the guard around the program", () => {
+  const tool = read("extensions", "eyg-codemode.ts");
+  assert.equal((tool.match(/pi\.exec\(runner, \[mode, entryPath\]/g) ?? []).length, 1, "one place spawns the eyg binary");
+  assert.equal((tool.match(/runGuarded\(pi, \{/g) ?? []).length, 2, "a call and an allowlist probe both go through the guard");
+  assert.equal(/pi\.exec\([^)]*"--/.test(tool), false, "no flag appears in an argv the tool builds");
+  for (const file of [GUARD_FILE, PROGRAM_FILE, ENTRY_FILE]) {
+    assert.ok(tool.includes(file), `the tool names ${file} as one of the files a call is made of`);
+  }
+  // A spawner's effect allowlist reaches the policy as a ctx value, not as an
+  // environment variable the policy reads for itself.
+  assert.ok(tool.includes("spawnerEffects(process.env, chain.depth)"), "the fields a spawner named travel in ctx");
+
+  const entry = entryProgram({
+    guard: "/pkg/host/guard.eyg",
+    policy: "/pkg/policies/agent-roots.eyg",
+    ctx: contextLiteral({ roots: ["/work a"], cwd: "/work", fields: ["read_file"] }),
+    program: "/tmp/call-1/program.eyg",
+  });
+  assert.ok(entry.indexOf("let guard = import") < entry.indexOf("let policy = import"), "the guard is imported first");
+  assert.ok(
+    entry.indexOf("guard.build(policy.rules(ctx), ctx, (_) -> {") < entry.indexOf('let program = import "/tmp/call-1/program.eyg"'),
+    "the program is imported inside the guarded body, never outside it",
+  );
+  assert.ok(entry.trimEnd().endsWith("})"), "the body calls the program and closes the guard");
+  assert.ok(entry.includes('{roots: ["/work a"], cwd: "/work", fields: ["read_file"]}'), "ctx reaches the policy as a literal");
+  assert.equal(entry.includes("--"), false, "the entry passes no flag to anything");
+  assert.equal(entry.includes("perform"), false, "the entry itself performs no effect");
+
+  const source = 'let answer = !int_add(1, 2)\nanswer';
+  const wrapped = programModule(source);
+  assert.ok(wrapped.includes(source), "the program text travels verbatim");
+  assert.ok(wrapped.startsWith("let run = (_) -> {") && wrapped.endsWith("{run}\n"), "one exported `run` function carries it");
 });

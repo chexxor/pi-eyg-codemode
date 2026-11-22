@@ -82,7 +82,7 @@ sweep() {
 
 # Every EYG module this package ships has to parse and type-check: a policy that does not
 # compile decides nothing, and a library that does not compile is a function nobody can call.
-# The CLI on `PATH` runs `check` without a runner, so this row needs no `--policy` support.
+# The CLI on `PATH` type-checks a module without running one, so this row needs no entry file.
 eyg_modules() {
   local f
   for f in policies/*.eyg libraries/*.eyg; do

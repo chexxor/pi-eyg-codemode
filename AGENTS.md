@@ -19,9 +19,9 @@ another workspace at run time.**
   This package was extracted from inside it on 2026-11-18 and never goes back. Its files
   are cited as "the language repository's", never as a path this tree can open. That
   repository also carries its own agent harness, Overlay: what each harness owns is
-  `docs/world/entities/overlay.agent-harness.md`, and which ref of that repository carries a
-  build that knows `run --policy` is
-  `docs/world/entities/gap.policy-runner-not-on-main.md`.
+  `docs/world/entities/overlay.agent-harness.md`, and what that repository does not carry is a
+  host that decides effects for someone else's program - which is why the guard this package
+  starts is in this tree (`host/guard.eyg`, `gap.policy-runner-not-on-main`).
 - **The EYG language skill is not in this tree**: it is a separate pi package declared by
   path in `.pi/settings.json` - the one line of this tree that reaches outside it, and the
   only reason a session here can see the language reference. `pi list` prints where each
@@ -51,50 +51,57 @@ the generated text of a kept binding, run through the CLI ·
 A program reaches the host only through effects, and this package has no effect that runs
 shell commands; a policy module decides each effect before the host performs it.
 
-- The tool spawns `<runner> <mode> --policy <module.eyg> -c <source>` through argv - no
-  shell in between, so quoting cannot be a route around the checks.
+- A call is three files and one argv: the tool writes `program.eyg` (the model's source
+  inside one `run` function) and `entry.eyg` (which imports the guard, the policy and the
+  program) into a scratch directory of its own and spawns
+  `<binary> <mode> <entry.eyg>` - no shell in between, so quoting cannot be a route around
+  the checks (`runGuarded` in `extensions/eyg-codemode.ts:458`, the one place it spawns at
+  `:769`).
+- The per-effect checks are a program this package ships: `host/guard.eyg` installs one
+  `handle` clause per effect row of `guides/eyg-surface.tsv` and applies the policy around
+  the model's code, which is imported inside the guarded body. A label the guard does not
+  name has no host, so naming every effect is what makes the default a refusal (`build` in
+  `host/guard.eyg:570`, `test/host-coverage.test.mjs`,
+  `notes/pi-codemode-host-guard-contract.md`).
 - Policy resolution: the order is stated once, in the table "Which policy a call gets" in
   `guides/how-to-write-a-policy.md`, and it is one function - `resolvePolicy` in
-  `lib/render-helpers.mjs:344`, used at `extensions/eyg-codemode.ts:501`. A slot that names no
+  `lib/render-helpers.mjs:391`, used at `extensions/eyg-codemode.ts:687`. A slot that names no
   module is skipped, and when none names one the tool refuses rather than running unchecked. The
   call's `policy` argument sits outside that chain: it is
   honoured only when it names the policy the chain already chose or `NARROWEST_POLICY_FILE`
-  (`narrows` in `lib/render-helpers.mjs:323`, used at `:361`), and anything else comes back
-  `refusedArgument` (`extensions/eyg-codemode.ts:645`, and `:1244` for a child's policy).
+  (`narrows` in `lib/render-helpers.mjs:369`, used at `:408`), and anything else comes back
+  `refusedArgument` (`extensions/eyg-codemode.ts:702`, and `:1297` for a child's policy).
 - The binary is chosen by name, not by asking it what it can do: `EYG_CODEMODE_RUNNER` (an
   absolute path), else `eyg` on PATH - two places, no third (`runnerCandidates` in
-  `lib/render-helpers.mjs`, used at `extensions/eyg-codemode.ts:563` and `:1135`). Every argv
-  carries `--policy`, so a build too old for the flag says so itself and the call ends with one
-  line naming the install (`runnerFailureLine` in `lib/render-helpers.mjs`). This package supports
-  the officially installed CLI and a binary the operator names, and reaches no other binary
-  (`docs/world/entities/cli.runner-official-install-only.md`).
-- **No officially installed CLI knows the `--policy` flag yet, and nothing here works around
-  that.** The CLI on PATH runs programs but has no flag to carry a policy: `eyg --version` answers
-  `eyg v0.1.0` and `grep -c -- '--policy
-  <<< "$(eyg --help 2>&1)"'` prints `0` (`@measured 2026-11-21`), and the language repository's
-  release and default branch both lack the flag (`gap.runner-release-lacks-policy`,
-  `gap.policy-runner-not-on-main`). One build that knew the flag has been seen on this machine,
-  a development build this tree no longer points at
-  (`docs/world/entities/cli.checked-runner-on-this-host.md`, superseded). Until the language
-  ships a build with the flag, a statement about what a shipped policy allows at runtime is not
-  re-runnable here: report the recorded number with its date and its provenance, never as a fresh
-  result.
-- Env: `EYG_CODEMODE_RUNNER` (absolute runner path), `EYG_POLICY` (absolute module path),
-  `EYG_ALLOWED_ROOTS` (comma-separated absolute roots, read by the default policy),
+  `lib/render-helpers.mjs:326`, used at `extensions/eyg-codemode.ts:749` and `:1408`). Nothing
+  is asked of it but the mode word and a file this package wrote; a missing binary, or one with
+  no such mode command, ends the call with one line naming the install and quoting the command
+  that was run (`runnerFailureLine` in `lib/render-helpers.mjs:569`).
+- **Nothing here waits on a build of the language.** The installed CLI runs every call:
+  `eyg --version` answers `eyg v0.1.0` and `eyg run <the entry this package writes>` runs the
+  guard (`@measured 2026-11-22`), so what a shipped policy decides at runtime is re-runnable
+  here - run the claim's command and report what it prints. What the language repository still
+  does not carry is a host of its own (`gap.policy-runner-not-on-main`).
+- Env: `EYG_CODEMODE_RUNNER` (absolute path to the binary a call runs in), `EYG_POLICY` (absolute
+  policy module path), `EYG_ALLOWED_ROOTS` (comma-separated absolute roots, the default source for
+  the `ctx.roots` the tool writes into the entry),
   `EYG_CODEMODE_TIMEOUT` (ms, default 30000, cap 120000); the tool's `timeout` parameter is
   in **seconds** (default 30, max 120).
 - The effect surface: 23 effects, 19 named by a policy field, 4 unchecked
   (`DecodeJSON`, `EYGParse`, `Hash`, `Sign`) available under every shipped policy including deny-all;
-  `Search` shares the `read_file` field. The drift guard compares
-  `POLICY_FIELDS` in `lib/render-helpers.mjs` against `test/fixtures/rule_mapping.gleam`
-  (a recorded snapshot of the language repository's `overlay.gleam`, md5
-  `9cb5e8ace42e1df79083bab255ee9bb1` at capture).
-- A **policy rule is a function** the host calls with the value the program asked for, and it
-  answers `Pass(value)` (perform with what you hand back, so the argument may be rewritten) or
-  `Mock(x)` (answer the program, the host performs nothing - a refusal is
-  `Mock(Error("<effect> denied by policy: <path>"))`, and `Mock` must return a value of the
-  effect's own type: `env: Mock(None({}))`, `cwd: Mock(Error({}))`, and `Mock` cannot answer
-  `Exit`). Rules wrap each other (`hide_secrets(under(...))`), which is why one record is one
+  `Search` has a field of its own (`search`) because the guard, not the CLI, is the host for that
+  walk. The drift guard compares the labels and the unchecked set of `POLICY_FIELDS` in
+  `lib/render-helpers.mjs` against `test/fixtures/rule_mapping.gleam` (a recorded snapshot of the
+  language repository's `overlay.gleam`, md5
+  `9cb5e8ace42e1df79083bab255ee9bb1` at capture); the field column is this package's own, and
+  `test/host-coverage.test.mjs` proves it against the guard.
+- A **policy rule is a function** the guard calls with the value the program asked for, and it
+  answers `Pass(value)` (the guard performs with what you hand back, so the argument may be
+  rewritten) or `Mock(reason)` (the guard answers the program itself, in the shape that effect's
+  own reply type allows: `Error(reason)` for the effects whose reply carries text, `None({})` for
+  `Env`, `Error({})` for `CWD`, the unit value for `Sleep`, `StandardOut` and `StandardError`, and
+  an abort naming the reason for `Now`, `Random`, `Flip` and `Exit`, whose replies carry no
+  refusal). Rules wrap each other (`hide_secrets(under(...))`), which is why one record is one
   composed decision (`policies/agent-roots.eyg`, read 2026-11-18; `ADR-002-handler-seam`).
 - The tool's registry reads three scopes and never writes: `<cwd>/.pi/eyg-functions`
   (workspace), `$HOME/.pi/eyg-functions` (home), `<package>/libraries` (package).
@@ -205,13 +212,13 @@ never put a workspace fact in a guide - a fact in two places drifts.
   2026-11-20, 5.70 s, 6/6); nothing in this tree runs it, so a failing check is still
   something a person notices. Trigger for CI: the first commit that lands with a failing
   check nobody saw.
-- **No release and no default branch carries a build that knows `--policy`.** The published release and the
-  default branch both lack `--policy` (`gap.policy-runner-not-on-main`,
-  `gap.runner-release-lacks-policy`), so a fresh clone of this package on any machine gets no
-  working `eyg` tool until the language ships one, and this package starts no build of its own.
-  Trigger: a release whose `--help` mentions `--policy` - then re-capture
-  `test/fixtures/rule_mapping.gleam` the way `test/fixtures/rule_mapping.PROVENANCE.md` says and
-  move those two records with the new output.
+- **No release of the language carries a host, and this package does not wait for one.** The
+  guard is this package's file (`host/guard.eyg`), so a fresh clone gets the checks with the
+  package; what is copied from the language is its effect surface, recorded in
+  `test/fixtures/rule_mapping.gleam`. Trigger to re-capture: `node bin/agent/gen-surface.mjs
+  --check` fails against an installed CLI whose labels differ - then re-capture the fixture the
+  way `test/fixtures/rule_mapping.PROVENANCE.md` says and move
+  `gap.runner-release-lacks-policy` and `gap.policy-runner-not-on-main` with the new output.
 - **No decision on where the language-skill package lives.** `.pi/settings.json` declares it from
   outside this tree - the one line here that reaches outside - and the three shapes (leave it, vendor
   it as `pi-simple-world-model/` is vendored, publish it and declare it by name) are unwritten down as

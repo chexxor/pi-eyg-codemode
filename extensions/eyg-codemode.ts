@@ -1,11 +1,13 @@
 /**
  * EYG codemode - the agent's only channel to the outside world.
  *
- * The model calls one tool, `eyg`, with EYG source. The tool spawns the
- * runner (`eyg run --policy <module.eyg>`) so the interpreter stops at every
- * effect and the host policy module decides Pass or Mock before the host
- * performs it. A denied effect resumes the program with an EYG error such as
- * `write_file denied by policy: /abs/path`, which the model can act on; the
+ * The model calls one tool, `eyg`, with EYG source. The tool writes three files for
+ * the call in a scratch directory of its own - the program, an entry that imports it,
+ * and the guard this package ships at `host/guard.eyg` - and spawns the installed
+ * binary as `<binary> <mode> <entry>`. The guard installs one handler per effect, so
+ * the interpreter stops at every effect and the policy module decides Pass or Mock
+ * before the host performs it. A denied effect resumes the program with an EYG error
+ * such as `write_file denied by policy: /abs/path`, which the model can act on; the
  * filesystem is unchanged because the host never performed the write.
  *
  * The tool renders like the built-in `bash` tool: the collapsed row names the
@@ -38,25 +40,27 @@
  * human's command appends, never a tool parameter, so a program cannot widen itself
  * (`notes/pi-codemode-session-grants.md`).
  *
- * Configure the runner and the policy with environment variables to point one
+ * Configure the binary and the policy with environment variables to point one
  * session at one policy without editing this file:
  *
- *   EYG_CODEMODE_RUNNER   absolute path to the runner (default: `eyg` on PATH)
+ *   EYG_CODEMODE_RUNNER   absolute path to the eyg binary a call runs in (default: `eyg` on PATH)
  *   EYG_POLICY            absolute path to the policy module (default: the package's)
  *   EYG_ALLOWED_ROOTS     comma separated absolute roots for the default policy
  *   EYG_CODEMODE_TIMEOUT  ms for one call (default 30000, capped at 120000)
  *
- * The runner must accept `run --policy <module.eyg>`: `--policy` is what makes the run
- * checked, and a run without it is ungated (`notes/pi_codemode_host_gate.md`
- * records why a policy inside the program is not a restriction). Nothing is asked of the
- * binary in advance: every argv this tool builds carries the flag, and a binary too old
- * for it says so, which `runnerFailureLine` turns into one line the model can act on.
+ * Nothing is asked of the binary beyond the mode word and a file this package wrote
+ * next to it: the checks are a program this package ships, and the entry that installs
+ * them is the file every call names, so there is no call that runs a program outside
+ * the guard. A label the guard does not name has no handler and no host, so the program
+ * is refused. A binary that is not there, or that has no such mode command, is answered
+ * with one line the model can act on (`runnerFailureLine`).
  */
 
 import { defineTool, type ExtensionAPI, type Theme } from "@earendil-works/pi-coding-agent";
 import { Type } from "typebox";
 import { Text } from "@earendil-works/pi-tui";
-import { existsSync, readFileSync, readdirSync } from "node:fs";
+import { existsSync, mkdirSync, readFileSync, readdirSync, rmSync, writeFileSync } from "node:fs";
+import { tmpdir } from "node:os";
 import { fileURLToPath } from "node:url";
 import { basename, dirname, join } from "node:path";
 import {
@@ -76,13 +80,16 @@ import {
   childTools,
   checkDeclaredEffects,
   classifyProbeOutput,
+  contextLiteral,
   DEPTH_ENV,
   describeGrant,
   EFFECT_ALLOWLIST_ENV,
   effectFieldsFor,
   effectLine,
+  ENTRY_FILE,
   effectsUsed,
   eygCallCount,
+  GUARD_FILE,
   fieldsOutside,
   findMetadata,
   formatDuration,
@@ -91,10 +98,13 @@ import {
   LANGUAGE_DOCS,
   MAX_CALLS_ENV,
   bindingOrder,
+  entryProgram,
   externBindings,
   libraryAliases,
   prepareCallArguments,
   probeProgram,
+  programModule,
+  PROGRAM_FILE,
   referenceLines,
   refusalHints,
   replayGrants,
@@ -107,6 +117,7 @@ import {
   runnerFailureLine,
   rootsInside,
   sessionDepth,
+  spawnerEffects,
   spawnerPolicy,
   spawnerRoots,
   subagentCallLines,
@@ -428,11 +439,56 @@ function paint(theme: Theme, segments: { tone: string; text: string }[]) {
   }).join("");
 }
 
-/// The runner this call starts is the first candidate `runnerCandidates` names - the path
+/// The binary a call runs in is the first candidate `runnerCandidates` names - the path
 /// the operator named, else `eyg` on `PATH`. The candidate order lives in
 /// `lib/render-helpers.mjs`, where the tests read it. Nothing is asked of the binary
-/// before the run: `--policy` is in every argv this tool builds, and a binary that does
-/// not know that command is answered with one line (`runnerFailureLine`).
+/// before the run, and nothing during one except the mode word and a file: the guard this
+/// package ships is what decides the effects, and a binary with no such command is
+/// answered with one line (`runnerFailureLine`).
+
+/// One call, one shape: `program.eyg` (the model's source inside one `run` function),
+/// `entry.eyg` (the guard, the policy and the program, imported in that order) and one
+/// argv - `[mode, entryPath]`, spawned with no shell in between. The scratch directory is
+/// named for the process and the call, holds nothing between calls, and is removed when
+/// the run ends, so a call leaves no file a later call could read. A binary that is not
+/// there comes back as a failed spawn whose stderr names `ENOENT` (`pi.exec` does not
+/// throw for it), which `runnerFailureLine` turns into the one line the model can act on.
+let callSequence = 0;
+
+async function runGuarded(
+  pi: ExtensionAPI,
+  { runner, mode, guard, policy, ctx, source, cwd, signal, timeoutMs }: {
+    runner: string;
+    mode: string;
+    guard: string;
+    policy: string;
+    ctx: string;
+    source: string;
+    cwd: string;
+    signal: AbortSignal | null;
+    timeoutMs: number;
+  },
+) {
+  const scratch = join(tmpdir(), "pi-eyg-codemode", `${process.pid}-${Date.now().toString(36)}-${(callSequence += 1)}`);
+  mkdirSync(scratch, { recursive: true });
+  const programPath = join(scratch, PROGRAM_FILE);
+  const entryPath = join(scratch, ENTRY_FILE);
+  writeFileSync(programPath, programModule(source));
+  writeFileSync(entryPath, entryProgram({ guard, policy, ctx, program: programPath }));
+  const startedAt = Date.now();
+  try {
+    const result = await pi.exec(runner, [mode, entryPath], { signal, timeout: timeoutMs, cwd });
+    return {
+      result,
+      entryPath,
+      programPath,
+      out: [result.stdout, result.stderr].filter((text) => text !== "").join("\n"),
+      durationMs: Date.now() - startedAt,
+    };
+  } finally {
+    rmSync(scratch, { recursive: true, force: true });
+  }
+}
 
 export default function (pi: ExtensionAPI) {
   pi.registerTool(defineTool({
@@ -449,10 +505,11 @@ export default function (pi: ExtensionAPI) {
       "By default the program runs under the package's policy over the session working",
       "directory: reads and writes inside that directory are performed, everything else",
       "is refused and reported. mode `eval` is pure and prints the value; mode `run`",
-      "performs effects.",
+      "performs effects (under `eval` the CLI performs no effect at all, so a program that",
+      "performs one there gets `unhandled effect`).",
       "An effect is performed with the `perform` keyword and one argument: `let text = perform ReadFile({path: \"/abs/file\", offset: 0, limit: 2000})`, `let written = perform WriteFile({path: \"/abs/file\", contents: !string_to_binary(\"text\")})`, `let found = perform ReadDirectory(\"/abs/dir\")`, `perform StandardOut(\"text\")` on the last line. A performed effect that is not the last line must be bound with `let`, otherwise the program does not parse.",
       "To find files, pass libraries: [\"search\"] and call `search_lib.search({root, pattern, limit})`: it walks the roots with the effects the policy decides, so it cannot see outside them.",
-      "`perform Search({path: \"/abs/dir\", pattern: \"**/*.eyg\", limit: 20})` is one host action that lists matching paths under a root; the policy decides it once for the whole walk.",
+      "`perform Search({path: \"/abs/dir\", pattern: \"**/*.eyg\", limit: 20})` lists matching paths under a root: the policy decides the root once and every directory the guard lists on the way through the `read_directory` rule.",
       "EYG has no infix operators - add integers with `!int_add(a, b)`; a bare `WriteFile(...)` is a function call and fails to parse.",
       "`extern` keeps the top-level `let` bindings of this call under a name: `session`, `workspace` (<cwd>/.pi/eyg-variables/) or `user` ($HOME/.pi/eyg-variables/). Only the source text is kept, and it is evaluated again on the call that names it; a file scope is written by a program that performs WriteFile, so the policy decides that write like any other.",
       "action selects what the call does: `run` (default) performs effects, `eval` is pure,",
@@ -483,7 +540,7 @@ export default function (pi: ExtensionAPI) {
       "Use eyg mode eval for a pure computation and eyg mode run when the program performs effects.",
       "Write an eyg effect as `perform Name(argument)`, bound with `let name =` or `let _ =` when another expression follows; `Name(argument)` alone is a function call and fails to parse.",
       "Every eyg path must be absolute: the policy sees absolute paths, and relative paths are resolved from the session's working directory before the policy decides.",
-      "Find files with `perform Search({path, pattern, limit})` - one host action, one policy decision, absolute paths you can hand to ReadFile; a refusal is `Error(\"read_file denied by policy: /abs/root\")`.",
+      "Find files with `perform Search({path, pattern, limit})` - one call, absolute paths you can hand to ReadFile; a refusal is `Error(\"search denied by policy: /abs/root\")`.",
       "A search lists names under an allowed root, including names of files a read of would be refused for, so a listed path is not permission to read it.",
       "On a runtime without the `Search` effect, ask for the package's library instead of writing a walk: `libraries: [\"search\"]` and `search_lib.search({root, pattern, limit})`.",
       "Before writing a helper, call `action: \"list_functions\"` - the registry names re-usable EYG functions with their signature, description and required effects; a function you need may already exist.",
@@ -691,36 +748,25 @@ export default function (pi: ExtensionAPI) {
 
       const candidates = runnerCandidates(cwd, process.env);
       const runner = candidates[0];
+      // The guard is not optional: a call that could not find it is refused rather than
+      // run with no handler in front of the program.
+      const guard = dir === null ? null : join(dir, GUARD_FILE);
+      if (guard === null || !existsSync(guard)) {
+        return refuseToRun(`this package ships no guard at ${GUARD_FILE}, and every call runs inside it: a call with no guard is refused rather than run unchecked. Restore the file or reinstall the package.`);
+      }
 
-      // One spawned program: the mode, the source and the wall-time cap. The
-      // roots the default policy reads from `EYG_ALLOWED_ROOTS` are set for the
-      // call and restored after it, since a spawned child inherits `process.env`.
-      // The project's `eyg.roots` win over an inherited `EYG_ALLOWED_ROOTS`, both
-      // over the working directory, and a grant in force adds roots on top of the
-      // result - `resolveRoots` holds that order.
+      // The roots a call gets: the project's `eyg.roots` win over an inherited
+      // `EYG_ALLOWED_ROOTS`, both over the working directory, and a grant in force adds
+      // roots on top of the result - `resolveRoots` holds that order. They reach the
+      // policy as a value in the entry this package writes, not through the environment.
       const roots = resolveRoots({ grant: grants.roots, spawner: spawnerRoots(process.env, chain.depth), project: settings.roots, env: process.env.EYG_ALLOWED_ROOTS ?? null, cwd });
-      const spawn = async (mode: string, source: string, timeoutMs: number) => {
-        const previousRoots = process.env.EYG_ALLOWED_ROOTS;
-        process.env.EYG_ALLOWED_ROOTS = roots;
-        const startedAt = Date.now();
-        try {
-          // A binary that is not there at all comes back as a failed spawn whose stderr
-          // names `ENOENT` (`pi.exec` does not throw for it), which `runnerFailureLine`
-          // turns into the one line the model can act on.
-          const result = await pi.exec(runner, [mode, "--policy", policy, "-c", source], { signal, timeout: timeoutMs, cwd });
-          return {
-            result,
-            out: [result.stdout, result.stderr].filter((text) => text !== "").join("\n"),
-            durationMs: Date.now() - startedAt,
-          };
-        } finally {
-          if (previousRoots === undefined) {
-            delete process.env.EYG_ALLOWED_ROOTS;
-          } else {
-            process.env.EYG_ALLOWED_ROOTS = previousRoots;
-          }
-        }
-      };
+      const ctxLiteral = contextLiteral({
+        roots: roots.split(",").map((root) => root.trim()).filter((root) => root !== ""),
+        cwd,
+        fields: spawnerEffects(process.env, chain.depth),
+      });
+      const spawn = async (mode: string, source: string, timeoutMs: number) =>
+        runGuarded(pi, { runner, mode, guard, policy, ctx: ctxLiteral, source, cwd, signal, timeoutMs });
 
       // `effects` is the capability question one session keeps asking: which effects
       // the policy in force will perform. Every probe is a whole spawned program, so
@@ -753,7 +799,7 @@ export default function (pi: ExtensionAPI) {
           probes = probes + 1;
           // One probe is enough to learn the binary cannot answer the question at all, in
           // which case the other rows would be the same sentence repeated.
-          const cannotAnswer = outcome.result.code === 0 ? null : runnerFailureLine({ runner, mode: "run", output: outcome.out });
+          const cannotAnswer = outcome.result.code === 0 ? null : runnerFailureLine({ runner, mode: "run", entry: outcome.entryPath, output: outcome.out });
           if (cannotAnswer !== null) return refuseToRun(cannotAnswer);
           const verdict = classifyProbeOutput(outcome.out);
           const answer =
@@ -993,9 +1039,14 @@ export default function (pi: ExtensionAPI) {
       // path, which a session that cannot read outside its roots cannot act on.
       const invented = builtinErrors(out);
       const hints = builtinHintRows(invented).map((row) => row.map((segment) => segment.text).join(""));
-      // A run that failed because the binary does not know the command this tool built is
-      // not a program error, and the fix is an install, not a rewrite of the program.
-      const cannotRun = result.code === 0 ? null : runnerFailureLine({ runner, mode, output: out });
+      // A run that failed because the binary has no such command is not a program error,
+      // and the fix is an install, not a rewrite of the program.
+      const cannotRun = result.code === 0 ? null : runnerFailureLine({ runner, mode, entry: spawnResult.entryPath, output: out });
+      // The other thing a failed eval-mode call can mean: eval performs no effect at all,
+      // so the guard's own re-perform of a permitted effect has no host under it.
+      const evalHint = mode === "eval" && result.code !== 0 && /unhandled effect/.test(out)
+        ? "eval performs nothing: the CLI's eval mode has no host for any effect, so a program that performs one gets this error. Use action run for a program that performs an effect."
+        : null;
 
       // A kept binding whose module cannot be read aborts every later call that names
       // it, and the runner's abort names the file but not the fix.
@@ -1067,6 +1118,7 @@ export default function (pi: ExtensionAPI) {
         `eyg ${mode}: ${status}`,
         out,
         cannotRun === null ? "" : cannotRun,
+        evalHint === null ? "" : evalHint,
         broken.join("\n"),
         kept.problems.concat(kept.shadows).join("\n"),
         asks.join("\n"),
@@ -1083,7 +1135,8 @@ export default function (pi: ExtensionAPI) {
           policy,
           policySource,
           runner,
-          argv: [mode, "--policy", policy, "-c", code],
+          argv: [mode, spawnResult.entryPath],
+          entry: spawnResult.entryPath,
           exit: result.code,
           killed: result.killed,
           truncated: result.truncated,
@@ -1136,7 +1189,7 @@ export default function (pi: ExtensionAPI) {
     promptGuidelines: [
       "Use eyg_subagent for a self-contained chunk of work - a search over many files, a mechanical edit set - that you can state completely in `task`; the child sees no part of this conversation.",
       "Name the child's roots inside the roots this session has; expect the call to be refused and the outside root named back when you do not.",
-      "Name `effects` as the shortest list the task needs, and include StandardOut if you want the child to print anything; `Search` is the same field as `ReadFile`, so a child that can search can read.",
+      "Name `effects` as the shortest list the task needs, and include StandardOut if you want the child to print anything; a search needs `Search` named, since the guard decides that walk through its own `search` field.",
       "Do not grant the child `read` to give it reach: `read` is pi's own tool, no policy decides it, and it hands the child this session's read reach. The default child tool list is `eyg` alone.",
       "Give `max_calls` when the task is a survey rather than a task with a known end; a child stopped by its budget reports what it found.",
       "Never spawn a subagent to get past a refusal: the child is bounded by your reach, and a grant you hold does not reach it. Ask the operator for the grant and do the work yourself.",
@@ -1296,11 +1349,11 @@ export default function (pi: ExtensionAPI) {
         );
       }
 
-      // The effect allowlist. Effect names come in; policy fields go out to the
-      // policy. Two names share one field (`Search` is decided by the `read_file` field), the four
-      // unchecked effects are outside every policy, and three names are refused here
-      // rather than left for the child to discover, because the narrowing policy keeps
-      // the plain refusals its base policy gives them.
+      // The effect allowlist. Effect names come in; policy fields go out to the policy,
+      // where they arrive as `ctx.fields`. The four unchecked effects are outside every
+      // policy, and three names are refused here rather than left for the child to
+      // discover, because the narrowing policy keeps the plain refusals its base policy
+      // gives them.
       const requestedEffects = params.effects === undefined ? [] : params.effects;
       const mapped = effectFieldsFor(requestedEffects);
       if (mapped.unknown.length > 0) {
@@ -1353,24 +1406,18 @@ export default function (pi: ExtensionAPI) {
         const parentPolicy = parent.policy ?? "";
         const reachableRoots = resolveRoots({ grant: chain.grants.roots, project: chain.settings.roots, env: process.env.EYG_ALLOWED_ROOTS ?? null, cwd });
         const candidates = runnerCandidates(cwd, process.env);
-        // The policy reads its roots from the environment, so a probe is run with this
-        // session's roots set for the call and restored after it, exactly as a checked
-        // run does. Probing without them would ask the policy what it allows with no
-        // roots at all, and answer that - which is what this call used to report.
-        const exec = async (binary: string, args: string[]) => {
-          const previousRoots = process.env.EYG_ALLOWED_ROOTS;
-          process.env.EYG_ALLOWED_ROOTS = reachableRoots;
-          try {
-            const probed = await pi.exec(binary, args, { signal: null, timeout: PROBE_TIMEOUT_MS, cwd });
-            return { stdout: probed.stdout ?? "", stderr: probed.stderr ?? "", code: probed.code ?? 1 };
-          } finally {
-            if (previousRoots === undefined) {
-              delete process.env.EYG_ALLOWED_ROOTS;
-            } else {
-              process.env.EYG_ALLOWED_ROOTS = previousRoots;
-            }
-          }
-        };
+        const guard = dir === null ? null : join(dir, GUARD_FILE);
+        if (guard === null || !existsSync(guard)) {
+          return refuseToRun(`this package ships no guard at ${GUARD_FILE}, and an effect allowlist is checked by asking the policy in force what it performs inside that guard: omit effects, or restore the file.`);
+        }
+        // A probe is a call like any other: the guard, the policy in force, this session's
+        // roots in its ctx. Probing with no roots would ask the policy what it allows with
+        // nothing allowed, and answer that.
+        const probeCtx = contextLiteral({
+          roots: reachableRoots.split(",").map((root) => root.trim()).filter((root) => root !== ""),
+          cwd,
+          fields: [],
+        });
         const runner = candidates[0];
         const probeRoot = reachableRoots.split(",")[0].trim();
         const performed: string[] = [];
@@ -1387,9 +1434,9 @@ export default function (pi: ExtensionAPI) {
             effectNotes.push(`${name}: no probe argument is defined, so its availability was not checked`);
             continue;
           }
-          const probed = await exec(runner, ["run", "--policy", parentPolicy, "-c", program]);
-          if (probed.code !== 0) {
-            const cannotAnswer = runnerFailureLine({ runner, mode: "run", output: probed.stdout + "\n" + probed.stderr });
+          const probed = await runGuarded(pi, { runner, mode: "run", guard, policy: parentPolicy, ctx: probeCtx, source: program, cwd, signal: null, timeoutMs: PROBE_TIMEOUT_MS });
+          if (probed.result.code !== 0) {
+            const cannotAnswer = runnerFailureLine({ runner, mode: "run", entry: probed.entryPath, output: probed.out });
             if (cannotAnswer !== null) {
               return refuseToRun(
                 `an effect allowlist is checked by asking the policy in force what it performs, and this session cannot ask it. ${cannotAnswer} ` +
@@ -1397,7 +1444,7 @@ export default function (pi: ExtensionAPI) {
               );
             }
           }
-          if (classifyProbeOutput(probed.stdout + "\n" + probed.stderr) === "refused") continue;
+          if (classifyProbeOutput(probed.out) === "refused") continue;
           if (!performed.includes(field)) performed.push(field);
         }
         const outside = fieldsOutside(effectFields, performed);
