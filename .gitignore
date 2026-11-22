@@ -3,7 +3,7 @@
 # session on one machine, not repository material, so it stays out of the tree.
 # .pi/settings.json is deliberately tracked: it declares this package (`..`) and
 # the vendored ./pi-simple-world-model, without which a clone of this workspace
-# has no world model gate and no `eyg` tool.
+# has no world model checks and no `eyg` tool.
 .pi/goals/
 .pi/.goals-pool-snapshot.json
 

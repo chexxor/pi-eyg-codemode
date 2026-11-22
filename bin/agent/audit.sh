@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Run the seven checks this package answers with, and print what each one cost.
+# Run the checks this package answers with, and print what each one cost.
 #
 # A human, or a script a human runs, runs this. Nothing inside the package runs it:
 # the package has no effect that starts a shell command (AGENTS.md, "Bash is not the
@@ -34,15 +34,17 @@ elif [[ -n "${1:-}" ]]; then
 fi
 
 failures=0
+rows=0
 started=$SECONDS
 
 # run_check <label> <command...>: run one check, print its wall time and its exit code,
-# and remember a failure without stopping the run - an operator wants all seven answers, not
+# and remember a failure without stopping the run - an operator wants every answer, not
 # the first one that failed.
 run_check() {
   local label=$1
   shift
   local from to cost status
+  rows=$((rows + 1))
   from=$(date +%s%3N)
   "$@" >"/tmp/eyg-audit.$$.out" 2>&1
   local code=$?
@@ -86,6 +88,15 @@ run_check "world verify $verify_args" node pi-simple-world-model/bin/world_verif
 run_check "world map current" node pi-simple-world-model/bin/world_map.mjs --check
 run_check "tool sees the world model" pi --world-model-check
 run_check "tracked paths and names" sweep
+# The doc checks: one word per concept, citations that resolve, headings that name their
+# subject, no upstream page copied into guides/, no dated stamp in the prose. Each one is
+# `bin/agent/doc-checks.mjs <name>`; the fixtures that prove they bite are in
+# `test/doc-checks.test.mjs`, which the unit row above runs.
+run_check "doc check: one term" node bin/agent/doc-checks.mjs one-term
+run_check "doc check: citations" node bin/agent/doc-checks.mjs citations
+run_check "doc check: headings" node bin/agent/doc-checks.mjs headings
+run_check "doc check: mirrors" node bin/agent/doc-checks.mjs mirrors
+run_check "doc check: dated prose" node bin/agent/doc-checks.mjs dated-prose
 
 moved=$(git status --porcelain docs/world | head -5)
 if [[ -n "$moved" ]]; then
@@ -93,5 +104,5 @@ if [[ -n "$moved" ]]; then
   printf '  %s\n' "$moved"
 fi
 
-echo "audit: $((7 - failures))/7 passed, $failures failed, $((SECONDS - started)) s wall"
+echo "audit: $((rows - failures))/$rows passed, $failures failed, $((SECONDS - started)) s wall"
 [[ $failures -eq 0 ]] || exit 1

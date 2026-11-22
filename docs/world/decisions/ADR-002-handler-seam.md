@@ -16,7 +16,7 @@ superseded_by: null
 ## Context
 
 An operator wants tools an agent can trust, and EYG separates an effect's *description* from
-its *implementation* (`guides/syntax.md:349`: "Scripts declare effects they need; the runner
+its *implementation* (`guides/syntax.md:349`, a mirror since deleted; "Scripts declare effects they need; the runner
 decides what to do with them"), so more than one place could hold an implementation: the
 policy module the host loads, a registry module the model calls, the CLI runtime's own effect
 code in the language repository, or `handle EffectName` inside the program. Those are not

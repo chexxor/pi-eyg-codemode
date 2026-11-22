@@ -33,8 +33,8 @@ of wall: one `pi --mode rpc` session over a gitignored scratch project, a typed
 
 **2. Nothing bounds a grant in time.** A grant ends by spend or by revoke:
 `grants.filter((grant) => grant.calls === null || grant.used < grant.calls)`
-(`lib/render-helpers.mjs:389`, read 2026-11-21), and `Date.now()` appears in the grant path
-only to name the id (`g${Date.now().toString(36)}`, `extensions/eyg-codemode.ts:1420`). A
+(`lib/render-helpers.mjs:442`, read 2026-11-21), and `Date.now()` appears in the grant path
+only to name the id (`g${Date.now().toString(36)}`, `extensions/eyg-codemode.ts:1417`). A
 session grant therefore keeps widening an hour later, and across any idle gap, until someone
 revokes it or cuts the branch. No field carries a deadline, and the shape is a decision rather
 than a patch: a wall-clock deadline per grant or an idle timeout; what the entry stores; and
@@ -47,8 +47,8 @@ first unattended run (`pi --print`) that takes a grant nobody is there to revoke
 **3. The operator cannot see the grants in force without starting one.** What exists:
 `/eyg-grant revoke [id]` (`extensions/eyg-codemode.ts:1329-1340`, one line in
 `guides/how-to-write-a-policy.md:32`), one-line descriptions with the spend in
-`describeGrant` (`lib/render-helpers.mjs:395`), and a `grants in force: ...` row in every eyg
-call's output (`lib/render-helpers.mjs:600`), so the session sees the state even though a
+`describeGrant` (`lib/render-helpers.mjs:448`), and a `grants in force: ...` row in every eyg
+call's output (`lib/render-helpers.mjs:675`), so the session sees the state even though a
 grant entry itself never reaches the model. What does not: a listing subcommand. `state()`,
 the line that builds "grants in force now" (`extensions/eyg-codemode.ts:1324-1327`), is
 reachable only on the command's two error paths (1365, 1383) and inside the confirmation

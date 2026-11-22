@@ -2,9 +2,9 @@
 id: pi.reference-action
 type: entity
 owner: delegate
-status: current
+status: suspect
 verified_at: 2026-11-22
-verify: "grep -q '\"reference\"' extensions/eyg-codemode.ts && grep -q 'export function referenceLines' lib/render-helpers.mjs && grep -q 'SURFACE_FILE = \"guides/eyg-surface.tsv\"' lib/render-helpers.mjs && grep -q 'no such builtin' lib/render-helpers.mjs && grep -q 'not policy-gated' lib/render-helpers.mjs && grep -q 'surfaceDriftProblems' test/render-helpers.test.mjs && grep -q 'referenceLines' test/render-helpers.test.mjs"
+verify: "grep -q '\"reference\"' extensions/eyg-codemode.ts && grep -q 'export function referenceLines' lib/render-helpers.mjs && grep -q 'SURFACE_FILE = \"guides/eyg-surface.tsv\"' lib/render-helpers.mjs && grep -q 'no such builtin' lib/render-helpers.mjs && grep -q 'not decided by a policy' lib/render-helpers.mjs && grep -q 'surfaceDriftProblems' test/render-helpers.test.mjs && grep -q 'referenceLines' test/render-helpers.test.mjs"
 confidence: medium
 sources: [extensions/eyg-codemode.ts, lib/render-helpers.mjs, test/render-helpers.test.mjs, guides/eyg-surface.tsv, bin/agent/gen-surface.mjs, guides/tool-reference.md, skills/eyg-codemode/SKILL.md, docs/world/entities/usability.without-language-skill.md, notes/reference-answer-shape.md]
 supersedes: null
@@ -25,7 +25,7 @@ Both halves come from one generated file, `guides/eyg-surface.tsv`: the builtin 
 capture, the effect rows are generated from the recorded `rule_mapping` and checked against
 `POLICY_FIELDS` (`docs/world/entities/guides.surface-file.md`). Two consequences are stated in the
 answer itself: the builtin rows are a capture, so the compiler is the source, and pi's own `read`
-tool is not policy-gated while `ReadFile` reaches only the roots - the sentence a session had to
+tool is not decided by a policy while `ReadFile` reaches only the roots - the sentence a session had to
 guess at before
 (`docs/world/entities/usability.without-language-skill.md`).
 

@@ -9,7 +9,7 @@
 // records where the policy came from and how it was checked.
 //
 // Decision, one row per effect the CLI can name (the 23 in `rule_mapping`; 18 of
-// them are policy fields, 4 are never gated). The names below are the effect
+// them are policy fields, 4 have no policy field). The names below are the effect
 // names; the field name is the lower-cased one used in this record.
 //
 //   PERFORMED (passed through unchanged)
@@ -29,10 +29,10 @@
 //     Env                             - Mock(None({})): Env returns Option, so an
 //                                       unset variable is the honest answer
 //     CWD                             - Mock(Error({})): CWD returns a Result
-//   NEVER GATED (not policy fields, available under every policy)
+//   NO POLICY FIELD (available under every policy)
 //     DecodeJSON, EYGParse, Hash, Sign - deterministic over values they were given
 //
-// `Search` is not in this record: the CLI gates it as the `read_file` field, so
+// `Search` is not in this record: the CLI decides it through the `read_file` field, so
 // whatever decides `ReadFile` decides a search.
 //
 // <https://eyg.run/guides/cli-effects-reference> says what each effect does;

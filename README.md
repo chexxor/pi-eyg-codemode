@@ -140,6 +140,8 @@ run of it.
 
 ## What it installs
 
+Each path this package ships, and what it is for:
+
 | path | what it is |
 | --- | --- |
 | `extensions/eyg-codemode.ts` | the one pi extension: registers `eyg`, the `eyg_subagent` spawner and the operator's `/eyg-grant`, resolves policy/roots/runner from inside the package, starts the runner that checks every effect through argv, renders the rows, reads the registry scopes |
@@ -150,6 +152,7 @@ run of it.
 | `lib/render-helpers.mjs` | the pure shapes the tool and its test share (plain JS: jiti does not transform a `.mjs`, so annotations in it are a parse error at load) |
 | `test/render-helpers.test.mjs` | the unit test over those shapes and the drift guard |
 | `bin/agent/gen-surface.mjs` | generates `guides/eyg-surface.tsv` and drift-checks it: `--check` against four inputs, `--builtins <the page as markdown> --write` to re-capture the builtin rows |
+| `bin/agent/doc-checks.mjs` | the doc checks over this package's prose: one term, resolving citations, headings, no mirrors, no dated prose; one row each in `bin/agent/audit.sh` |
 | `test/fixtures/surface.PROVENANCE.md` | where the surface file's builtin rows were captured, when, their checksum, and how to re-capture them |
 | `test/fixtures/rule_mapping.gleam` | the runtime's `rule_mapping` recorded verbatim, so the guard runs without the language repository present (`test/fixtures/rule_mapping.PROVENANCE.md`: where it came from, its checksums, how to refresh it) |
 | `skills/eyg-codemode/SKILL.md` | the pi skill loaded when a model writes EYG: the forms, what a refusal means, how to ask the registry |

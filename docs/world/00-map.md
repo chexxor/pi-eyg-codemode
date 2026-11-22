@@ -13,7 +13,7 @@ nothing here reads it at run time, and this tree never writes outside itself.
 
 | directory | purpose |
 | --- | --- |
-| bin/ | The shell scripts a human runs outside this package. One: `agent/audit.sh`, which runs the |
+| bin/ | The shell scripts a human runs outside this package: `agent/audit.sh`, which runs the checks in |
 | docs/ | The world model records for this workspace: docs/world/00-map.md (tier-0 index), the entity, decision and runbook pages, invariants.md, traps.md and roster.yaml. The lint, map and verify CLIs that check them live in pi-simple-world-model/. |
 | extensions/ | The one pi extension: it registers the `eyg` tool, resolves the policy, the roots and the runner from inside the package, and spawns the runner that checks every effect through argv. |
 | guides/ | Prose this package writes for its own users - the tour (`first-session.md`), the how-tos |
@@ -42,6 +42,11 @@ nothing here reads it at run time, and this tree never writes outside itself.
 | cli.prebuilt-binary | `command -v eyg` answers `$HOME/.local/bin/eyg` and `eyg --version` answers `eyg v0.1.0` (measured 2026-11-18). | delegate | 2026-11-22 |
 | cli.runner-official-install-only | `runnerCandidates` in `lib/render-helpers.mjs` returns two things and nothing else: the value of `EYG_CODEMODE_RUNNER` ... | delegate | 2026-11-22 |
 | codemode.effect-surface | A running program reaches the host only through effects, and the set it may perform is an intersection of three files. | delegate | 2026-11-22 |
+| doc-checks.citations | Every markdown file in the tree is scanned (except the session's own goal and note state under `.pi/goals/` and ... | delegate | 2026-11-22 |
+| doc-checks.dated-prose | Within the prose set minus `AGENTS.md`, no line may match an ISO date, `@measured`, "measured <a digit>", "development ... | delegate | 2026-11-22 |
+| doc-checks.headings | Within the prose set (`README.md`, `AGENTS.md`, `guides/`, `skills/`, `.agents/skills/`; the set ... | delegate | 2026-11-22 |
+| doc-checks.mirrors | Two halves, one per failure mode of an offline documentation copy. | delegate | 2026-11-22 |
+| doc-checks.one-term | `bin/agent/doc-checks.mjs` holds this package's five prose checks, one name each: `one-term`, `citations`, `headings`, ... | delegate | 2026-11-22 |
 | gap.grant-polish-undecided | The mechanism is recorded and partly measured in `docs/world/entities/pi.session-grants.md`: a refusal names the ask, ... | delegate | 2026-11-22 |
 | gap.install-guides-name-no-policy | Neither install page at <https://eyg.run/guides> - `install-a-prebuilt-binary` and `install-from-source`, the index ... | delegate | 2026-11-22 |
 | gap.language-skill-home-undecided | `.pi/settings.json` declares the EYG language-skill pi package by path, one directory above this one (`@measured ... | delegate | 2026-11-22 |
@@ -79,7 +84,7 @@ nothing here reads it at run time, and this tree never writes outside itself.
 
 ## Where to look for a claim
 
-- entities: 26 · invariants: 4 · decisions: 6 · runbooks: 2 · traps: 51
-- suspect right now: ADR-002-handler-seam, gap.runner-release-lacks-policy, overlay.agent-harness, pi.policy-config
+- entities: 31 · invariants: 4 · decisions: 6 · runbooks: 2 · traps: 52
+- suspect right now: ADR-002-handler-seam, gap.runner-release-lacks-policy, overlay.agent-harness, pi.policy-config, pi.reference-action
 - re-check everything: `npm run world` · checks: `npm run world:lint` · regenerate this index: `npm run world:map`
 <!-- END GENERATED -->

@@ -67,10 +67,10 @@ files. Each one is classified here:
 
 **Must be rewritten (instructions):**
 
-- `README.md:14` the `pi list` line, and every `--policy` / `EYG_ALLOWED_ROOTS` command
+- `README.md:14` <!-- doc-check:ignore citations --> the `pi list` line, and every `--policy` / `EYG_ALLOWED_ROOTS` command
   line in the how-to-run sections — these are instructions, so they point at
   `this workspace`.
-- `README.md:183,188,210,211,312,578,579,580`, `skills/eyg-codemode/SKILL.md:12`,
+- `README.md:183,188,210,211,312,578,579,580`, <!-- doc-check:ignore citations --> `skills/eyg-codemode/SKILL.md:12`,
   `CHANGELOG.md:55,98`, `libraries/search.eyg:25` — prose pointers to
   `eyg_packages/overlay/policy.eyg` and `eyg_packages/codemode_policy/*`. With no vendored
   policies they now point at the inline policies in `policies/` and at the note that records
@@ -86,7 +86,7 @@ unchanged in the surviving README.*
   — transcript blocks captured in the old workspace on 2026-11-16. Rewriting a path inside
   a transcript would make the claim un-verbatim, so the blocks stay byte-identical and each
   gets a provenance line naming the old workspace and the capture date.
-- `README.md:368,370,384` and `CHANGELOG.md` release entries — records of runs taken in the
+- `README.md:368,370,384` <!-- doc-check:ignore citations --> and `CHANGELOG.md` release entries — records of runs taken in the
   old workspace (the `bin/agent/gate.sh` script, the Gleam `manifest.toml` path).
 
 ## What could not be re-probed here

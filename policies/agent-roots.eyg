@@ -17,13 +17,13 @@
 // decision is readable where it is used. `notes/pi-codemode-policy-inlining.md`
 // records where the policy came from and how it was checked.
 //
-// The decision, one rule for each of the 18 fields the CLI gates (the 23 effects
-// in `rule_mapping` less the 4 that are never gated). `roots` is the list built
+// The decision, one rule for each of the 18 fields the CLI decides (the 23 effects
+// in `rule_mapping` less the 4 no policy field decides). `roots` is the list built
 // from EYG_ALLOWED_ROOTS below.
 //
 //   UNDER THE ROOTS (path checked against `roots`, absolute, no `.` or `..`)
 //     ReadFile, ReadDirectory, WriteFile, AppendFile, MakeDirectory, DeleteFile
-//     Search                              - the CLI gates Search as the read_file
+//     Search                              - the CLI decides Search through the read_file
 //                                            field, so a search is walked under the
 //                                            same rule: every directory it looks at
 //                                            is checked before the host reads it
@@ -139,7 +139,7 @@ let split_roots = (text) -> {
 }
 
 // The roots the session is allowed to work in. Read here, at the top of the
-// policy module, which the runner evaluates outside the gate - the agent's own
+// policy module, which the runner evaluates outside the policy - the agent's own
 // program still cannot read the environment, see the `env` rule below.
 let raw_roots = match perform Env("EYG_ALLOWED_ROOTS") {
   Some(text) -> { text }

@@ -181,7 +181,7 @@ A program that named a builtin the runtime does not have gets the same pointer i
 runner prints `error: builtin undefined: !str_len` with a hint that names no path; the tool adds
 `no such builtin: !str_len`, the path of the builtins guide and of the syntax guide, `action
 "reference"` as the way to print them without leaving the tool, and that pi's own `read` tool is not
-policy-gated while `ReadFile` reaches only the roots. `builtinErrors` and `builtinHintRows` in
+decided by a policy while `ReadFile` reaches only the roots. `builtinErrors` and `builtinHintRows` in
 `lib/render-helpers.mjs` build those rows and the unit test pins them;
 `notes/reference-answer-shape.md` carries why the answer reads the shipped copy rather than asking
 the runner, and `docs/world/entities/pi.reference-action.md` carries what one run measured.

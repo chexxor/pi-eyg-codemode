@@ -7,7 +7,7 @@ rules, not the argument.
 
 The package is one directory deep. Everything it loads at run time is inside it:
 the extension resolves its own `policies/` and `libraries/` from `import.meta.url`
-(`extensions/eyg-codemode.ts:104-121`, `packageDir()` then
+(`extensions/eyg-codemode.ts:185-204`, `packageDir()` then
 `join(dir, "policies", "agent-roots.eyg")`), and the policy modules import nothing
 outside the package (`invariant.policy-self-contained`). **Nothing in this tree reads
 another workspace at run time.**
@@ -41,6 +41,8 @@ nothing · `skills/` the pi skill a model reads before writing EYG · `test/` th
 recorded `rule_mapping` snapshot the drift guard compares against, and `guides/eyg-surface.tsv` the generated surface · `guides/` the prose
 reference · `notes/` the trade-offs the code cannot show · `docs/world/` the claims with
 their verify commands · `pi-simple-world-model/` the vendored tool over those claims ·
+`bin/agent/` the scripts a human runs: `audit.sh` the rows below, `gen-surface.mjs` the surface
+file's generator and drift check, `doc-checks.mjs` the five prose checks ·
 `.agents/skills/` the skills the coding agent loads. Every one carries a `PURPOSE` file.
 
 ## What the checks are, in facts
@@ -53,14 +55,14 @@ shell commands; a policy module decides each effect before the host performs it.
 - Policy resolution order: a grant the operator made this session, then the policy a spawner
   named for this session, then the project's `eyg.policy` key, then `EYG_POLICY`, then the
   package's own `policies/agent-roots.eyg`; if none names a module the tool refuses rather than
-  running unchecked (`resolvePolicy` in `lib/render-helpers.mjs:314`, used at
-  `extensions/eyg-codemode.ts:500`). The call's `policy` argument sits outside that chain: it is
+  running unchecked (`resolvePolicy` in `lib/render-helpers.mjs:344`, used at
+  `extensions/eyg-codemode.ts:501`). The call's `policy` argument sits outside that chain: it is
   honoured only when it names the policy the chain already chose or `NARROWEST_POLICY_FILE`
-  (`lib/render-helpers.mjs:286`, `narrows` at `:293`), and anything else comes back
-  `refusedArgument` (`extensions/eyg-codemode.ts:515`, and `:1022` for a child's policy).
+  (`narrows` in `lib/render-helpers.mjs:323`, used at `:361`), and anything else comes back
+  `refusedArgument` (`extensions/eyg-codemode.ts:516`, and `:1024` for a child's policy).
 - The binary is chosen by name, not by asking it what it can do: `EYG_CODEMODE_RUNNER` (an
   absolute path), else `eyg` on PATH - two places, no third (`runnerCandidates` in
-  `lib/render-helpers.mjs`, used at `extensions/eyg-codemode.ts:562` and `:1141`). Every argv
+  `lib/render-helpers.mjs`, used at `extensions/eyg-codemode.ts:563` and `:1135`). Every argv
   carries `--policy`, so a build too old for the flag says so itself and the call ends with one
   line naming the install (`runnerFailureLine` in `lib/render-helpers.mjs`). This package supports
   the officially installed CLI and a binary the operator names, and reaches no other binary
@@ -100,7 +102,8 @@ shell commands; a policy module decides each effect before the host performs it.
 
 | Do this | cost | measured |
 | --- | --- | --- |
-| `bin/agent/audit.sh` (a human or a cron runs it; seven checks, each cost printed) | see its own last line | 2026-11-22 |
+| `bin/agent/audit.sh` (a human or a cron runs it; twelve rows, each cost printed) | see its own last line | 2026-11-22 |
+| `node bin/agent/doc-checks.mjs --all` (the five prose checks: one term, citations, headings, mirrors, dated prose) | 0.07 s wall | 2026-11-22 |
 | `node bin/agent/gen-surface.mjs --check` (the surface file against its four inputs) | 0.04 s wall | 2026-11-22 |
 | `node --test 'test/*.mjs'` (or the single file) | 0.09 s wall, pass 1 fail 0 | 2026-11-18 |
 | `pi --print --mode json --tools eyg <prompt>` (one fresh session, one tool call) | 20-40 s wall; needs `--model`, the default model hangs | 2026-11-20 |
@@ -196,7 +199,7 @@ never put a workspace fact in a guide - a fact in two places drifts.
   language repository's; nothing here carries a queue. Trigger to port one: a task from the
   operator that spans several steps of its own.
 - **No CI.** There is no `.github/workflows` and no `entry.eyg` here. `bin/agent/audit.sh` is the
-  one command that runs the six checks in the table above and prints what each cost (added
+  one command that runs the twelve rows in the table above and prints what each cost (added
   2026-11-20, 5.70 s, 6/6); nothing in this tree runs it, so a failing check is still
   something a person notices. Trigger for CI: the first commit that lands with a failing
   check nobody saw.

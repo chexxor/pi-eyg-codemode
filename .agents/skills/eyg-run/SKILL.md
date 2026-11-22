@@ -41,15 +41,14 @@ row per name with the policy field that decides it. Read that rather than guessi
   keep that invariant intact.
 
 ## What the CLI on this host can and cannot do
-Measured 2026-11-18 and again 2026-11-21: `command -v eyg` answers `$HOME/.local/bin/eyg`, and
-`eyg --version` answers `eyg v0.1.0`. That build's help has no `--policy`
-(`grep -c -- '--policy' <<< "$(eyg --help 2>&1)"` prints `0`), so from
-this workspace the CLI **type-checks** (`eyg check <file>.eyg`) but **cannot check a run**. A run
-with checks in force needs a CLI that accepts `--policy`; this package probes `eyg` on `PATH` and
-`EYG_CODEMODE_RUNNER`, builds nothing itself, and points at no private build, so an effect-level
-result claimed from this tree is UNVERIFIED, never PASS.
+Whether the CLI on `PATH` carries `--policy` decides what a session can prove from here:
+without it the CLI **type-checks** (`eyg check <file>.eyg`) but **cannot check a run**. The
+record `docs/world/entities/cli.prebuilt-binary.md` carries the current answer and the command
+that re-checks it. This package probes `eyg` on `PATH` and `EYG_CODEMODE_RUNNER`, builds nothing
+itself, and points at no private build, so an effect-level result claimed from this tree is
+UNVERIFIED, never PASS.
 
-## Prove it
+## Prove the CLI answers
 
 Costs are in `AGENTS.md`'s command table, dated where measured.
 

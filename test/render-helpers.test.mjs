@@ -399,7 +399,7 @@ let metadata = {
   assert.equal(childTools(["eyg"]).ok, true, "the default is the whole channel and nothing else");
   assert.equal(childTools(["eyg", "bash"]).ok, false, "a shell tool is refused: this package spawns no session that has one");
   assert.deepEqual(childTools(["eyg", "bash"]).unknown, ["bash"], "and the name outside the allowlist is the answer");
-  assert.equal(childTools(["read"]).ok, false, "a child with no eyg is a session no policy gates");
+  assert.equal(childTools(["read"]).ok, false, "a child with no eyg is a session no policy decides");
   assert.equal(childTools(["read"]).withoutEyg, true, "named that way");
   assert.deepEqual(childTools(["eyg", "read"], ["eyg", "eyg_subagent"]).parentMissing, ["read"], "a tool the parent session does not have is named back");
   assert.equal(childTools(["eyg", "read"], ["eyg", "read"]).ok, true, "and granting one the parent has is fine");
@@ -498,7 +498,7 @@ let metadata = {
   assert.match(flat(subagentCallLines({ task: "l1\nl2\nl3\nl4\nl5", roots: [] }, true)), /l5/, "expanded shows the whole task");
   assert.match(flat(subagentCallLines({ task: "t" }, false)), /roots: inherited: the roots this session has/, "with no roots named the child inherits them");
   const narrowed = subagentCallLines({ task: "t", tools: ["eyg", "read"], effects: ["ReadFile", "WriteFile"], max_calls: 3 }, false);
-  assert.match(flat(narrowed), /tools: eyg, read \(pi's read tool is not policy-gated\)/, "the tools, with the fact that makes them worth narrowing");
+  assert.match(flat(narrowed), /tools: eyg, read \(pi's read tool is not decided by a policy\)/, "the tools, with the fact that makes them worth narrowing");
   assert.match(flat(narrowed), /effects: read_file, write_file under the spawner allowlist policy/, "effect names shown as the fields the policy reads");
   assert.match(flat(narrowed), /max_calls: 3/, "and the budget");
   assert.match(flat(subagentCallLines({ task: "t" }, false)), /tools: eyg/, "a child left at the default has one tool");
@@ -597,7 +597,7 @@ let metadata = {
   assert.ok(lines.some((line) => line.startsWith(surfaceFileLines()[0])), "and points at the generator that keeps it true");
   assert.ok(lines.some((line) => line.includes('policy in force: /pkg/policies/agent-roots.eyg (project settings)')), "the policy in force is named");
   assert.ok(lines.some((line) => line.includes('action "effects"')), "and the call that asks it what it decides, effect by effect");
-  assert.ok(lines.some((line) => line.includes("read tool is not policy-gated")), "the harness read tool's standing is stated");
+  assert.ok(lines.some((line) => line.includes("read tool is not decided by a policy")), "the harness read tool's standing is stated");
   assert.ok(!/\| (allowed|refused|unavailable|unknown)/.test(lines.join("\n")), "it reports no verdict, so it asked the policy nothing");
 }
 
@@ -639,7 +639,7 @@ let metadata = {
   assert.match(shown, /no such builtin: !str_len/, "the name is repeated back");
   assert.ok(shown.includes(SURFACE_FILE), "the row names the surface file");
   assert.match(shown, /action "reference"/, "and the action that prints the list without leaving the tool");
-  assert.ok(shown.includes("read tool is not policy-gated"), "and says pi's own read tool is not policy-gated");
+  assert.ok(shown.includes("read tool is not decided by a policy"), "and says pi's own read tool is not decided by a policy");
   assert.equal(shown.split(SURFACE_FILE).length - 1, 2, "builtins and syntax share one file, so it is named twice and no guide path is invented");
   assert.equal(builtinHintRows([]).length, 0, "no invented builtin, no lecture");
 

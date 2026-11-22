@@ -22,7 +22,7 @@ is at <https://eyg.run/guides>.
 performing an effect, and it reads `guides/eyg-surface.tsv`, which this package generates. Do not
 try to read that file through an effect: the roots cover your working directory, not this package,
 so `perform ReadFile` on a `guides/` path answers `read_file denied by policy`, and a grant is the
-operator's to give, not yours to assume. The harness `read` tool is not policy-gated, and the
+operator's to give, not yours to assume. The harness `read` tool is not decided by a policy, and the
 language's prose is at <https://eyg.run/guides>. Guessing builtin names instead of asking costs
 the session (`docs/world/entities/usability.without-language-skill.md`).
 
@@ -54,11 +54,11 @@ on its value, as the last two lines above do.
 - `action` selects what the call does: `run` (default, effects allowed by the policy), `eval` (pure,
   prints the value), `effects` (what the policy in force decides, one probe per effect - pass
   `code: ""`), `reference` (every builtin with its signature, plus the effect surface and the field
-  that gates each effect - pass `code: ""`, performs nothing), `list_functions` (the registry of
+  that decides each effect - pass `code: ""`, performs nothing), `list_functions` (the registry of
   re-usable functions - pass `code: ""`) or `describe_function` (one of them by `function: "<name>"`).
 - never guess a builtin name: `action: "reference"` prints all of them with their signatures in one
   call that performs nothing, and a run that named one answers `builtin undefined: !name` with rows
-  naming `guides/eyg-surface.tsv`. pi's own `read` tool is not policy-gated, so a session that has
+  naming `guides/eyg-surface.tsv`. pi's own `read` tool is not decided by a policy, so a session that has
   it can open that file directly; `ReadFile` reaches only the roots, and asking for a grant over this
   package's own files is rarely the right ask.
 - `timeout` is in SECONDS as the bash tool spells it: `timeout: 90` is ninety seconds, default 30, at

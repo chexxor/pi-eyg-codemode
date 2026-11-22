@@ -19,8 +19,8 @@ reworded at the same time as the paragraphs were cut to say each fact once.
   and was regenerated.
 - Claim verify commands that grep prose moved with the prose, or the claim would read as
   suspect the day the wording changed: `ADR-003-doc-delegation` greps the install
-  sentence, `ADR-003-doc-delegation` greps the install sentence, and a `traps.md` entry that
-  grepped a page copy for that sentence now greps the claim record that carries it.
+  sentence, and a `traps.md` entry that grepped a page copy for that sentence now greps the
+  claim record that carries it.
   `docs/world/traps.md` carries the trap and a verify
   command that answers 0 while the README is clean.
 - The tier-0 index line "gate: `npm run world:lint`" is generated, so the generator
@@ -61,3 +61,17 @@ the sweep that catches this is `grep -rnE '\bgate(s|d|ing)?\b'` over the tree, m
 `policy-gated`, the language repository's `bin/agent/gate.sh` and `gleam-gate`, the field name
 `gated: true`, and the 2026-11-19 entry in `docs/world/traps.md`, whose own `verify` quotes the
 old wording on purpose.
+
+# Checked mechanically, and named for the check
+
+On 2026-11-22 the rule stopped being a grep a person remembers to run: `bin/agent/doc-checks.mjs
+one-term` reports any rival word in the prose set or the code set, with its file and line, and
+`bin/agent/audit.sh` runs it as a row. The artifact is named for this note's own rule - the file
+is `doc-checks.mjs` and the rows read "doc check: one term", never "gate" - even though the
+request that asked for it used the word "gate" for each rule.
+
+What the checker exempts is this note's list, expressed in code: the field name `gated:`, the
+checker's own source (it holds the patterns), `docs/world/` and `notes/` (the records and the
+notes are allowed to name a word in order to ban it, and `world_lint.mjs` checks them), and
+`CHANGELOG.md` (the history of the names). Any other exemption is a `doc-check:ignore` comment on
+the line that needs it, so the exception is readable where the exception is.

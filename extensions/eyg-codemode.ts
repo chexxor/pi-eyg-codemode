@@ -1,7 +1,7 @@
 /**
  * EYG codemode - the agent's only channel to the outside world.
  *
- * The model calls one tool, `eyg`, with EYG source. The tool spawns the gated
+ * The model calls one tool, `eyg`, with EYG source. The tool spawns the
  * runner (`eyg run --policy <module.eyg>`) so the interpreter stops at every
  * effect and the host policy module decides Pass or Mock before the host
  * performs it. A denied effect resumes the program with an EYG error such as
@@ -342,13 +342,13 @@ export default function (pi: ExtensionAPI) {
       "is refused and reported. mode `eval` is pure and prints the value; mode `run`",
       "performs effects.",
       "An effect is performed with the `perform` keyword and one argument: `let text = perform ReadFile({path: \"/abs/file\", offset: 0, limit: 2000})`, `let written = perform WriteFile({path: \"/abs/file\", contents: !string_to_binary(\"text\")})`, `let found = perform ReadDirectory(\"/abs/dir\")`, `perform StandardOut(\"text\")` on the last line. A performed effect that is not the last line must be bound with `let`, otherwise the program does not parse.",
-      "To find files, pass libraries: [\"search\"] and call `search_lib.search({root, pattern, limit})`: it walks the roots with the effects the policy gates, so it cannot see outside them.",
+      "To find files, pass libraries: [\"search\"] and call `search_lib.search({root, pattern, limit})`: it walks the roots with the effects the policy decides, so it cannot see outside them.",
       "`perform Search({path: \"/abs/dir\", pattern: \"**/*.eyg\", limit: 20})` is one host action that lists matching paths under a root; the policy decides it once for the whole walk.",
       "EYG has no infix operators - add integers with `!int_add(a, b)`; a bare `WriteFile(...)` is a function call and fails to parse.",
       "action selects what the call does: `run` (default) performs effects, `eval` is pure,",
       "`effects` answers what the policy in force decides for every effect the CLI can name,",
       "`reference` prints every builtin the package's reference guide lists and the effect",
-      "surface with the field that gates each one - it performs nothing and asks the policy",
+      "surface with the field that decides each one - it performs nothing and asks the policy",
       "nothing, so it answers even where no runner was found,",
       "`list_functions` lists the registry of re-usable EYG functions (pass code: \"\"), and",
       "`describe_function` describes one of them by name. Pass `timeout` in SECONDS for the wall",
@@ -372,13 +372,13 @@ export default function (pi: ExtensionAPI) {
       "A refused eyg effect is a value, not a crash: bind it with a name you use (`let written = perform WriteFile(...)`) and report `written`, because `let _ =` discards the refusal and makes the call look like success when nothing was written.",
       "Use eyg mode eval for a pure computation and eyg mode run when the program performs effects.",
       "Write an eyg effect as `perform Name(argument)`, bound with `let name =` or `let _ =` when another expression follows; `Name(argument)` alone is a function call and fails to parse.",
-      "Every eyg path must be absolute: the policy sees absolute paths, and relative paths are resolved from the session's working directory before the gate sees them.",
+      "Every eyg path must be absolute: the policy sees absolute paths, and relative paths are resolved from the session's working directory before the policy decides.",
       "Find files with `perform Search({path, pattern, limit})` - one host action, one policy decision, absolute paths you can hand to ReadFile; a refusal is `Error(\"read_file denied by policy: /abs/root\")`.",
       "A search lists names under an allowed root, including names of files a read of would be refused for, so a listed path is not permission to read it.",
       "On a runtime without the `Search` effect, ask for the package's library instead of writing a walk: `libraries: [\"search\"]` and `search_lib.search({root, pattern, limit})`.",
       "Before writing a helper, call `action: \"list_functions\"` - the registry names re-usable EYG functions with their signature, description and required effects; a function you need may already exist.",
       "When a capability question is in the air, call `action: \"effects\"` once instead of probing effects one program at a time: it runs one probe per effect under the policy in force and answers effect | policy field | decision. `guides/eyg-surface.tsv` lists every effect the CLI names and the policy field that decides it.",
-      "When a run answers `builtin undefined`, do not guess another name: the result rows name `guides/eyg-surface.tsv`, and `action: \"reference\"` prints the builtins and the effect surface in one call without performing an effect. pi's own `read` tool is not policy-gated, so a session that has it can open that file directly; `ReadFile` reaches only the roots.",
+      "When a run answers `builtin undefined`, do not guess another name: the result rows name `guides/eyg-surface.tsv`, and `action: \"reference\"` prints the builtins and the effect surface in one call without performing an effect. pi's own `read` tool is not decided by a policy, so a session that has it can open that file directly; `ReadFile` reaches only the roots.",
       "Pass `timeout` in seconds when a run is longer than 30 s; the result says how long it took in wall time, so a timeout is visible rather than guessed.",
       "The effects listed for a registry function are advisory: availability is re-probed at each listing and the policy can change mid-session, and a run whose effect is refused simply gets the ordinary Error value.",
       "When an effect is refused, report what was refused and ask the operator for the grant the result names (/eyg-grant: one call, N calls, or the rest of the session), recommending the narrowest one that retries the refused program; then retry it. Never write a policy module of your own and never look for another channel.",
@@ -595,7 +595,7 @@ export default function (pi: ExtensionAPI) {
 
       // `effects` is the capability question one session keeps asking: which effects
       // the policy in force will perform. Every probe is a whole spawned program, so
-      // the answer comes from the same gate that will run the real program rather than
+      // the answer comes from the same policy that will decide the real program rather than
       // from a copy of the policy in this file. Probes are chosen by `probeArguments`
       // to fail at the host before they could change anything.
       if (action === "effects") {
@@ -634,7 +634,7 @@ export default function (pi: ExtensionAPI) {
           rows.push(effectLine(name, field, answer));
         }
         const text = [
-          `effects under ${policy} (${policySource}), roots ${roots}: ${probes} probes in ${formatDuration(Date.now() - startedAt)} wall. A path-gated effect was probed with a path under the first root, so \"allowed\" means the policy let it through for that value and not for every path.`,
+          `effects under ${policy} (${policySource}), roots ${roots}: ${probes} probes in ${formatDuration(Date.now() - startedAt)} wall. An effect decided by a path was probed with a path under the first root, so \"allowed\" means the policy let it through for that value and not for every path.`,
           ...rows,
         ].join("\n");
         return {
@@ -917,7 +917,7 @@ export default function (pi: ExtensionAPI) {
       "Use eyg_subagent for a self-contained chunk of work - a search over many files, a mechanical edit set - that you can state completely in `task`; the child sees no part of this conversation.",
       "Name the child's roots inside the roots this session has; expect the call to be refused and the outside root named back when you do not.",
       "Name `effects` as the shortest list the task needs, and include StandardOut if you want the child to print anything; `Search` is the same field as `ReadFile`, so a child that can search can read.",
-      "Do not grant the child `read` to give it reach: `read` is pi's own tool, no policy gates it, and it hands the child this session's read reach. The default child tool list is `eyg` alone.",
+      "Do not grant the child `read` to give it reach: `read` is pi's own tool, no policy decides it, and it hands the child this session's read reach. The default child tool list is `eyg` alone.",
       "Give `max_calls` when the task is a survey rather than a task with a known end; a child stopped by its budget reports what it found.",
       "Never spawn a subagent to get past a refusal: the child is bounded by your reach, and a grant you hold does not reach it. Ask the operator for the grant and do the work yourself.",
       "Read the child's refusals in the result before deciding what to do next; they name the field, the path and the policy that refused it.",
@@ -936,7 +936,7 @@ export default function (pi: ExtensionAPI) {
       tools: Type.Optional(
         Type.Array(
           Type.String({
-            description: "Tools the child session gets. Only `eyg` and `read` may be named and `eyg` must be among them: a child whose only tool is `read` would be a session no policy module decides. `read` is pi's own tool and is not policy-gated, so granting it hands the child this session's read reach. Default: `eyg` alone.",
+            description: "Tools the child session gets. Only `eyg` and `read` may be named and `eyg` must be among them: a child whose only tool is `read` would be a session no policy module decides. `read` is pi's own tool and is not decided by a policy, so granting it hands the child this session's read reach. Default: `eyg` alone.",
           }),
         ),
       ),
@@ -1055,7 +1055,7 @@ export default function (pi: ExtensionAPI) {
       const childRoots = requested;
 
       // The child's tools: the allowlist, `eyg` required, and never a tool this
-      // session does not have itself. `read` is pi's own tool and no policy gates it,
+      // session does not have itself. `read` is pi's own tool and no policy decides it,
       // so granting it hands the child this session's read reach - which is why the
       // default is one tool and the allowlist is two names.
       const parentTools = typeof pi.getActiveTools === "function" ? pi.getActiveTools() : null;
@@ -1077,7 +1077,7 @@ export default function (pi: ExtensionAPI) {
       }
 
       // The effect allowlist. Effect names come in; policy fields go out to the
-      // policy. Two names share one field (`Search` is gated as `read_file`), the four
+      // policy. Two names share one field (`Search` is decided by the `read_file` field), the four
       // unchecked effects are outside every policy, and three names are refused here
       // rather than left for the child to discover, because the narrowing policy keeps
       // the plain refusals its base policy gives them.
@@ -1101,7 +1101,7 @@ export default function (pi: ExtensionAPI) {
       const effectFields = effectFieldsFor(checkedEffects).fields;
 
       // An allowlist is enforced by the narrowing policy this package ships, which is
-      // the base policy with a gate over its fields. It may only replace the base
+      // the base policy with an allowlist over its fields. It may only replace the base
       // policy: replacing a policy this project made narrower would widen it.
       const narrowingPolicy = dir === null ? null : shippedPolicyPath(NARROWING_POLICY, dir);
       const basePolicy = dir === null ? null : shippedPolicyPath(BASE_POLICY, dir);

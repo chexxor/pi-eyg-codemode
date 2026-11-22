@@ -54,8 +54,8 @@ that no installed build provides today.
   policy: <workspace>/guides` - because the roots cover the project, not the package. One
   session stopped there and asked the operator for `/eyg-grant` over this package's own
   documentation: 86 calls, 7 m 27 s, nothing written (`@measured 2026-11-20`). The `read` tool
-  is not policy-gated, and nothing says so: the tool's own hint is `check the builtin name
-  against the builtins reference` and names no path.
+  is decided by no policy, and the hint said nothing of it: the tool's own hint was `check the builtin name
+  against the builtins reference` and named no path.
 - **What did change the cost** was an instruction to open a reference first - and this
   package's own mirrors are enough: told to read `guides/syntax.md` and
   `guides/builtins_reference.md`, a session with no language-skill package at all used 11 calls,

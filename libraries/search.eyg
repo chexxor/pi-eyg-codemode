@@ -1,7 +1,7 @@
 // A search helper for a codemode program: find files by name under one root.
 //
 // This is not an effect and it is not part of the language. It is a program
-// written with the effects the policy already gates - `ReadDirectory` - so
+// written with the effects the policy already decides - `ReadDirectory` - so
 // every directory it looks at is checked by the policy before the host reads
 // it, and a directory the policy refuses simply ends that branch (`Error(_)`)
 // rather than failing the search. A search is therefore no more and no less
