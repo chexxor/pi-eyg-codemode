@@ -6,25 +6,25 @@ description: "Use when a session's side effects must go through EYG instead of b
 # EYG codemode: effects are the only channel to the outside world
 
 An EYG program reaches the outside world only through effects; a host policy decides each.
-Capability question first: `guides/cli_effects_reference.md` opens with `Every effect at a glance`,
-one row per effect with the policy field it sits under and what that field allows - that answers "can I
-perform this here" without deriving it. Then the one-line smoke test `perform StandardOut("ok")`
+Capability question first: `guides/eyg-surface.tsv` answers "can I perform this here" without
+deriving it - one row per effect with the policy field that decides it, and `action: "effects"`
+answers what the policy in force decides for each. Then the one-line smoke test `perform StandardOut("ok")`
 shows the policy answering. The policies this package ships are written out in full in
 `policies/agent-roots.eyg`, `policies/deny-all.eyg` and `policies/spawner-effects.eyg`, so authoring
 another one means editing
 one of those records, not reading a library somewhere else; the renderer, the timeout shape and
-the registry scopes are in `README.md`, policies and security in `guides/pi_codemode_agent.md`,
-surface syntax in `guides/syntax.md`.
+the registry scopes are in `README.md`, and the language's prose - syntax, effects, installation -
+is at <https://eyg.run/guides>.
 
 ## Before writing EYG
 
-Open the language reference with the harness `read` tool, which is not policy-gated: `guides/syntax.md`
-for the forms and `guides/builtins_reference.md` for the complete builtin set. Do not try to read them
-through an effect - the roots cover your working directory, not this package, so `perform ReadFile` on a
-`guides/` path answers `read_file denied by policy`, and a grant is the operator's to give, not yours to
-assume. Guessing instead costs the session: measured 2026-11-20, a session that opened the two files first
-used 11 tool calls and hit no `builtin undefined`; one that did not used 41-93 calls and 16-57 of those
-errors (`docs/world/entities/usability.without-language-skill.md`).
+`action: "reference"` prints the builtin names and the effect surface in one call without
+performing an effect, and it reads `guides/eyg-surface.tsv`, which this package generates. Do not
+try to read that file through an effect: the roots cover your working directory, not this package,
+so `perform ReadFile` on a `guides/` path answers `read_file denied by policy`, and a grant is the
+operator's to give, not yours to assume. The harness `read` tool is not policy-gated, and the
+language's prose is at <https://eyg.run/guides>. Guessing builtin names instead of asking costs
+the session (`docs/world/entities/usability.without-language-skill.md`).
 
 ## Calling the tool
 
@@ -58,9 +58,9 @@ on its value, as the last two lines above do.
   re-usable functions - pass `code: ""`) or `describe_function` (one of them by `function: "<name>"`).
 - never guess a builtin name: `action: "reference"` prints all of them with their signatures in one
   call that performs nothing, and a run that named one answers `builtin undefined: !name` with rows
-  naming `guides/builtins_reference.md` and `guides/syntax.md`. pi's own `read` tool is not
-  policy-gated, so a session that has it can open those guides directly; `ReadFile` reaches only the
-  roots, and asking for a grant over this package's documentation is rarely the right ask.
+  naming `guides/eyg-surface.tsv`. pi's own `read` tool is not policy-gated, so a session that has
+  it can open that file directly; `ReadFile` reaches only the roots, and asking for a grant over this
+  package's own files is rarely the right ask.
 - `timeout` is in SECONDS as the bash tool spells it: `timeout: 90` is ninety seconds, default 30, at
   most 120. A run that hits it reports elapsed wall time rather than hanging.
 - `code` is EYG source and the last expression is the value. In `run` mode nothing is printed unless the
@@ -98,8 +98,9 @@ policy: ...")` value inside the program, so `available` is never permission to r
 
 `perform Search({path: "/abs/root", pattern: "**/*.eyg", limit: 20})` is one host action that answers absolute
 paths, or `Error("read_file denied by policy: /abs/root")` when the roots do not cover it - the policy decides
-the whole walk under its `read_file` rule; matching and `limit` semantics are in the `Search` section of
-`guides/cli_effects_reference.md`.
+the whole walk under its `read_file` rule (`Search` shares that field, which `guides/eyg-surface.tsv` records);
+matching and `limit` semantics are in the `Search` section of
+<https://eyg.run/guides/cli-effects-reference>.
 
 A search reports **names**, including the name of a path a read of would be refused for, so a listed path is
 not permission to read it and contents never come through. Without the `Search` effect, pass `libraries:
