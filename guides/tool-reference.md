@@ -99,7 +99,7 @@ policy, this package's or any other, can forbid them (`docs/world/traps.md`,
 
 Two vocabularies, and only one of them is this package's. The **host layer** is the record this
 tool loads: one field per effect, handlers answering `Pass`/`Mock`. The **language layer** is
-documented on the website (<https://eyg.run/guides/effect-access-policies>, read 2026-11-18):
+documented on the website (<https://eyg.run/guides/effect-access-policies>):
 an `overlay.access` package applied *inside* a program - `access.apply(policy, (_) -> { perform ... })`
 - whose fields answer `Allow({})`, `Mock(value)` or `Deny(reason)`, with helpers such as
 `access.read_file.allow_under(["data"])`, `max_bytes`, `access.fetch.allow_get_hosts` and
@@ -109,7 +109,7 @@ and it manages six effects; the CLI's policy decides the 18 fields above.
 One seam this tree cannot check: the language syntax page documents `handle EffectName` in two
 lines - "used to install custom effect handlers in advanced embedding scenarios" - and those
 are the only two lines about it. The website expands it
-(<https://eyg.run/guides/advanced-effects>, read 2026-11-18): `handle EffectName(handler_fn, fallback)`
+(<https://eyg.run/guides/advanced-effects>): `handle EffectName(handler_fn, fallback)`
 builds **stateful computations inside a program**, and every example handles an effect the
 program itself designed (`Increment`, `Update`, `State`, `Get`, `Increase`) - no example re-handles
 one of the CLI's computer effects, so whether such a handler can shadow the host's decision stays
@@ -132,7 +132,7 @@ collapsed row names the effects it may ask before the source appears, the operat
 the second call is the one that changes anything. A staged session is also the honest place for a
 `Mock` that *simulates* a working effect: the plan policy may answer, the act policy may not.
 The language's own docs name the same pattern from inside a program
-(<https://eyg.run/guides/effect-access-policies>, read 2026-11-18: "Mock helpers are available
+(<https://eyg.run/guides/effect-access-policies>: "Mock helpers are available
 for dry runs and tests", `access.write_file.mock_success`); this package dry-runs the whole
 session by loading the narrower record. `docs/world/decisions/ADR-002-handler-seam.md` records
 why the seam sits in the policy module and what was rejected; `notes/pi-codemode-handler-seam.md`
@@ -162,8 +162,8 @@ section of <https://eyg.run/guides/cli-effects-reference>.
 
 **Adding an effect is a change to the language, not to this package**, and it is an escalation in
 the language repository's own rules. What this package does when the language lands one is follow
-the mapping: `Search` was landed on 2026-11-16 and mapped to `read_file`, so no new policy field
-exists here. `docs/world/entities/overlay.policy-rules.md` carries the claim over the whole mapping.
+the mapping: `Search` came in under the `read_file` field, so no new policy field exists here.
+`docs/world/entities/overlay.policy-rules.md` carries the claim over the whole mapping.
 
 ## The language surface, answered rather than remembered
 
@@ -214,14 +214,14 @@ cannot show is that pi paints the row from those shapes; that needs a human sess
 The registry is documented as a how-to, `guides/how-to-share-functions.md`: three scopes read in
 order, first match wins, one `let metadata` record per function-set. One fact sits better here
 than there: the availability beside an effect is probed against the first root the session
-advertises, not a fixed path. An earlier version probed at `/dev/null` and listed everything as
-"refused" in a session that can read (`notes/pi_codemode_registry_probe.md`).
+advertises, not a fixed path - a fixed path such as `/dev/null` lists everything as "refused"
+in a session that can read (`notes/pi_codemode_registry_probe.md` carries the trade-off).
 
 ## A refusal, as it looked
 
 A read inside the roots and a write outside them, in one program:
 
-*[2026-11-16 · the language repository]*
+*[capture · the language repository]*
 
 ```
 eyg run: ran
@@ -234,7 +234,7 @@ took the capture.
 
 The second boundary, same marking:
 
-*[2026-11-16 · the language repository]*
+*[capture · the language repository]*
 
 ```
 read_file denied by policy: <that checkout>/.search-proof/.env.eyg
@@ -247,15 +247,11 @@ quotes such a path.
 
 ## Captures, and how they are marked
 
-A block under an italic tag `*[date · the language repository]*` is a capture taken there
-on that date - paths masked where they name a checkout outside this tree, otherwise never
-re-run here and never rewritten, so the paths in it mean nothing
-on your machine. Untagged blocks are instructions, or captures taken in this workspace. On 2026-11-18
-this README was rewritten shorter: captures that carried a decision a reader still needs were kept
-(the refusal above, the `.env.eyg` name boundary, the status lines), and the rest - the language
-workspace's policy transcripts, the `Search` landing, the registry listing - were dropped rather
-than shortened, and live in `CHANGELOG.md`, `docs/world/traps.md` and the `notes/` set. The command
-and the date for each remaining claim are beside it.
+A block under the italic tag `*[capture · the language repository]*` was taken there and never
+re-run here, so the paths in it mean nothing on your machine, and a path naming a checkout
+outside this tree is masked. The tag carries no date: `docs/world/entities/overlay.policy-rules.md`
+carries each capture's date, and the dates of the reads of the language pages quoted here.
+Untagged blocks are instructions, or captures taken in this workspace.
 
 ## Not this
 

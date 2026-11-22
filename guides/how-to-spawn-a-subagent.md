@@ -133,20 +133,10 @@ declares this package (`"packages": [".."]`) gives the child the `eyg` tool with
 A project that declares nothing gives the child no `eyg` tool, and the spawn answers with the
 child's own stderr instead of pretending.
 
-@measured 2026-11-20 in a scratch project (gitignored under `.ai-work/`) whose `.pi/settings.json`
-declared this package and named `agent-roots` - through a development build of the language CLI
-this tree no longer has, so these rows are labelled, not re-runnable here; the argv, the child
-env and the call budget are pinned by `node --test`: one spawn ran 11 child calls, all
-`policySource: spawner`, wrote `<project>/child-inside.txt` (6 bytes) and came back with
-`write_file denied by policy: /tmp/child-outside.txt`, and no such file existed; a spawn with
-`roots: ["<project>/sub"]` wrote `sub/inside-slice.txt` and was refused at
-`<project>/outside-slice.txt`; a spawn with `policy: "deny-all"` wrote nothing; a spawn with
-`roots: ["/tmp"]` was refused with `/tmp` named back; a session started with
-`EYG_CODEMODE_DEPTH=1` was refused the spawn itself. With the child's surface named:
-`tools: ["eyg","read"]` reached argv as `--tools eyg,read` and the child read a file outside its
-slice with `read`; `effects: ["ReadFile","StandardOut"]` put the child under
-`policies/spawner-effects.eyg` and its `WriteFile` inside its own slice answered
-`write_file denied by policy: EYG_SUBAGENT_EFFECTS=read_file,standard_out`; `max_calls: 2` stopped the
-third call with `this session has made 2 eyg calls and its spawner set a budget of 2`. Numbers per run,
-with the parent's own call rows, in `docs/world/entities/pi.subagent-spawn.md`.
-`node --test 'test/*.mjs'` (pass 1, fail 0).
+What each narrowing answered, run by run - the child's call rows and what it wrote inside its
+roots, what a sliced root refused, what `policy: "deny-all"` wrote, what `roots: ["/tmp"]` and a
+session at depth 1 were told, what `effects:` put the child under
+`policies/spawner-effects.eyg`, and where a call budget stopped the third call - is in
+`docs/world/entities/pi.subagent-spawn.md`, which names the scratch project and the command for
+each row. The argv built for the child, its env and its call budget are pinned offline by
+`node --test 'test/*.mjs'`.

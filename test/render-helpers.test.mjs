@@ -580,8 +580,12 @@ let metadata = {
   }
   assert.ok(text.includes(GENERATED_MARK), "the file says it is generated, and by what");
   assert.ok(text.includes(LANGUAGE_DOCS), "and names the language's pages rather than copying them");
-  assert.match(text, /captured from <[^>]+> on \d{4}-\d{2}-\d{2}; md5 of the copy this tree/, "the builtin rows say where they were captured, when, and of what");
-  assert.match(text, /deleted is [0-9a-f]{32}/, "with the checksum of the capture");
+  assert.match(
+    text,
+    /test\/fixtures\/surface\.PROVENANCE\.md/,
+    "the builtin rows name the page that records their capture",
+  );
+  assert.ok(!/\d{4}-\d{2}-\d{2}/.test(text), "the generated file carries no date: --check decides currency, the provenance page carries the date");
 
   const lines = referenceLines(text, { policy: "/pkg/policies/agent-roots.eyg", policySource: "project settings" });
   assert.match(lines[0], new RegExp(`builtins: ${builtins.length}, read from ${SURFACE_FILE}`), "the count and the file it came from");

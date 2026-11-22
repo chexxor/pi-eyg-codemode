@@ -47,9 +47,9 @@ on its value, as the last two lines above do.
 - `match` arms: the first arm takes no leading `|`, an arm after it takes none either, and the only arm
   that carries a `|` is the **catch-all**, written `| (name) -> { ... }`. `_ -> { ... }` is not a
   pattern, and a constructor arm written `| Error(_) -> { ... }` fails with `unexpected ->` at the
-  arrow, which reads like a broken arm rather than a stray pipe (measured 2026-11-20 by
-  `eyg check`, which the CLI on `PATH` still runs - a `check` needs no `--policy`; 4 modules,
-  0 failures, 0.5 s, @measured 2026-11-21).
+  arrow, which reads like a broken arm rather than a stray pipe. `eyg check <file>` type-checks a
+  module without running it and needs no policy, so it answers even on a CLI that cannot run a
+  program under a policy (`docs/world/entities/cli.prebuilt-binary.md`).
 
 - `action` selects what the call does: `run` (default, effects allowed by the policy), `eval` (pure,
   prints the value), `effects` (what the policy in force decides, one probe per effect - pass

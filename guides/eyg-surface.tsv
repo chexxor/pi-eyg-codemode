@@ -10,9 +10,12 @@
 #   prose page: this file is the whole offline surface, and the compiler is the source
 #   under all of it.
 #
-# builtins: captured from <https://eyg.run/guides/builtins-reference> on 2026-11-18; md5 of the copy this tree
-#   deleted is e859f37e70d9e058b11bf4c372693f44. The names and signatures are the page's, not this package's.
-#   Re-capture with: node bin/agent/gen-surface.mjs --builtins <the page as markdown> --write
+# builtins: names and signatures from the language's builtins page,
+#   <https://eyg.run/guides/builtins-reference>; the names are the page's, not this package's. When that capture
+#   was taken, and the checksum of the page text it came from, are recorded in
+#   test/fixtures/surface.PROVENANCE.md - this file carries no date, because a row here
+#   is current when --check below passes and drift when it does not. Re-capture with:
+#   node bin/agent/gen-surface.mjs --builtins <the page as markdown> --write
 #
 # drift: node bin/agent/gen-surface.mjs --check re-derives the effect rows from that
 #   fixture, requires them to equal POLICY_FIELDS in lib/render-helpers.mjs, requires every

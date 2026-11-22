@@ -135,8 +135,8 @@ run of it.
   should be written in EYG - its own loop, its own model client, a project config file - that is
   the language repository's Overlay harness, not this package
   (`docs/world/entities/overlay.agent-harness.md`).
-- **Costs** live in `AGENTS.md`'s command table, dated where they were measured; the language
-  workspace's own runs are marked as its.
+- **Costs** live in `AGENTS.md`'s command table, dated where they were measured; a capture taken
+  outside this workspace names where it came from (`guides/tool-reference.md`).
 
 ## What it installs
 

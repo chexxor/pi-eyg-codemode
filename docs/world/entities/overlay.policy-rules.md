@@ -41,6 +41,14 @@ snapshot of its rule table.
   (`deny-all.eyg` refuses `cwd` with `Mock(Error({}))` because `CWD` returns a `Result`), and
   `Mock` cannot answer `Exit` at all. A rule may take and return another rule, which is what
   `hide_secrets` does.
+- The two refusal captures in `guides/tool-reference.md` ("A refusal, as it looked") were taken in
+  the language repository on 2026-11-16 (@measured 2026-11-16; they cannot be re-run on this host
+  while the installed CLI rejects `--policy`,
+  `docs/world/entities/cli.runner-official-install-only.md`). One shows a `ReadFile` inside the
+  roots performing while a `WriteFile` at `/tmp/eyg-codemode-outside-root/probe.txt` answered
+  `write_file denied by policy`, with nothing at that path; the other shows a refused `ReadFile` of
+  a `.env.eyg` while `Search` named the same path. A capture's tag in that guide names where it was
+  taken and never when, which is why the date sits here.
 - **Two vocabularies, not one set of names.** The host layer (this package's) is the record a `--policy`
   module builds: one field per effect the policy decides, rules answering `Pass`/`Mock`. The language layer,
   documented on the website (<https://eyg.run/guides/effect-access-policies>, read 2026-11-18),
@@ -55,11 +63,14 @@ snapshot of its rule table.
 
 ## Not this
 
-Not the effect definitions - those are in the CLI harness and in
-`guides/cli_effects_reference.md`. Not the CLI's own `run`, `eval` or `script` commands:
+Not the effect definitions - those are in the CLI harness and on the language's effect page
+(<https://eyg.run/guides/cli-effects-reference>); what this package ships offline is the rows in
+`guides/eyg-surface.tsv`. Not the CLI's own `run`, `eval` or `script` commands:
 without `--policy` they reach the host unchecked - see `docs/world/traps.md` - which is what
 `pi.codemode-tool` builds on. Not a handler a program writes for itself: `handle EffectName`
-(`guides/syntax.md:383`) is the language's own route to a handler, documented in two lines as
-"advanced embedding scenarios", and whether it can shadow the host's rule is UNVERIFIED from
+is the language's own route to a handler, two lines on its syntax page as "advanced embedding
+scenarios" (that page and <https://eyg.run/guides/advanced-effects> were read 2026-11-18, when
+this tree still carried copies of the language pages), and whether such a handler can shadow the
+host's rule is UNVERIFIED from
 here - `docs/world/traps.md` carries that question and the command that shows it is still
 unanswerable on this host.

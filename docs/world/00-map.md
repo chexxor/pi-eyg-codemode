@@ -79,7 +79,7 @@ nothing here reads it at run time, and this tree never writes outside itself.
 
 ## Where to look for a claim
 
-- entities: 26 · invariants: 4 · decisions: 6 · runbooks: 2 · traps: 50
+- entities: 26 · invariants: 4 · decisions: 6 · runbooks: 2 · traps: 51
 - suspect right now: ADR-002-handler-seam, gap.runner-release-lacks-policy, overlay.agent-harness, pi.policy-config
 - re-check everything: `npm run world` · checks: `npm run world:lint` · regenerate this index: `npm run world:map`
 <!-- END GENERATED -->

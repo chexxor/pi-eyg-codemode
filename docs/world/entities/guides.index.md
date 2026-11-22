@@ -25,8 +25,8 @@ none of their content.
 `--check` re-derives it from `test/fixtures/rule_mapping.gleam`, from `POLICY_FIELDS` in
 `lib/render-helpers.mjs`, from the `!builtins` this tree's own `.eyg` sources call, and byte
 for byte against its own rebuild (`docs/world/entities/guides.surface-file.md`). Its header
-carries the capture provenance of the builtin rows and
-`test/fixtures/surface.PROVENANCE.md` carries the how-to re-capture it.
+names the page that records when its builtin rows were captured, and
+`test/fixtures/surface.PROVENANCE.md` is that page and carries the how-to re-capture it.
 
 The language's prose is not here. <https://eyg.run/guides> carries install, syntax, the CLI
 effect reference, the builtins reference, `advanced-effects` (program-level handlers) and

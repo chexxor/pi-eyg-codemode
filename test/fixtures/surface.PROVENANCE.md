@@ -7,10 +7,12 @@
   is hand-written, and `--check` re-derives every effect row from that fixture.
 - **builtin rows** are a dated capture of the language's builtins page,
   `<https://eyg.run/guides/builtins-reference>`, taken 2026-11-18 from the markdown of the page
-  as this tree then held it. The header of the surface file records the capture date and the
-  `md5` of that copy (`e859f37e70d9e058b11bf4c372693f44`), which this tree no longer carries:
+  as this tree then held it. This page records the capture date and the `md5` of that copy
+  (`e859f37e70d9e058b11bf4c372693f44`), which this tree no longer carries:
   the offline copies of the language's pages were deleted, and what survives of them is the
-  rows, not the prose.
+  rows, not the prose. The surface file names this page instead of repeating the date: a dated
+  stamp inside a file meant to be current reads as a note about when someone last looked, while
+  `--check` is what decides currency.
 
 Why a dated capture instead of asking a CLI: the drift check has to run offline in well under a
 second, and the installed CLI prints no builtin list - its `--help` names no command that does
@@ -26,13 +28,13 @@ offline check.
 Re-capture, when you can load the page:
 
 ```bash
-node bin/agent/gen-surface.mjs --builtins <the page saved as markdown> --captured <YYYY-MM-DD> --write
+node bin/agent/gen-surface.mjs --builtins <the page saved as markdown> --write
 node bin/agent/gen-surface.mjs --check
 ```
 
-`--builtins` replaces the builtin rows, rewrites the header's capture line with the new date and
-the new md5, and leaves the effect rows generated from the fixture. Commit both the file and this
-page's sentence about the date.
+`--builtins` replaces the builtin rows and leaves the effect rows generated from the fixture.
+It prints the capture line - date and `md5` of the page text - for this page, since the file it
+writes carries no date. Commit both the file and this page's sentence about the date.
 
 Hand-editing a row fails the check: comparison 4 compares the file byte for byte with what the
 generator rebuilds from its inputs, so an edit to a name, a signature or the header is drift.

@@ -16,10 +16,17 @@ superseded_by: null
 `guides/eyg-surface.tsv` is the whole offline answer to "what may I call, and what may I ask
 for": 29 `builtin` rows (name, the section the language's page files it under, its signature)
 and 23 `effect` rows (name, the policy field that decides it, or `none` for the four no policy
-can forbid). `#` lines above the rows are its header, which carries the capture provenance of
-the builtin rows and the command that re-derives the file. `kind`, `name`, `detail1`, `detail2`
+can forbid). `#` lines above the rows are its header, which names the page that records when
+the builtin rows were captured and the command that re-derives the file. `kind`, `name`,
+`detail1`, `detail2`
 is the column line, and a parser that ignores the four kinds it does not know treats that line
 as a row, which is what `surfaceRows` in both readers guards against.
+
+The builtin rows are a capture of the language's builtins page taken 2026-11-18 from page text
+whose `md5` is `e859f37e70d9e058b11bf4c372693f44` (@measured 2026-11-18; `node bin/agent/gen-surface.mjs
+--builtins <the page as markdown> --write` re-captures and prints the line to record here). The
+file itself carries no date: `--check` decides whether its rows are current, and
+`test/render-helpers.test.mjs` asserts that no date appears in it.
 
 Four offline comparisons decide whether the file is current, all run by
 `node bin/agent/gen-surface.mjs --check` (0.07 s here):

@@ -47,11 +47,9 @@ call with `every eyg.roots entry must be an absolute path, got <entry>` rather t
 silently matching nothing. A policy name that is not one of the package's, or a roots entry
 of the wrong shape, is refused the same way, naming the key. pi reads the settings file when
 it starts, so a changed file takes effect in the next session; the tool re-reads the two
-keys on every call (`extensions/eyg-codemode.ts`, in `execute`). Measured 2026-11-20: a
-project file naming `deny-all` and one root produced `deny-all.eyg (project settings)` in
-the probe header, a write inside that root refused, and 16 probes in 0.94 s - through a
-development build of the language CLI this tree no longer has; reading those two keys is pinned
-by `node --test` regardless.
+keys on every call (`extensions/eyg-codemode.ts`, in `execute`), which `node --test
+'test/*.mjs'` pins. `docs/world/entities/pi.policy-config.md` carries a session started in a
+project that named `deny-all` and one root, with what it refused and what it cost.
 
 ## Learn what one record covers
 
@@ -134,10 +132,11 @@ Type-check it before a session runs it:
 eyg check <absolute path to your module>
 ```
 
-An exit code of 0 means the module parses and type-checks; the two shipped policies answer 0
-and the snippets on this page answer 0 (`eyg check` exit codes measured 2026-11-19). The
+An exit code of 0 means the module parses and type-checks. The
 check reads the module as an expression, so it does not ask for all 18 fields - a record of
-one field passes - and it runs nothing.
+one field passes - and it runs nothing. `docs/world/entities/cli.prebuilt-binary.md` carries
+what the CLI installed here can and cannot do with a module, and the cost of checking the
+shipped ones.
 
 Then choose it for the session:
 
@@ -167,13 +166,13 @@ which one it read.
 - This page does not build a CLI. `guides/how-to-point-the-tool-at-your-runner.md` points the
   tool at a binary you built or downloaded, and <https://eyg.run/guides/install-from-source>
   builds one.
-- The language keeps a wider policy library than the two this package ships, and it is not
+- The language keeps a wider policy library than the policies this package ships, and it is not
   installed with this package, so the policy you need is a module you write here.
 - What a policy allows at run time is checkable, not something to take on faith: run one call
-  through a build that knows `--policy` and read what comes back. No officially installed build
-  does yet (`docs/world/entities/gap.runner-release-lacks-policy.md`), so on a machine that
-  installed only the release no call runs at all. Whether a shipped policy would decide a
-  particular path the same way at run time is UNVERIFIED here for that reason: the runs this
-  tree recorded came from a build this package does not point at
-  (`docs/world/entities/cli.checked-runner-on-this-host.md`, superseded). `AGENTS.md` names the
-  probe and its result.
+  through a binary that accepts `--policy` and read what comes back. No officially installed
+  build accepts it yet (`docs/world/entities/gap.runner-release-lacks-policy.md`,
+  `docs/world/entities/cli.runner-official-install-only.md`), so on a machine that
+  installed only the release no call runs at all. Until a binary that accepts the flag is
+  installed here, whether a shipped policy would decide a particular path the same way at run
+  time is UNVERIFIED here; `docs/world/entities/pi.first-draft.md` carries the one run under a
+  shipped policy that this tree recorded, and what it still lacks.

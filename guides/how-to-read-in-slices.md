@@ -72,10 +72,14 @@ name, so the four lines shown are your names rather than a nested `match`.
 
 ## How these were checked
 
-`eyg check -c '<snippet>'` answered exit 0 for both programs on 2026-11-19, on the CLI on
-this host. That check reads a program that is never run, so the shapes of the answers -
-`ReadDirectory` entries, `ReadFile` bytes - are the ones
-<https://eyg.run/guides/cli-effects-reference> documents rather than ones observed here.
+Each block above is a definition, and a program has to end with an expression, so type-check one
+by adding the call you would make: with `report([])` and
+`read_slice({path: "/abs/x", offset: 0, limit: 10})` appended, `eyg check` answers exit 0 for
+both. The check reads a program it never runs, so the shapes of the answers - `ReadDirectory`
+entries, `ReadFile` bytes - are the ones <https://eyg.run/guides/cli-effects-reference>
+documents rather than ones observed here; `docs/world/entities/cli.prebuilt-binary.md` carries
+what the CLI installed here can and cannot check, and `docs/world/entities/codemode.effect-surface.md`
+the effects it decides.
 
 ## Not this
 
