@@ -105,7 +105,7 @@ host performs it.
   `Env`, `Error({})` for `CWD`, the unit value for `Sleep`, `StandardOut` and `StandardError`, and
   an abort naming the reason for `Now`, `Random`, `Flip` and `Exit`, whose replies carry no
   refusal). Rules wrap each other (`hide_secrets(under(...))`), which is why one record is one
-  composed decision (`policies/agent-roots.eyg`, read 2026-11-18; `ADR-002-handler-seam`).
+  composed decision (`policies/agent-roots.eyg`, read 2026-11-18; `ADR-006-guard-in-package`).
 - The tool's registry reads three scopes and never writes: `<cwd>/.pi/eyg-functions`
   (workspace), `$HOME/.pi/eyg-functions` (home), `<package>/libraries` (package).
 
@@ -213,10 +213,9 @@ never put a workspace fact in a guide - a fact in two places drifts.
   language repository's; nothing here carries a queue. Trigger to port one: a task from the
   operator that spans several steps of its own.
 - **No CI.** There is no `.github/workflows` and no `entry.eyg` here. `bin/agent/audit.sh` is the
-  one command that runs the sixteen rows in the table above and prints what each cost (added
-  2026-11-20, 5.70 s, 6/6); nothing in this tree runs it, so a failing check is still
-  something a person notices. Trigger for CI: the first commit that lands with a failing
-  check nobody saw.
+  one command that runs the rows in the table above and prints what each cost; nothing in this
+  tree runs it, so a failing check is still something a person notices. Trigger for CI: the first
+  commit that lands with a failing check nobody saw.
 - **No release of the language carries a host, and this package does not wait for one.** The
   guard is this package's file (`host/guard.eyg`), so a fresh clone gets the checks with the
   package; what is copied from the language is its effect surface, recorded in
