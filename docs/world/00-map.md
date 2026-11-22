@@ -17,6 +17,7 @@ nothing here reads it at run time, and this tree never writes outside itself.
 | docs/ | The world model records for this workspace: docs/world/00-map.md (tier-0 index), the entity, decision and runbook pages, invariants.md, traps.md and roster.yaml. The lint, map and verify CLIs that check them live in pi-simple-world-model/. |
 | extensions/ | The one pi extension: it registers the `eyg` tool, resolves the policy, the roots and the runner from inside the package, and spawns the runner that checks every effect through argv. |
 | guides/ | Prose this package writes for its own users - the tour (`first-session.md`), the how-tos |
+| host/ | The EYG host this package ships: the guard module that wraps a model's program in |
 | lib/ | The pure JavaScript shapes the tool and its tests share: render rows, the effect scan, availability-probe arguments, the registry walk, the argument mapping. |
 | libraries/ | EYG modules this package ships: bound by the tool's `libraries` parameter and listed in its function registry. |
 | notes/ | Design notes with name/description/date front-matter; the record of trade-offs that are not clear in the code. |
@@ -39,7 +40,7 @@ nothing here reads it at run time, and this tree never writes outside itself.
 | id | one line | owner | verified_at |
 | --- | --- | --- | --- |
 | cli.checked-runner-on-this-host | **Superseded 2026-11-21 by `docs/world/entities/cli.runner-official-install-only.md`.** The untracked symlink this ... | delegate | 2026-11-22 |
-| cli.prebuilt-binary | `command -v eyg` answers `$HOME/.local/bin/eyg` and `eyg --version` answers `eyg v0.1.0` (measured 2026-11-18). | delegate | 2026-11-22 |
+| cli.prebuilt-binary | `command -v eyg` answers `$HOME/.local/bin/eyg` and `eyg --version` answers `eyg v0.1.0` (measured 2026-11-18, again ... | delegate | 2026-11-22 |
 | cli.runner-official-install-only | `runnerCandidates` in `lib/render-helpers.mjs` returns two things and nothing else: the value of `EYG_CODEMODE_RUNNER` ... | delegate | 2026-11-22 |
 | codemode.effect-surface | A running program reaches the host only through effects, and the set it may perform is an intersection of three files. | delegate | 2026-11-22 |
 | doc-checks.citations | Every markdown file in the tree is scanned (except the session's own goal and note state under `.pi/goals/` and ... | delegate | 2026-11-22 |
@@ -48,15 +49,16 @@ nothing here reads it at run time, and this tree never writes outside itself.
 | doc-checks.mirrors | Two halves, one per failure mode of an offline documentation copy. | delegate | 2026-11-22 |
 | doc-checks.one-term | `bin/agent/doc-checks.mjs` holds this package's five prose checks, one name each: `one-term`, `citations`, `headings`, ... | delegate | 2026-11-22 |
 | gap.grant-polish-undecided | The mechanism is recorded and partly measured in `docs/world/entities/pi.session-grants.md`: a refusal names the ask, ... | delegate | 2026-11-22 |
-| gap.install-guides-name-no-policy | Neither install page at <https://eyg.run/guides> - `install-a-prebuilt-binary` and `install-from-source`, the index ... | delegate | 2026-11-22 |
+| gap.install-guides-name-no-policy | This page recorded the hole: neither install page at <https://eyg.run/guides> - `install-a-prebuilt-binary` and ... | delegate | 2026-11-22 |
 | gap.language-skill-home-undecided | `.pi/settings.json` declares the EYG language-skill pi package by path, one directory above this one (`@measured ... | delegate | 2026-11-22 |
 | gap.policy-record-extension | `guides/how-to-write-a-policy.md` tells an operator to copy the shipped policy nearest what they need and change the ... | delegate | 2026-11-22 |
-| gap.policy-runner-not-on-main | The one-shot run this package starts — `eyg run --policy <module.eyg>` — is not in the language repository's `main` as ... | delegate | 2026-11-22 |
+| gap.policy-runner-not-on-main | The one-shot run with a policy module that this package used to start is not in the language repository's `main` as ... | delegate | 2026-11-22 |
 | gap.roots-have-no-config-file | This page recorded the hole: the roots in force were the session working directory or `EYG_ALLOWED_ROOTS`, ... | delegate | 2026-11-22 |
-| gap.runner-release-lacks-policy | The latest release the language repository serves is `gleam_cli-v0.1.0` (read from its release feed on 2026-11-19), and ... | delegate | 2026-11-22 |
+| gap.runner-release-lacks-policy | This page recorded the hole: the latest release the language repository serves is `gleam_cli-v0.1.0` (read from its ... | delegate | 2026-11-22 |
 | gap.windows-is-undocumented | The language's prebuilt-install page (<https://eyg.run/guides/install-a-prebuilt-binary>, read as a copy here on ... | delegate | 2026-11-22 |
 | guides.index | `guides/` holds what an agent reads before writing EYG, and it is one set now: prose this package wrote, plus ... | delegate | 2026-11-22 |
 | guides.surface-file | `guides/eyg-surface.tsv` is the whole offline answer to "what may I call, and what may I ask for": 29 `builtin` rows ... | delegate | 2026-11-22 |
+| host.guard-boundary | `host/guard.eyg` is an EYG program, run by the ordinary installed CLI with no flag, that decides every effect of a call. | delegate | 2026-11-22 |
 | notes.format | `notes/` is where trade-offs go when they are not clear from the code: one file per subject, `name:`, `description:` ... | delegate | 2026-11-22 |
 | overlay.agent-harness | Overlay is the EYG repository's own agent. | delegate | 2026-11-22 |
 | overlay.policy-rules | A running EYG program is stopped at every effect before the host performs it, and a user-supplied function decides. | delegate | 2026-11-22 |
@@ -77,16 +79,17 @@ nothing here reads it at run time, and this tree never writes outside itself.
 | invariant.policy-self-contained | A policy module in this package imports nothing outside the package. | human | 2026-11-22 |
 | ADR-000-world-model | ## Context Agents rediscover the layout, act on stale assumptions, and re-litigate settled decisions. | human | 2026-11-22 |
 | ADR-001-world-model-import | ## Context The world model tool (`pi-simple-world-model`) is authored in `another of the operator's projects`. | delegate | 2026-11-22 |
-| ADR-002-handler-seam | ## Context An operator wants tools an agent can trust, and EYG separates an effect's *description* from its ... | human | 2026-11-22 |
+| ADR-002-handler-seam | **Superseded 2026-11-22 by `docs/world/decisions/ADR-006-guard-in-package.md`.** The choice this record made - that the ... | human | 2026-11-22 |
 | ADR-003-doc-delegation | ## Context A new user of this package needs two different things: how to get an EYG CLI onto their machine, and what ... | human | 2026-11-22 |
 | ADR-004-doc-shape-for-two-readers | ## Context Three readers, and each needs a different thing from this tree: 1. | human | 2026-11-22 |
+| ADR-006-guard-in-package | ## Context Until 2026-11-22 the tool asked the CLI to do the deciding: it named a policy module and the program inline ... | human | 2026-11-22 |
 | ADR-005-grants-spawn-and-child-surface | ## Context Three mechanisms went in during 2026-11-20, each answering a different question the code could not answer ... | delegate | 2026-11-22 |
 | runbook.check-a-change | Costs are in `AGENTS.md`'s command table, dated where each was measured; they are not repeated here. | delegate | 2026-11-22 |
 | runbook.next-milestone | Each row is a claim whose `verify` still passes, which means the hole is still open. | delegate | 2026-11-22 |
 
 ## Where to look for a claim
 
-- entities: 33 · invariants: 4 · decisions: 6 · runbooks: 2 · traps: 60
+- entities: 34 · invariants: 4 · decisions: 7 · runbooks: 2 · traps: 63
 - suspect right now: none
 - re-check everything: `npm run world` · checks: `npm run world:lint` · regenerate this index: `npm run world:map`
 <!-- END GENERATED -->
