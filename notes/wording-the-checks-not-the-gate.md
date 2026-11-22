@@ -56,7 +56,7 @@ reworded at the same time as the paragraphs were cut to say each fact once.
 
 On 2026-11-21 the milestone that added `bin/agent/audit.sh` broke the rule in its own new
 lines - "six gates" in `AGENTS.md` and in the ADR-005 draft, "a red gate" for a failing check,
-and a shell helper named `gate`. They now say six checks, a failing check, and `run_check`;
+and a shell helper named `gate`. They now say "the checks", a failing check, and `run_check`;
 the sweep that catches this is `grep -rnE '\bgate(s|d|ing)?\b'` over the tree, minus
 `policy-gated`, the language repository's `bin/agent/gate.sh` and `gleam-gate`, the field name
 `gated: true`, and the 2026-11-19 entry in `docs/world/traps.md`, whose own `verify` quotes the

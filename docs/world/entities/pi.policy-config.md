@@ -2,7 +2,7 @@
 id: pi.policy-config
 type: entity
 owner: delegate
-status: suspect
+status: current
 verified_at: 2026-11-22
 verify: "grep -c 'the default policy' README.md && grep -c 'Which policy a call gets' guides/how-to-write-a-policy.md && grep -c 'eyg.policy' guides/how-to-write-a-policy.md && grep -q agent-roots .pi/settings.json && grep -q resolvePolicy extensions/eyg-codemode.ts && grep -q NARROWEST_POLICY_FILE lib/render-helpers.mjs && grep -q refusedArgument extensions/eyg-codemode.ts && node pi-simple-world-model/bin/world_lint.mjs"
 confidence: high
@@ -18,17 +18,12 @@ you set nothing, and where to go to change it.
   behind a per-field allowlist and is installed for a child session rather than chosen by an operator
   (`docs/world/entities/pi.spawner-policy.md`). README.md names all three in its policy table.
 - The order a call's policy comes from is stated once, in
-  `guides/how-to-write-a-policy.md`: the `policy` argument of the call (a policy this
-  package ships, honoured only when it names the policy the other slots already chose or the
-  narrowest shipped one, so it can only narrow), a grant the operator made in this session, the policy a
-  spawner named for a child session (`EYG_SUBAGENT_POLICY`, read only when `EYG_CODEMODE_DEPTH`
-  says this package started the process), `eyg.policy` in `.pi/settings.json`, `EYG_POLICY`, the
-  policy in the package, and if none exists the tool refuses to run anything rather than run
-  unchecked. The order is one
+  `guides/how-to-write-a-policy.md`'s table "Which policy a call gets": the `policy` argument of
+  the call first and held to narrowing, the operator's grant, the spawner's choice, the project
+  key, `EYG_POLICY`, the policy in the package, and nothing at all if no slot names a module - the
+  tool refuses to run anything rather than run unchecked. The order is one
   function, `resolvePolicy` in `lib/render-helpers.mjs`, and the unit test pins every step of
-  it. The same page states the roots order - the roots a spawner narrowed the session to, then
-  `eyg.roots`, then `EYG_ALLOWED_ROOTS`, then the working directory, plus the roots of a grant in
-  force - which is `resolveRoots`.
+  it. The same page states the roots order, which is `resolveRoots`.
   `guides/tool-reference.md` carries the knobs and links there for the orders.
 - The project key is the per-project knob: `"eyg": { "policy": ..., "roots": [...] }`, where
   the policy is a shipped policy name (`agent-roots`, `deny-all`, `spawner-effects`) or an absolute module path, and the

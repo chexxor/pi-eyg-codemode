@@ -2,7 +2,7 @@
 id: pi.reference-action
 type: entity
 owner: delegate
-status: suspect
+status: current
 verified_at: 2026-11-22
 verify: "grep -q '\"reference\"' extensions/eyg-codemode.ts && grep -q 'export function referenceLines' lib/render-helpers.mjs && grep -q 'SURFACE_FILE = \"guides/eyg-surface.tsv\"' lib/render-helpers.mjs && grep -q 'no such builtin' lib/render-helpers.mjs && grep -q 'not decided by a policy' lib/render-helpers.mjs && grep -q 'surfaceDriftProblems' test/render-helpers.test.mjs && grep -q 'referenceLines' test/render-helpers.test.mjs"
 confidence: medium

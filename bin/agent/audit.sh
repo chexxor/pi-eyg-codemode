@@ -80,9 +80,21 @@ sweep() {
   return 0
 }
 
+# Every EYG module this package ships has to parse and type-check: a policy that does not
+# compile decides nothing, and a library that does not compile is a function nobody can call.
+# The CLI on `PATH` runs `check` without a runner, so this row needs no `--policy` support.
+eyg_modules() {
+  local f
+  for f in policies/*.eyg libraries/*.eyg; do
+    eyg check "$f" > /dev/null || return 1
+  done
+  return 0
+}
+
 echo "audit in $pkg"
 run_check "surface file current" node bin/agent/gen-surface.mjs --check
 run_check "unit test and drift guard" node --test 'test/*.mjs'
+run_check "shipped EYG modules check" eyg_modules
 run_check "world lint" node pi-simple-world-model/bin/world_lint.mjs
 run_check "world verify $verify_args" node pi-simple-world-model/bin/world_verify.mjs $verify_args
 run_check "world map current" node pi-simple-world-model/bin/world_map.mjs --check

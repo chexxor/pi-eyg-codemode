@@ -28,9 +28,8 @@ program whose every effect is decided by the policy in force before the host per
   module file the extension was loaded from), `defaultPolicy()` is
   `join(dir, "policies", "agent-roots.eyg")`, and the roots default to the session
   working directory, exported as `EYG_ALLOWED_ROOTS` for the one call and restored
-  after it. Resolution order is a grant the operator made this session, the policy a spawner named
-  for this session, the project's `eyg.policy` key, `EYG_POLICY`, the package default, and
-  the tool says which one it used; the call's `policy` argument sits outside that chain and is
+  after it. The order the policy comes from is the table in `guides/how-to-write-a-policy.md`, and
+  the tool says which slot it used; the call's `policy` argument sits outside that chain and is
   honoured only when it can narrow it (`pi.policy-config`).
 - The binary is chosen by name, not by asking it what it can do: `EYG_CODEMODE_RUNNER`, else `eyg`
   on `PATH`, and every command line carries `--policy`. The check lives in the binary, and the

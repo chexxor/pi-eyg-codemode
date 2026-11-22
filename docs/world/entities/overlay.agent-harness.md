@@ -2,7 +2,7 @@
 id: overlay.agent-harness
 type: entity
 owner: delegate
-status: suspect
+status: current
 verified_at: 2026-11-22
 verify: "grep -q 'policy_runner.gleam' notes/pi_codemode_host_gate.md && grep -q '\"--policy\"' extensions/eyg-codemode.ts && grep -q 'action === \"effects\"' extensions/eyg-codemode.ts && grep -q 'eyg-functions' extensions/eyg-codemode.ts && grep -q 'eyg_packages/overlay/policy.eyg' notes/pi-codemode-policy-inlining.md && test -f notes/pi-eyg-codemode-vs-overlay.md"
 confidence: high
@@ -39,11 +39,11 @@ a checkout this page does not repeat.
 | model access | its own HTTP client - Ollama `/api/chat` (`packages/overlay_llm/src/overlay/llm/provider/ollama.gleam:42`), Mistral `/v1/chat/completions` (`…/mistral.gleam:32`) | none: any model pi is configured with |
 | the tool the model sees | `agent.tools()` is `[run.spec()]` (`packages/overlay/src/overlay/agent.gleam:172-173`); what a capability is stays prose in the system prompt (`describe_effect`, same file:98) | `code`, `action`, `function`, `timeout`, `policy`, `libraries` and `promptGuidelines` (`extensions/eyg-codemode.ts:276-324`); `action` adds host-side probes - `eval`, `effects`, `list_functions`, `describe_function` |
 | process model | one long-running session: the rules are matched once at `setup`, `execute.State` threaded through the conversation | one runner spawn per call, `[mode, "--policy", policy, "-c", code]` with no shell between, and no state kept |
-| where the policy comes from | part of the agent config, in the same record as the model | separate from the model: `policy` argument, `EYG_POLICY`, the package's `policies/agent-roots.eyg`, else refuse to run anything |
+| where the policy comes from | part of the agent config, in the same record as the model | separate from the model: the slots are the table "Which policy a call gets" in `guides/how-to-write-a-policy.md`, and a call with no slot naming a module does not run |
 | how a policy is written | composes helpers from the config library: `policy.read_only(roots)`, `{..policy.allow_all}`, `policy.with_header(host, key, value, otherwise)` (`eyg_packages/overlay/README.md`) | policies written out in full - 18 rules in `policies/agent-roots.eyg` - because the package imports nothing outside itself (`notes/pi-codemode-policy-inlining.md`, `invariant.policy-self-contained`) |
 | where the roots come from | code: arguments to `read_only`/`read_write` | configuration: `EYG_ALLOWED_ROOTS`, with no per-project place for them yet (`gap.roots-have-no-config-file`) |
 | reuse of code | the `context` record in scope for every run, published `@package` refs, skills appended to `context.readme` (`eyg_packages/overlay/skills.eyg`) | three read-only registry scopes bound as `<name>_lib`, asked through `list_functions` before a helper is written |
-| what the model reads | skills loaded by the config into the prompt | `skills/eyg-codemode/SKILL.md` plus the offline mirror in `guides/` (`guides.index`) |
+| what the model reads | skills loaded by the config into the prompt | `skills/eyg-codemode/SKILL.md` plus `guides/`, which links upstream instead of copying it, and `guides/eyg-surface.tsv` for the names (`guides.index`, `guides.surface-file`) |
 
 What is shared is the checking, and this page does not restate it: the vocabulary and the rule
 table are `overlay.policy-rules`, the capability question is `codemode.effect-surface`, and the

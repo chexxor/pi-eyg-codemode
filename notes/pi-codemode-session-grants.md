@@ -22,8 +22,9 @@ details are used together.
 **The widening is the operator's act, and the tool's own parameter was narrowed to match.**
 Until this change a call could pass `policy: <absolute path>`. A program that can write inside
 its roots can write a permissive module there and hand the runner its path, so a "grant" that
-the model could reach was not a boundary. Now `argumentPolicyPath` accepts only a policy this
-package ships, and `resolvePolicy` honours that argument only when it names the policy the other
+the model could reach was not a boundary. Now `argumentPolicyPath` accepts only a policy
+this package ships - `agent-roots.eyg`, `deny-all.eyg` and `spawner-effects.eyg`, the three
+in `policies/` - and `resolvePolicy` honours that argument only when it names the policy the other
 slots already chose or the narrowest shipped one (`NARROWEST_POLICY_FILE`, `deny-all.eyg`); every
 other name is refused and the message names the name it refused. A wider module comes from
 `/eyg-grant`, `eyg.policy` or `EYG_POLICY`, none of which a program writes. What it costs:

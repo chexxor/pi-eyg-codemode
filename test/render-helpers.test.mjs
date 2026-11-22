@@ -8,9 +8,13 @@
  * time format, the effect scan, the metadata record of a registry module, and
  * the probe programs. The collapsed-and-expanded toggle itself is pi's, so the
  * operator's interactive check is the other half of the evidence.
+ *
+ * One named test per group, so a failure names the group it came from instead of
+ * stopping the file at its first assert.
  */
 
 import assert from "node:assert/strict";
+import { test } from "node:test";
 import { surfaceDriftProblems } from "../bin/agent/gen-surface.mjs";
 import { argumentPolicyPath, budgetRefusal, builtinErrors, builtinHintRows, builtinRows, callBudget, callLines, checkDeclaredEffects, CHILD_TOOL_ALLOWLIST, classifyProbeOutput, COLLAPSED_SOURCE_LINES, childAnswer, childArgv, childCalls, childEnvOverrides, childRefusalRows, childTools, describeGrant, EFFECT_ALLOWLIST_ENV, effectFieldsFor, effectLine, effectsUsed, eygCallCount, eygSettings, findMetadata, fieldsOutside, formatDuration, grantEvents, GRANT_ENTRY, GENERATED_MARK, isUnder, LANGUAGE_DOCS, MAX_CALLS_ENV, outsideRoot, prepareCallArguments, shippedPolicyPath, probeArguments, probeProgram, POLICY_FIELDS, referenceLines, refusalHints, replayGrants, resolvePolicy, resolveRoots, resultLines, ruleMappingEffects, rootsInside, runnerCandidates, runnerFailureLine, sessionDepth, spawnerPolicy, spawnerRoots, subagentCallLines, subagentResultRows, suggestGrant, surfaceFileLines, surfaceRows, SURFACE_FILE } from "../lib/render-helpers.mjs";
 import { readFileSync } from "node:fs";
@@ -19,15 +23,15 @@ import { join } from "node:path";
 const flat = (rows) => rows.map((row) => row.map((segment) => segment.text).join("")).join("\n");
 const tones = (rows) => rows.map((row) => row.map((segment) => segment.tone).join("+")).join("\n");
 
+const choice = (policy, source) => ({ policy, source, refusedArgument: null });
+
 const program = `let found = perform Search({path: "/repo", pattern: "*.eyg", limit: 20})
 let text = perform ReadFile({path: "/repo/README.md", offset: 0, limit: 100})
 perform StandardOut(!int_to_string(!string_length(text)))
 perform AppendFile({path: "/repo/log", contents: !string_to_binary("a")})
 perform DeleteFile("/repo/log")`;
 
-// --- the call row: effects used, the first lines, and nothing else cut ---
-
-{
+test("the call row: effects used, the first lines, and nothing else cut", () => {
   const rows = callLines({ code: program, timeout: 60 }, false);
   const shown = flat(rows);
   assert.match(rows[0][0].text, /^eyg $/, "the row names the tool");
@@ -46,20 +50,16 @@ perform DeleteFile("/repo/log")`;
     "and shows them in order, indented",
   );
   assert.match(flat(rows), /\.\.\. \d+ more lines/, "the rest is counted, not hidden silently");
-}
+});
 
-// --- the expanded call row: the whole program, no marker ---
-
-{
+test("the expanded call row: the whole program, no marker", () => {
   const rows = callLines({ code: program, timeout: 60 }, true);
   const codeRows = rows.filter((row) => row[0].tone === "code");
   assert.equal(codeRows.length, program.split("\n").length, "every source line is rendered");
   assert.doesNotMatch(flat(rows), /more lines/, "nothing is truncated in the expanded row");
-}
+});
 
-// --- the result row: summary, timing, and the whole output when expanded ---
-
-{
+test("the result row: summary, timing, and the whole output when expanded", () => {
   const result = {
     content: [{ type: "text", text: "eyg run: ran in 1.24 s wall\nfirst line of output\nsecond line" }],
     details: { ran: true, exit: 0, durationMs: 1240, policy: "/abs/policy.eyg", policySource: "package default", runner: "eyg", roots: "/abs/cwd" },
@@ -81,33 +81,27 @@ perform DeleteFile("/repo/log")`;
 
   const partial = resultLines({ content: [], details: {} }, false, undefined, 92_000);
   assert.equal(flat(partial), "eyg running, 1:32 so far", "a run in flight says how long it has gone");
-}
+});
 
-// --- wall time: seconds, and minutes when it crosses a minute ---
-
-{
+test("wall time: seconds, and minutes when it crosses a minute", () => {
   assert.equal(formatDuration(420), "0.42 s");
   assert.equal(formatDuration(1240), "1.24 s");
   assert.equal(formatDuration(59_999), "60.00 s");
   assert.equal(formatDuration(60_000), "1:00", "a run over a minute is minutes and seconds");
   assert.equal(formatDuration(123_000), "2:03");
   assert.equal(formatDuration(3_723_000), "1:02:03", "and hours when it crosses one");
-}
+});
 
-// --- the effect scan ---
-
-{
+test("the effect scan", () => {
   assert.equal(
     effectsUsed("let a = perform ReadFile({})\nperform StandardOut(a)\n// a note about perform Fetch\nlet b = !int_add(1, 2)").join(","),
     "ReadFile,StandardOut,Fetch",
     "names in order of first appearance, and a comment mentioning an effect counts",
   );
   assert.equal(effectsUsed("let plain = search_lib.search({root: \"/\"})").join(""), "", "a library call is not an effect");
-}
+});
 
-// --- the registry metadata of the shipped module, and a broken one ---
-
-{
+test("the registry metadata of the shipped module, and a broken one", () => {
   const source = readFileSync(join(import.meta.dirname, "..", "libraries", "search.eyg"), "utf8");
   const metadata = findMetadata(source);
   assert.equal(metadata.found, true, "the shipped module carries a metadata record");
@@ -130,11 +124,9 @@ let metadata = {
   assert.equal(brokenCheck.unperformed.join(","), "ReadFile", "and so is a stale annotation");
   assert.equal(findMetadata(broken).found, true, "the record itself is still read");
   assert.equal(findMetadata("let x = 1\n{x}").found, false, "a module with no record is reported as such");
-}
+});
 
-// --- probe programs: what the availability probe asks, and how the answer is read ---
-
-{
+test("probe programs: what the availability probe asks, and how the answer is read", () => {
   const read = probeProgram("ReadFile", "/abs/root");
   assert.match(read, /^perform ReadFile\(\{path: "\/abs\/root\/\.eyg-codemode-probe", offset: 0, limit: 0\}\)$/, "a read at a path that cannot exist, under the root the policy advertises");
   assert.equal(probeArguments("WriteFile", "/abs/root").includes("/abs/root\""), true, "a write names the root itself, a directory, so it cannot create a file");
@@ -145,11 +137,9 @@ let metadata = {
   assert.match(fetch, /eyg-codemode-probe\.invalid/, "against a host under the reserved TLD, which can never resolve");
   const fallback = probeProgram("ReadDirectory", "");
   assert.match(fallback, /\/dev\/null/, "with no root the impossible path is /dev/null, which is never a directory");
-}
+});
 
-// --- back-compat for a session resumed from an older version of the package ---
-
-{
+test("back-compat for a session resumed from an older version of the package", () => {
   const old = prepareCallArguments({ code: "perform CWD({})", mode: "eval", timeout_ms: 1500 });
   assert.equal(old.timeout, 1.5, "timeout_ms becomes timeout in seconds");
   assert.equal(old.action, "eval", "mode becomes action");
@@ -160,20 +150,16 @@ let metadata = {
   assert.equal(prepareCallArguments('{"code": "x", "timeout_ms": 2500}').timeout, 2.5, "even as the JSON string a model sometimes sends");
   assert.equal(prepareCallArguments("not json").code, "", "unparseable arguments answer with the defaults rather than throwing");
   assert.equal(prepareCallArguments({ code: "x", pathe: "/misspelt" }).pathe, "/misspelt", "an unknown field is left for validation to report");
-}
+});
 
-// --- the probe verdict ---
-
-{
+test("the probe verdict", () => {
   assert.equal(classifyProbeOutput("read_file denied by policy: /abs/x"), "refused", "the policy said no");
   assert.equal(classifyProbeOutput("unhandled effect ReadFile({})"), "unavailable", "the runner does not implement it");
   assert.equal(classifyProbeOutput("No such file or directory"), "available", "the policy let it through and the host failed");
   assert.equal(classifyProbeOutput("Ok(\"/abs/cwd\")"), "available", "a safe effect printed its value");
-}
+});
 
-// --- the effect surface `action: effects` prints, and the drift guard ---
-
-{
+test("the effect surface: the recorded rule_mapping parses, one row per effect", () => {
   const fixture =
     `  #("AppendFile", policy.PolicyField("append_file")),\n` +
     `  #("DecodeJSON", policy.Unchecked),\n` +
@@ -182,6 +168,8 @@ let metadata = {
   assert.equal(effectLine("Search", "read_file", "allowed for the probe value"), "Search | read_file | allowed for the probe value", "one row per effect");
   assert.equal(effectLine("Hash", null, "unchecked (computes over values it was given)"), "Hash | none | unchecked (computes over values it was given)", "an unchecked effect names no field");
 
+});
+test("where the tool looks for a runner, and the one line a spawn that ran nothing gets", () => {
   // Where the tool looks for a runner that checks effects. A named path ends the
   // search; otherwise the only candidate is the CLI on PATH, because this package
   // depends on the officially installable `eyg` and reaches no build output or other
@@ -232,6 +220,8 @@ let metadata = {
     "a missing file inside a program is not the mode word, so no install line",
   );
 
+});
+test("the project settings key: the policy slots in order, and the roots order", () => {
   // The config surface: what the project's `eyg` key says, and which of the six
   // names wins for the policy and for the roots. Every step of both orders is
   // pinned, because the whole point of the key is that a project can say "this
@@ -239,7 +229,6 @@ let metadata = {
   // controls is the call's `policy` argument, so it is pinned too: it may only
   // narrow, which means naming the policy the session already runs under or naming
   // the narrowest shipped policy (`notes/pi-codemode-session-grants.md`).
-  const choice = (policy, source) => ({ policy, source, refusedArgument: null });
   assert.deepEqual(eygSettings(undefined), { policy: null, roots: [] }, "no settings is no configuration");
   assert.deepEqual(eygSettings({ eyg: { policy: "deny-all", roots: ["/a", "", 5, "/b"] } }), { policy: "deny-all", roots: ["/a", "/b"] }, "a named shipped policy and absolute roots, junk dropped");
   assert.deepEqual(eygSettings({ eyg: { roots: "/only" } }), { policy: null, roots: ["/only"] }, "one root may be written without a list");
@@ -298,9 +287,9 @@ let metadata = {
   assert.equal(resolveRoots({ project: [], env: "/e", cwd: "/c" }), "/e", "then EYG_ALLOWED_ROOTS");
   assert.equal(resolveRoots({ project: [], env: null, cwd: "/c" }), "/c", "then the working directory");
 
-// --- the grant store: durations, expiry, revoke, and the branch it lives on ---
+});
 
-{
+test("the grant store: durations, expiry, revoke, and the branch it lives on", () => {
   const grant = (id, calls, policy = "/p/wide.eyg", roots = []) => ({ op: "grant", id, policy, calls, roots });
   const call = (grantId) => ({ op: "call", grantId });
 
@@ -341,11 +330,9 @@ let metadata = {
   assert.equal(rebuilt.active.used, 1, "so a refused call does not spend the grant");
   assert.deepEqual(rebuilt.roots, ["/extra"], "and a grant carries roots as well as a policy");
   assert.equal(replayGrants(grantEvents([{ type: "custom", customType: "other", data: grant("gX", 1) }])).policy, null, "an entry that is not on this extension's type is not a grant");
-}
+});
 
-// --- what a refusal names: the path, and the exact grant that would clear it ---
-
-{
+test("what a refusal names: the path, and the exact grant that would clear it", () => {
   const output = "eyg run: exit 1 in 0.11 s wall\nError(\"write_file denied by policy: /tmp/outside\")\nError(\"write_file denied by policy: /tmp/outside\")";
   const hints = refusalHints(output);
   assert.deepEqual(hints, [{ field: "write_file", path: "/tmp/outside" }], "one hint per distinct refusal");
@@ -370,17 +357,16 @@ let metadata = {
   assert.match(shown, /grants in force: g9: \/p\/wide\.eyg for 2 tool calls \(0 used\) roots \+ \/tmp/, "and every call names the grants in force");
   assert.equal(refused[0][0].tone, "error", "the status line is still the status line");
   assert.match(flat(refused.filter((row) => row[0].tone === "warning")), /one tool call, N calls/, "with the durations to choose from");
-}
+});
 
-// --- a model may narrow to a shipped policy and may not name a module ---
-
-{
+test("a model may narrow to a shipped policy and may not name a module", () => {
   assert.equal(argumentPolicyPath("deny-all", "/pkg"), join("/pkg", "policies", "deny-all.eyg"), "a bare policy name resolves inside the package");
   assert.equal(argumentPolicyPath("/tmp/my-policy.eyg", "/pkg"), null, "an absolute module path is not the model's to choose");
   assert.equal(argumentPolicyPath("../outside.eyg", "/pkg"), null, "nor is a path that walks out of it");
   assert.equal(argumentPolicyPath("deny-all", null), null, "and with no package directory there is nothing to resolve against");
-}
+});
 
+test("a subagent: argv, tools, effect fields and the environment it starts with", () => {
   // A subagent: how it is started, what it may be given, and what comes back.
   assert.deepEqual(
     childArgv({ task: "write the file", model: "strata/qwen3.8-flash", trusted: true }),
@@ -441,6 +427,8 @@ let metadata = {
   assert.equal(childAnswer(childRecords), "wrote it, /tmp was refused", "and its last words");
   assert.deepEqual(childCalls(undefined), [], "no output is no calls, not a crash");
 
+});
+test("a spawner's slots: depth, roots and call budget, with a grant on top", () => {
   // A grant adds roots on top of what the project and the environment say, and a
   // model may not name the module it is checked against.
   assert.deepEqual(
@@ -489,6 +477,8 @@ let metadata = {
   assert.match(budgetRefusal(2, 2), /budget of 2/, "the child is told the number it ran out of");
   assert.match(budgetRefusal(2, 2), /not yours to widen/, "and that the budget belongs to the spawner");
 
+});
+test("the rows a subagent spawn renders: the ask, and what came back", () => {
   // The rows the subagent tool renders: the ask, and what came back.
   const asked = subagentCallLines({ task: "l1\nl2\nl3\nl4\nl5", roots: ["/work/sub"], timeout: 90, policy: "deny-all" }, false);
   assert.match(flat(asked), /eyg_subagent \(timeout: 90s\) ?policy: deny-all/, "the timeout and the named policy in the head");
@@ -534,6 +524,8 @@ let metadata = {
   assert.match(flat(subagentResultRows(out, false, 1200)), /spent its call budget/, "and that it ran out");
   assert.ok(!flat(subagentResultRows(childResult, false, 1200)).includes("call budget"), "a child that never hit one is not told about one");
 
+});
+test("the drift guard: POLICY_FIELDS against the recorded rule_mapping", () => {
   // The drift guard. This workspace is the pi package on its own, so the runtime
   // that owns `rule_mapping` is not in this tree: the guard compares `POLICY_FIELDS`
   // against the recorded snapshot in test/fixtures/rule_mapping.gleam (provenance in
@@ -550,11 +542,9 @@ let metadata = {
   }
   const unchecked = Object.keys(POLICY_FIELDS).filter((name) => POLICY_FIELDS[name] === null).join(",");
   assert.equal(unchecked, "DecodeJSON,EYGParse,Hash,Sign", "exactly four effects carry no policy field and are available under every policy");
-}
+});
 
-// --- the reference answer: the surface file, both halves of it ---
-
-{
+test("the reference answer: the surface file, both halves of it", () => {
   const text = readFileSync(join(import.meta.dirname, "..", SURFACE_FILE), "utf8");
   const rows = surfaceRows(text);
   const builtins = rows.filter((row) => row.name.startsWith("!"));
@@ -599,11 +589,9 @@ let metadata = {
   assert.ok(lines.some((line) => line.includes('action "effects"')), "and the call that asks it what it decides, effect by effect");
   assert.ok(lines.some((line) => line.includes("read tool is not decided by a policy")), "the harness read tool's standing is stated");
   assert.ok(!/\| (allowed|refused|unavailable|unknown)/.test(lines.join("\n")), "it reports no verdict, so it asked the policy nothing");
-}
+});
 
-// --- the drift check over the surface file: four inputs, and a planted rename answers ---
-
-{
+test("the drift check over the surface file: four inputs, and a planted rename answers", () => {
   const text = readFileSync(join(import.meta.dirname, "..", SURFACE_FILE), "utf8");
   assert.deepEqual(surfaceDriftProblems(text), [], "the file agrees with the fixture, POLICY_FIELDS, this tree's calls and its own rebuild");
 
@@ -620,11 +608,9 @@ let metadata = {
     builtinRenamed.some((p) => p === "builtin this tree calls is not listed: !int_add"),
     "a renamed builtin this tree calls is caught by the sources that call it",
   );
-}
+});
 
-// --- the rows a failed run adds when it named a builtin the runtime does not have ---
-
-{
+test("the rows a failed run adds when it named a builtin the runtime does not have", () => {
   const out = "error: builtin undefined: !str_len\nhint: check the builtin name against the builtins reference\n\n\u2192 in <inline>:1";
   assert.deepEqual(builtinErrors(out), ["!str_len"], "the runner's own error text is what is scanned");
   assert.deepEqual(
@@ -651,4 +637,4 @@ let metadata = {
   assert.match(collapsed, /no such builtin: !str_len/, "the hint shows collapsed, where the model reads it");
   const clean = flat(resultLines({ content: [{ type: "text", text: "eyg run: ran in 0.10 s wall\n2" }], details: { ran: true, exit: 0 } }, false, 100));
   assert.ok(!clean.includes("no such builtin"), "a run that named no invented builtin gets no hint row");
-}
+});

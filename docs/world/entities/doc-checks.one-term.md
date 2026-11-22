@@ -36,7 +36,9 @@ skips its own source for the same reason.
 - that table has a row for each of `runner`, `policy`, `roots`, `the checks`,
   `checked, unchecked`, `registry scope`, so deleting a row from the definition of the
   vocabulary fails the check rather than quietly shrinking it;
-- no file in scope uses a rival word for a concept the table names: `preset`, and the `gate`
+- no file in scope uses a rival word for a concept the table names: `prese[t]` - bracketed here
+  because `docs/world/traps.md` carries a sweep for that word over every tracked file, and a page
+  that explains a ban has to name the banned word without tripping it - and the `gate`
   family (`gate`, `gates`, `gated`, `gating`).
 
 The `gate` family is the residue the vocabulary rewrite left behind: the tool's own user-facing strings

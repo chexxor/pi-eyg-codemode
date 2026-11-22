@@ -8,6 +8,24 @@ history, not as instructions for this tree. On 2026-11-19 the word "gate" was re
 
 ## Unreleased
 
+- **The doc rules became checks.** `bin/agent/doc-checks.mjs` answers five questions over this
+  package's own prose and code - one word per concept, a `path:NNN` citation whose file is in this
+  tree and whose line holds the names it anchors, a section heading whose subject is named in its
+  first line, no upstream page copied into `guides/`, no dated stamp in the prose a session acts on
+  - and each answer is one row of `bin/agent/audit.sh`, one claim whose `verify` is that command,
+  and one planted violation in `test/doc-checks.test.mjs`. The dated stamps the scrub removed from
+  the guides moved into the records that carry the dates. `notes/wording-the-checks-not-the-gate.md`
+  says why the file is named for the check and not for anything else.
+- **Review fixes.** `test/render-helpers.test.mjs` became 22 named tests, so one failure names the
+  group it came from instead of stopping the file at its first assert. The policy resolution order
+  is stated once, in the table "Which policy a call gets" in `guides/how-to-write-a-policy.md`, and
+  the entity pages and `AGENTS.md` point at that table instead of listing the slots again.
+  `.pi/settings.json` stopped naming `codemode` in `defaultTools` while disabling the built-in of
+  the same name. The audit gained a `shipped EYG modules check` row: `eyg check` over every module
+  in `policies/` and `libraries/`, which the CLI on `PATH` answers offline. Claim verifies that could
+  pass because a binary was absent, or because `&&` outranks `||`, were rewritten to lead with
+  `test -x` and keep their conditional last (`docs/world/traps.md`).
+
 - **One generated surface, not six page copies.** The offline copies of the language's pages
   (`syntax.md`, `builtins_reference.md`, `cli_effects_reference.md`, `install_prebuilt.md`,
   `install_from_source.md`, `pi_codemode_agent.md`) are deleted, and every pointer to them moved in
@@ -85,9 +103,10 @@ history, not as instructions for this tree. On 2026-11-19 the word "gate" was re
   probed, and `bin/agent/build-checked-runner.sh` was a script a person ran. Both are gone: the probe
   went with them, and the install pages point at the website
   (`docs/world/entities/gap.runner-release-lacks-policy.md`).
-- **The six checks run in one command.** `bin/agent/audit.sh` runs the unit test and drift guard, the
-  world lint, the claim verifies, the map check, `pi --world-model-check` and the tracked-path-and-name
-  sweep, printing what each cost and whether a record moved: 5.70 s wall, 6/6, 2026-11-20.
+- **The checks ran in one command.** `bin/agent/audit.sh` was added to run the unit test and drift
+  guard, the world lint, the claim verifies, the map check, `pi --world-model-check` and the
+  tracked-path-and-name sweep, printing what each cost and whether a record moved: 5.70 s wall, 6/6,
+  2026-11-20. The rows it runs now are the list `AGENTS.md` prices.
 - Vocabulary: the tree says **the checks**, **checked** and **unchecked**; a new claim, four trap
   entries and the `AGENTS.md` "no check script" line moved with the script's arrival.
 
