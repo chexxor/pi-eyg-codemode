@@ -12,7 +12,16 @@
 Why a snapshot: this workspace is the pi package alone, so the runtime that owns
 `rule_mapping` is not here and cannot be read. `POLICY_FIELDS` in
 `lib/render-helpers.mjs` is the package's copy of that list, and the test compares the
-copy against this block. When a policy-capable runner IS available, re-capture the block
+copy against this block.
+
+What the block decides, and what it no longer decides: since the checks moved into
+`host/guard.eyg`, this snapshot decides only the effect **labels** and which of them the
+runtime marks `Unchecked`. The policy **field** names are this package's own choice, not a
+copy of the runtime's, and they are proved against the guard rather than against the
+snapshot - `test/host-coverage.test.mjs` asserts that every effect row here has a handler
+and that the handler reads the field `POLICY_FIELDS` names. So a runtime that adds an
+effect fails the label comparison, and the drift guard never claims to know what a field
+should be called. When a policy-capable runner IS available, re-capture the block
 and re-run the live guard:
 
 ```bash
