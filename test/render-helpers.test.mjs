@@ -720,6 +720,9 @@ test("kept bindings: the write is a program of effects, so a policy decides ever
   assert.equal(variableDir("workspace", { cwd: "/work", home: "/operator-home" }), "/work/.pi/eyg-variables", "workspace scope is this workspace");
   assert.equal(variableDir("session", { cwd: "/work", home: "/operator-home" }), null, "session scope has no directory: it is this session's records");
   assert.equal(variableDir("user", { cwd: "/work", home: null }), null, "and with no home there is nothing to write to");
+  const userModule = `${variableDir("user", { cwd: "/work", home: "/operator-home" })}/note.eyg`;
+  assert.ok(!isUnder(userModule, "/work"), "user scope sits outside the roots the shipped policy gives a session, so its write is refused until a root reaches the home directory");
+  assert.ok(isUnder(variableDir("workspace", { cwd: "/work" }) + "/note.eyg", "/work"), "while the workspace scope's write is inside them");
 });
 
 test("kept bindings: a session branch replays its own definitions", () => {
