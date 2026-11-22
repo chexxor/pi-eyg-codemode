@@ -1,7 +1,7 @@
 ---
 name: eyg-run
 description: Run, evaluate, script and type-check EYG with the CLI, and build the CLI itself. Use when you need to execute EYG, or when a command involving `eyg` fails.
-verified: 2026-11-21
+verified: 2026-11-22
 ---
 
 # Running EYG
@@ -40,13 +40,24 @@ row per name with the policy field that decides it. Read that rather than guessi
   `policies/agent-roots.eyg` and `policies/deny-all.eyg` deny reading them by design;
   keep that invariant intact.
 
-## What the CLI on this host can and cannot do
-Whether the CLI on `PATH` carries `--policy` decides what a session can prove from here:
-without it the CLI **type-checks** (`eyg check <file>.eyg`) but **cannot check a run**. The
-record `docs/world/entities/cli.prebuilt-binary.md` carries the current answer and the command
-that re-checks it. This package probes `eyg` on `PATH` and `EYG_CODEMODE_RUNNER`, builds nothing
-itself, and points at no private build, so an effect-level result claimed from this tree is
-UNVERIFIED, never PASS.
+## What a run here proves
+
+The checks are a program this package ships (`host/guard.eyg`), so the installed CLI runs every
+call and a runtime decision is re-runnable here with no build of the language and no special flag.
+One command, a fifth of a second, writes the same entry, policy import and program module a tool
+call writes and prints what the policy answered:
+
+```sh
+node bin/agent/refusal-probe.mjs
+node bin/agent/refusal-probe.mjs --with-policy deny-all
+node bin/agent/refusal-probe.mjs --with-policy spawner-effects --fields read_file,standard_out
+node bin/agent/refusal-probe.mjs --program test/fixtures/unnamed-effect.eyg
+```
+
+`eyg check <file>.eyg` still type-checks a module without running one, which is all the audit's
+`shipped EYG modules check` row needs. What the installed binary *is* - path, version - is a claim
+with its own command in `docs/world/entities/cli.prebuilt-binary.md`; this package builds nothing
+and points at no private build.
 
 ## Prove the CLI answers
 

@@ -1,8 +1,10 @@
 # Point the tool at a CLI you built or downloaded
 
-The `eyg` tool starts one binary to run every program, and it must accept
-`run --policy <module.eyg>`: `--policy` is what carries the policy into the run, so a binary
-without that flag cannot run a program with checks in it. Two steps and one proof.
+The `eyg` tool starts one binary per call, and it asks that binary for one thing: run the
+file it wrote. The checks are not inside the binary - they are in `host/guard.eyg`, which the
+tool wraps around your program before the binary sees it - so any EYG CLI that runs a file
+works, and this page is about which binary a call gets and how to prove it. Two steps and one
+proof.
 
 ## Name the binary
 
@@ -13,40 +15,47 @@ export EYG_CODEMODE_RUNNER=<absolute path to the binary>
 That is the whole contract. When the variable is set, that path is the binary. Without it,
 the tool starts `eyg` on your `PATH`. There is no third place to park a binary: the package
 reaches those two and nothing else (`docs/world/entities/cli.runner-official-install-only.md`).
-A relative path is refused - the policy sees absolute paths, and a relative one resolves
-before the checks can read it.
+A relative path is refused - the checks see absolute paths, and a relative name is resolved
+before anything can decide it.
 
-Nothing is asked of the binary before the run: the flag is in every command line the tool
-builds, and a binary that does not know it says so in its own output. That output ends the
-call with one line:
+Nothing is asked of the binary before the run: no flag, no capability question, no probe of
+its `--help`. The command line is `<binary> run <the file this package wrote>` (`eval` in
+place of `run` for `action: "eval"`), and a binary that cannot answer that says so in its own
+output, which the tool turns into one line. A binary that is not where it said it was:
 
 ```
-the eyg binary this tool started did not understand `run --policy <module.eyg>` and read `run` as a file name, so no policy ran and nothing was performed: the install predates the flag this package needs, so install a newer release of the EYG CLI or name a binary that accepts the flag with EYG_CODEMODE_RUNNER=<absolute path>.
+spawn /nonexistent/eyg ENOENT
+no eyg binary found at /nonexistent/eyg: install the EYG CLI so that `eyg` is on PATH, or name one with EYG_CODEMODE_RUNNER=<absolute path>.
 ```
 
-A binary that is not there at all answers `no eyg binary found at <where the tool looked>`.
+A binary that takes the mode word as a file name rather than as a command (`EYG_CODEMODE_RUNNER`
+pointed at a stub that prints `error: no such file: <cwd>/run`, so the sentence is not a
+hypothetical):
 
-Neither officially installed build carries the flag: not the published release
-(`docs/world/entities/gap.runner-release-lacks-policy.md`), not a build of the published
-default branch (`docs/world/entities/gap.policy-runner-not-on-main.md`). So this page is for
-a binary built from a ref the language repository names, or for a machine where a release
-does carry the flag.
+```
+the binary at <the path you named> has no `run` command, so it read `run` as a file name and ran nothing: `<the path you named> run /tmp/pi-eyg-codemode/2617833-mwsg7yjh-1/entry.eyg` is the command this package runs for every call. Install the EYG CLI (see <https://eyg.run/guides>), or name a binary that takes a file after the mode word with EYG_CODEMODE_RUNNER=<absolute path>.
+```
 
 ## Prove this package found it
 
-Make one call that asks a question rather than changing anything - `action: "effects"`
-answers without running a program - and expand the row (`Ctrl+O`). Its last line reads
-`policy: <path> (<source>) runner: <path> roots: <path>`: the runner named there is the
-proof, and the line quoted above is the counter-proof.
+Make one call that asks a question rather than changing anything - `action: "effects"` answers
+with one row per effect - and expand the row (`Ctrl+O`). Its last line reads
+`policy: <path> (<source>) runner: <path> roots: <path>`: the runner named there is the proof,
+and either line above is the counter-proof.
 
-At the shell, this package's own fixture is the same proof in one command:
+At the shell, this package's own probe is the same proof in one command, and it costs a fifth
+of a second:
 
 ```sh
-$EYG_CODEMODE_RUNNER run --policy <this package>/policies/deny-all.eyg test/fixtures/refusal-probe.eyg
+node bin/agent/refusal-probe.mjs
 ```
 
-It prints `write_file denied by policy` and leaves no file behind; the fixture is
-`test/fixtures/refusal-probe.eyg`.
+It writes the same entry and program module a tool call writes, under the system temporary
+directory, runs `eyg run <that entry>` and prints the argv it used. Under
+`policies/agent-roots.eyg` it prints `write_file denied by policy: <a path under the temporary
+directory>` and leaves nothing behind. Add `--with-policy deny-all` for the narrowest policy, or
+`--with-policy spawner-effects --fields read_file,standard_out` to see the child allowlist
+refuse a write by name. `guides/how-to-write-a-policy.md` is where the decisions themselves are written.
 
 ## Not this
 

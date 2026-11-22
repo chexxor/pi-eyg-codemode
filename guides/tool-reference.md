@@ -9,7 +9,7 @@ the README and by the how-to pages.*
 The sections:
 
 - [What the tool decides, and in what order](#what-the-tool-decides-and-in-what-order)
-- [What a policy handler answers with](#what-a-policy-handler-answers-with)
+- [What a policy rule answers with](#what-a-policy-rule-answers-with)
 - [Plan first, then act, with the same program](#plan-first-then-act-with-the-same-program)
 - [The effect surface, answered rather than remembered](#the-effect-surface-answered-rather-than-remembered)
 - [The language surface, answered rather than remembered](#the-language-surface-answered-rather-than-remembered)
@@ -21,22 +21,22 @@ The sections:
 
 | knob | default | resolved from |
 | --- | --- | --- |
-| policy module | `policies/agent-roots.eyg` inside the installed package, the path taken from `import.meta.url` | `lib/render-helpers.mjs` (`resolvePolicy`), used by `extensions/eyg-codemode.ts`; the order is stated in `guides/how-to-write-a-policy.md` |
+| policy module | `policies/agent-roots.eyg` inside the installed package, the path taken from `import.meta.url` | `lib/render-helpers.mjs` (`resolvePolicy`), used by `extensions/eyg-codemode.ts`; the path reaches the program through the entry, which imports the module (`entryProgram`); the order of the slots is stated in `guides/how-to-write-a-policy.md` |
 | project key | nothing set: the package default and the working directory | `eyg.policy` (a shipped policy name such as `agent-roots`, or an absolute module path) and `eyg.roots` (absolute paths) in `.pi/settings.json`; pi merges global and project settings and keeps keys it does not know, and the tool re-reads both keys on every call |
-| roots | the session working directory, exported as `EYG_ALLOWED_ROOTS` for the call and restored after it | `lib/render-helpers.mjs` (`resolveRoots`): the roots a spawner narrowed this session to, then `eyg.roots`, then `EYG_ALLOWED_ROOTS`, then the working directory, plus the roots of a grant in force; the policy reads the variable |
+| roots | the session working directory | `lib/render-helpers.mjs` (`resolveRoots`): the roots a spawner narrowed this session to, then `eyg.roots`, then `EYG_ALLOWED_ROOTS`, then the working directory, plus the roots of a grant in force; the entry writes the resolved list into the `ctx` the policy reads (`contextLiteral`) |
 | widening for the rest of the session | nothing widened: a refusal stays a refusal | the operator's `/eyg-grant` command (`extensions/eyg-codemode.ts`), whose record `replayGrants` in `lib/render-helpers.mjs` reads back off the session branch; the order is in `guides/how-to-write-a-policy.md` |
 | a second session | none started | the `eyg_subagent` tool (`extensions/eyg-codemode.ts`): `pi --print --mode json --tools <tools>` built as argv, its boundary from `childEnvOverrides` and checked by `rootsInside` and `childTools`, its effect allowlist enforced by `policies/spawner-effects.eyg`, its call budget by `callBudget`, its report parsed by `childCalls`/`childAnswer`; `guides/how-to-spawn-a-subagent.md` |
 | kept bindings | none kept: a `let` defined in one call is not in scope on the next | the `extern` argument (`session`, `workspace`, `user`): `keptBindings` in `extensions/eyg-codemode.ts` reads the two directories and this session's records into the prelude, and a file scope is kept by a program built by `variableWriteProgram` and reported by `variableWriteOutcomes` (`lib/render-helpers.mjs`); `guides/how-to-keep-bindings.md` |
-| runner | `EYG_CODEMODE_RUNNER` (an absolute path) when set, else `eyg` on PATH | `lib/render-helpers.mjs` (`runnerCandidates`, and `runnerFailureLine` for a binary that does not know `--policy`), used by `extensions/eyg-codemode.ts` |
+| runner | `EYG_CODEMODE_RUNNER` (an absolute path) when set, else `eyg` on PATH | `lib/render-helpers.mjs` (`runnerCandidates`), used by `extensions/eyg-codemode.ts`; a binary that is missing, or that reads the mode word as a file name, gets one line naming the install and quoting the command that was run (`runnerFailureLine`) |
 | mode | `run`; `eval` is pure and prints the value | `extensions/eyg-codemode.ts`. `action` selects what the call does - `run`, `eval`, `effects`, `reference`, `list_functions`, `describe_function` (`ACTIONS`) - and `prepareCallArguments` in `lib/render-helpers.mjs` maps `mode` from sessions resumed before the rename |
 | timeout | 30 s default, 120 s cap; the parameter is `timeout` in **seconds** | `extensions/eyg-codemode.ts` |
-| argv | `[mode, "--policy", policy, "-c", code]`, spawned with no shell in between | `extensions/eyg-codemode.ts` |
+| argv | `[mode, entryPath]`: the entry this package wrote in a scratch directory of its own, which imports the guard, the policy and the model's program; the directory is removed when the run ends | `runGuarded` in `extensions/eyg-codemode.ts`; the three files come from `entryProgram`, `programModule` and `contextLiteral` in `lib/render-helpers.mjs` |
 
 | environment | meaning |
 | --- | --- |
 | `EYG_POLICY` | absolute path to another policy module for the session |
 | `EYG_ALLOWED_ROOTS` | comma-separated absolute roots, replacing the session directory |
-| `EYG_CODEMODE_RUNNER` | absolute path to the binary the tool starts; it must know `run --policy <module.eyg>` |
+| `EYG_CODEMODE_RUNNER` | absolute path to the binary a call runs in; it must take a mode word and then a file this package wrote |
 | `EYG_CODEMODE_TIMEOUT` | milliseconds for one call (the variable keeps its unit; the parameter does not) |
 | `EYG_CODEMODE_PI` | absolute path to the `pi` CLI, for the session `eyg_subagent` starts; default `pi` on PATH |
 | `EYG_SUBAGENT_POLICY` | the policy a spawner chose for a child session, read only when the depth marker says this package started the process |
@@ -49,12 +49,15 @@ The orders - which policy a call gets, and which roots it reads - are stated onc
 call adds what the collapsed row shows too: the path it was denied, the policy that denied it,
 and the `/eyg-grant` that would have allowed it.
 
-A policy module may read the environment; the program under it may not. The module's own
-`perform Env("EYG_ALLOWED_ROOTS")` runs at the top of the file, outside the checks the
-program is under (`policies/agent-roots.eyg:144`), and that is why a token belongs in a
-policy module rather than in a program (`policies/agent-roots.eyg` is written out in full).
+The policy is imported before the guard is installed, and an effect raised at a module's top
+level is never performed, guard or no guard (`unhandled effect`, `docs/world/entities/host.guard-boundary.md`),
+so a policy cannot ask the host for its own configuration. The tool hands it over instead: the
+entry writes `ctx = {roots, cwd, fields}` as a literal, which `contextLiteral` in
+`lib/render-helpers.mjs` builds. What a *program* gets when it asks for the environment is the
+answer the policy chooses - `env: (_) -> { Mock(None({})) }` under `policies/agent-roots.eyg` -
+which is why a token belongs in a policy the operator wrote and never in a program.
 
-## What a policy handler answers with
+## What a policy rule answers with
 
 `policies/agent-roots.eyg` is the default (files under the roots, nothing else).
 `policies/deny-all.eyg` is the narrowest record there is: it refuses every effect except
@@ -68,56 +71,61 @@ the package owns its whole decision (`notes/pi-codemode-policy-inlining.md`, and
 for the trap inlining prevents). `guides/how-to-write-a-policy.md` is the how-to over
 changing one of them.
 
-A handler is a function the host calls with the value the program asked for. It answers one of
-three things:
+A rule is a function the guard calls with the value the program asked for. It answers one of two
+things, and a third shape is what a rule is built out of:
 
-- **`Pass(value)`** - perform, with what you hand back. The value may be rewritten, which is
-  how a handler substitutes a jailed path, a normalised URL, or a header carrying a token the
-  module read from the environment. `exit` is the field where rewriting matters upward: `Pass`
-  may rewrite the status, and `Mock` cannot answer `Exit` at all, since `Exit` has no return value.
-- **`Mock(x)`** - do not perform; answer the program with `x` and let it carry on. A refusal is
-  `Mock(Error("<effect> denied by policy: <path>"))`, and `Mock` is not only a veto:
-  `env: (_) -> { Mock(None({})) }` answers "unset" instead of refusing, because `Env` returns an
-  `Option` and refusing it would tell the program about the caller's environment. `Mock` must
-  hand back a value of the effect's own type - `deny-all.eyg` refuses `cwd` with
-  `Mock(Error({}))` because `CWD` returns a `Result`.
+- **`Pass(value)`** - the guard performs the effect for real, with what you hand back. The value
+  may be rewritten, which is how a rule substitutes a jailed path or a normalised URL. `exit` is
+  the field where rewriting matters upward: `Pass` may rewrite the status, and a refusal of `Exit`
+  cannot be answered at all, since `Exit` has no reply.
+- **`Mock(reason)`** - the guard performs nothing and answers the program itself; `reason` is the
+  text the program reads, and it is what makes a denial readable. The guard, not the rule, chooses
+  the *shape* that answer takes, because the shape is the effect's own reply type: `Error(reason)`
+  for the effects whose reply carries text, `None({})` for `Env` (an unset variable is the honest
+  answer for a token, and it tells the program nothing about the caller's environment), `Error({})`
+  for `CWD`, the unit value for `Sleep`, `StandardOut` and `StandardError`, and an abort naming the
+  reason for `Now`, `Random`, `Flip` and `Exit`, whose replies carry no place for a refusal. The
+  table is written out at the top of `host/guard.eyg`.
 - **a wrapper** - a function that takes a rule and returns one, for example
   `hide_secrets(under("read_file", roots, request_path))`, which refuses `.env.eyg` before the
-  roots are consulted. Handlers compose by application, and the composed handler is still one field.
+  roots are consulted. Rules compose by application, and the composed rule is still one field.
 
-The path a handler inspects differs by effect: `read_directory`, `delete_file` and `make_directory`
+The path a rule inspects differs by effect: `read_directory`, `delete_file` and `make_directory`
 carry a bare path string; `read_file`, `write_file` and `append_file` carry a record with a
-`path` field. Each effect has exactly one field in the record a policy builds - the 18 of them,
-as mapped in the language repository's `rule_mapping` and recorded for this package in
-`POLICY_FIELDS` (`lib/render-helpers.mjs`): `append_file`, `create_key`, `cwd`, `delete_file`,
-`env`, `exit`, `fetch`, `flip`, `make_directory`, `now`, `random`, `read_directory`, `read_file`,
-`sleep`, `standard_error`, `standard_in`, `standard_out`, `write_file`. `Search` is a 19th
-effect under the `read_file` field.
+`path` field. The guard resolves either to an absolute path with no `.` or `..` segment before a
+rule sees it, because the CLI hands over the path exactly as the program wrote it, and a rule that
+compares whole paths is bypassed by `./` otherwise. Each effect has exactly one field in the record
+a policy builds - the 19 of them, named in `POLICY_FIELDS` (`lib/render-helpers.mjs`):
+`append_file`, `create_key`, `cwd`, `delete_file`, `env`, `exit`, `fetch`, `flip`,
+`make_directory`, `now`, `random`, `read_directory`, `read_file`, `search`, `sleep`,
+`standard_error`, `standard_in`, `standard_out`, `write_file`. `Search` has a field of its own
+because the guard, not the CLI, is the host of that walk.
 
 Four effects have no policy field at all - `DecodeJSON`, `EYGParse`, `Hash`, `Sign` - so no
-policy, this package's or any other, can forbid them (`docs/world/traps.md`,
+policy, this package's or any other, can forbid them: the guard names a clause for each that
+re-performs it and decides nothing (`docs/world/traps.md`,
 `docs/world/entities/codemode.effect-surface.md`).
 
-Two vocabularies, and only one of them is this package's. The **host layer** is the record this
-tool loads: one field per effect, handlers answering `Pass`/`Mock`. The **language layer** is
+Two vocabularies, and only one of them is this package's. The **host layer** is the record a
+policy module returns from `rules(ctx)`: one field per effect, rules answering `Pass`/`Mock`. The
+**language layer** is
 documented on the website (<https://eyg.run/guides/effect-access-policies>):
 an `overlay.access` package applied *inside* a program - `access.apply(policy, (_) -> { perform ... })`
 - whose fields answer `Allow({})`, `Mock(value)` or `Deny(reason)`, with helpers such as
 `access.read_file.allow_under(["data"])`, `max_bytes`, `access.fetch.allow_get_hosts` and
 `access.write_file.mock_success`. The website marks that package as "currently unpublished",
-and it manages six effects; the CLI's policy decides the 18 fields above.
+and it manages six effects; the guard this package ships decides the 19 fields above.
 
-One seam this tree cannot check: the language syntax page documents `handle EffectName` in two
-lines - "used to install custom effect handlers in advanced embedding scenarios" - and those
-are the only two lines about it. The website expands it
-(<https://eyg.run/guides/advanced-effects>): `handle EffectName(handler_fn, fallback)`
-builds **stateful computations inside a program**, and every example handles an effect the
-program itself designed (`Increment`, `Update`, `State`, `Get`, `Increase`) - no example re-handles
-one of the CLI's computer effects, so whether such a handler can shadow the host's decision stays
-**UNVERIFIED from here**
-(`docs/world/traps.md`); nothing in this package relies on it, and a policy module is host-authored
-by construction, since the tool starts the runner with `--policy <module.eyg>` before the program
-runs.
+The one seam this page used to leave UNVERIFIED is now the mechanism. The language syntax page
+documents `handle EffectName` in two lines - "used to install custom effect handlers in advanced
+embedding scenarios" - and the website's examples handle only effects the program designed itself
+(`Increment`, `Update`, `State`). `host/guard.eyg` installs a clause over each of the CLI's own
+computer effects, and it holds: an effect raised inside the model's separately imported module
+reaches the guard's clause; a clause that re-performs sends the effect to the host exactly once;
+and a clause the model writes inside the guarded body can only decline, since its re-perform
+reaches the outer guard, which decides. A label the guard does not name has no host, so
+`perform Foo({})` answers `error: unhandled effect Foo({})`. The probes that proved each half are
+recorded in `docs/world/entities/host.guard-boundary.md`.
 
 ## Plan first, then act, with the same program
 
@@ -146,25 +154,40 @@ row per policy field, `<effect> | <field or none> | allowed | refused | not impl
 unknown`, plus a header naming the policy, where it came from and the roots. Probes are chosen so
 they fail at the host before they could change anything (a read and a delete name
 `<root>/.eyg-codemode-probe`, a write names `<root>` itself, a directory, `Fetch` points at the
-reserved TLD `.invalid`); `Env`, `Exit` and `StandardIn` report `unknown` because they would read
-the caller's environment, stop the probe, or swallow stdin. A row that checks a path answers for
-the probe value, not for every path.
+reserved TLD `.invalid`). A refusal of an effect whose reply is a `Result` is that reply's `Error`
+branch, and `run` prints no value, so such a probe binds the reply and aborts with it
+(`!never(perform Abort(why))`) and the reason reaches the runtime's own error output whatever the
+`standard_out` rule decides (`probeProgram` in `lib/render-helpers.mjs`). `Env`, `Exit` and
+`StandardIn` report `unknown` because they would read the caller's environment, stop the probe, or
+swallow stdin; `CWD`, `Sleep`, `StandardOut` and `StandardError` report `unknown` because a refusal
+of one is answered with the same value a pass is, so no probe of them could tell the two apart
+(`UNPROBED_EFFECTS`). A row that checks a path answers for the probe value, not for every path.
 
-Two search routes and one boundary. The `Search` effect lives in the CLI runtime and is checked
-by the existing `read_file` field, one decision for the whole walk. `libraries/search.eyg`, bound
+The same trap runs at the shell. `node bin/agent/refusal-probe.mjs --with-policy spawner-effects`
+with no `--fields` prints nothing but `exit=0`: the write was refused and the program's one way of
+saying so - `StandardOut` - is refused too. Ask the same question with a program that aborts with
+the reason and the answer appears: `node bin/agent/refusal-probe.mjs --with-policy spawner-effects
+--program test/fixtures/refusal-abort.eyg`.
+
+Two search routes and one boundary. The `Search` effect lives in the CLI runtime and the guard is
+its host: one clause, one decision for the whole walk, under the policy's own `search` field - so
+a spawner that names `read_file` does not hand a child the walk, and one that names `search` does
+not hand it a read. `libraries/search.eyg`, bound
 as `search_lib` by the `libraries` parameter, walks with `ReadDirectory` and is therefore checked
 one directory at a time. Both report **names** under an allowed root, including the name of a file
 a read of that path would be refused for, and contents never come through. So a secret is not
 readable through a search, but its existence and name are; hide names by rooting searches
-narrower, or by giving `Search` its own rule wrapped the way `hide_secrets` wraps `read_file` in
+narrower, or by wrapping the `search` rule the way `hide_secrets` wraps `read_file` in
 `policies/agent-roots.eyg`. Pattern semantics - one `*` per segment, a whole `**` segment spans
 depths, `limit` is a budget spent while walking, 32 directories deep - are in the `Search`
 section of <https://eyg.run/guides/cli-effects-reference>.
 
 **Adding an effect is a change to the language, not to this package**, and it is an escalation in
-the language repository's own rules. What this package does when the language lands one is follow
-the mapping: `Search` came in under the `read_file` field, so no new policy field exists here.
-`docs/world/entities/overlay.policy-rules.md` carries the claim over the whole mapping.
+the language repository's own rules. What this package does when the language lands one is fail:
+`test/host-coverage.test.mjs` compares the guard's handler list and `POLICY_FIELDS` against the
+effect rows of `guides/eyg-surface.tsv`, so a label nobody names is a red test rather than an
+unguarded effect. `docs/world/entities/overlay.policy-rules.md` carries the claim over the whole
+mapping.
 
 ## The language surface, answered rather than remembered
 
@@ -220,39 +243,40 @@ in a session that can read (`notes/pi_codemode_registry_probe.md` carries the tr
 
 ## A refusal, as it looked
 
-A read inside the roots and a write outside them, in one program:
+Both blocks are output from `node bin/agent/refusal-probe.mjs`, which writes the same entry, policy
+import and program module a tool call writes and runs the installed CLI on them. The paths are this
+machine's: read them as shapes, not as locations.
 
-*[capture · the language repository]*
-
-```
-eyg run: ran
-READ FIRST LINE: ![penelopea mascot for EYG](https://eyg.run/assets/pea.8C463682609CAA4A5A638D66BWRITE REFUSED: write_file denied by policy: /tmp/eyg-codemode-outside-root/probe.txt
-```
-
-Nothing exists at `/tmp/eyg-codemode-outside-root`. `eyg run: ran` is the status of the *program*,
-not evidence that the write happened, and the path and the first line belong to the machine that
-took the capture.
-
-The second boundary, same marking:
-
-*[capture · the language repository]*
+The shipped write probe - a relative `WriteFile`, from a working directory the roots do not cover:
 
 ```
-read_file denied by policy: <that checkout>/.search-proof/.env.eyg
-<that checkout>/.search-proof/.env.eyg
+write_file denied by policy: /tmp/eyg-refusal-probe-KsjDt9/eyg-probe-refused.txt
 ```
 
-The first line is a refused `ReadFile`, the second is `Search` naming the same path. The
-path is masked: the capture named a checkout outside this tree, and nothing tracked here
-quotes such a path.
+Nothing exists at that path, and the scratch directory the probe ran in is removed on the way out.
+`exit=0` is the status of the *probe*, and the program ran to completion past the refusal.
+
+`test/fixtures/secret-probe.eyg` - a `ReadFile` of a `.env.eyg` path inside the root, run with
+`--inside-roots`. The path is masked, because the rule answers before the host is asked and no such
+file is in this tree:
+
+```
+read_file denied by policy: <this tree>/.env.eyg
+```
+
+In a tool session the same refusal arrives with two rows more: the path it was denied and the
+`/eyg-grant` that would have allowed it (`refusalRows` and `grantRows` in
+`lib/render-helpers.mjs`). One exception is worth knowing before you read a session transcript:
+those rows appear when the refusal names a path, and a policy that refuses without one -
+`policies/deny-all.eyg` answers `read_file denied by policy` and nothing else - leaves the tool
+nothing to put in them.
 
 ## Captures, and how they are marked
 
-A block under the italic tag `*[capture · the language repository]*` was taken there and never
-re-run here, so the paths in it mean nothing on your machine, and a path naming a checkout
-outside this tree is masked. The tag carries no date: `docs/world/entities/overlay.policy-rules.md`
-carries each capture's date, and the dates of the reads of the language pages quoted here.
-Untagged blocks are instructions, or captures taken in this workspace.
+Every block on this page was printed in this workspace by a command the page names, on the CLI the
+operator installed; absolute paths in them belong to this machine and are masked where they would
+name it. `docs/world/entities/overlay.policy-rules.md` carries the dates of the reads of the
+language pages quoted here, and the one capture in this tree that was taken in another checkout.
 
 ## Not this
 

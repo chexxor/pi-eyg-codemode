@@ -1,19 +1,19 @@
 # pi-eyg-codemode
 
-**Status: a first draft.** The package is written and unit-tested, and no officially installed
-EYG build carries the flag that carries a policy into a run, so a fresh install refuses every
-call until the language ships one (`docs/world/entities/cli.runner-official-install-only.md`).
-It has not been proved in use: no long-running session, and no comparison against the built-in
-JavaScript codemode measured. Treat the design as settled and the use as unproven
-(`docs/world/entities/pi.first-draft.md`).
+**Status: a first draft.** The package is written and unit-tested, and the checks it promises
+run on the installed EYG CLI - the guard is this package's own program, so nothing waits on a
+build of the language. It has not been proved in use: no long-running session, and no
+comparison against the built-in JavaScript codemode measured
+(`docs/world/entities/pi.first-draft.md`). Treat the design as settled and the use as unproven.
 
 **EYG** is a small scripting language: everything is an expression, there are no statements,
 and the only route a program has to the outside world is a named effect -
 `perform ReadFile({path: "/abs/file", offset: 0, limit: 60})`. It has no effect that runs a
 shell command. **This package makes an EYG program a pi agent's coding tool**: the built-in
 JavaScript codemode is disabled, one tool `eyg` replaces `read`, `edit`, `write`, `bash`,
-`grep` and `ls`, and the tool starts a runner begun with `--policy <module.eyg>`, so the host -
-not the program - decides every effect, per call, before the host performs it. A refused
+`grep` and `ls`, and every program runs inside a guard this package ships
+(`host/guard.eyg`), so the host - not the program - decides every effect, per call, before the
+host performs it. A refused
 effect is a value (`Error("write_file denied by policy: /abs/path")`), so the model reads the
 permission it was refused and acts on it; nothing happened on disk.
 
@@ -37,9 +37,9 @@ Three readers, and each needs one thing from this tree:
 
 | word | what it means here |
 | --- | --- |
-| runner | the EYG CLI this package starts; the checks live in it, so a build that does not know `--policy` cannot run a program with checks in it |
-| policy | a record of effect-handlers, one per effect the CLI decides: `Pass` is the handler an effect keeps when the policy leaves it at its default. The runner loads it before the program runs. This package ships `policies/agent-roots.eyg`, `policies/deny-all.eyg`, and `policies/spawner-effects.eyg` for a child session whose spawner named an effect allowlist |
-| roots | the directories a session may reach; the shipped policy reads them from `EYG_ALLOWED_ROOTS` |
+| runner | the EYG CLI this package starts a call in, asked for nothing but `<mode> <file>`; the checks live in the guard this package writes around the program, not in the runner |
+| policy | a record of effect-handlers, one per effect the guard names: `Pass` is the handler an effect keeps when the policy leaves it at its default. The guard applies it around the program. This package ships `policies/agent-roots.eyg`, `policies/deny-all.eyg`, and `policies/spawner-effects.eyg` for a child session whose spawner named an effect allowlist |
+| roots | the directories a session may reach; the tool writes them into the entry it builds for the call, and `eyg.roots` in the project settings, `EYG_ALLOWED_ROOTS` and a grant are how they get chosen |
 | the checks | a policy's decision for one effect, made before the host performs it |
 | checked, unchecked | an effect a policy decides, and an effect no policy can forbid |
 | registry scope | a directory of function-sets the tool reads: the workspace, the home, this package's `libraries/` |
@@ -77,13 +77,12 @@ it reads as `..` (`docs/world/traps.md`). The same command installed *inside* a 
 repository also declares the vendored `pi-simple-world-model/` package, which is what checks
 the claims in `docs/world/`.
 
-**The EYG CLI is not in this package** - nothing here builds it, and the check lives in it:
-the tool starts a runner begun with `--policy <module.eyg>`, and only that runner can answer
-for an effect. Install one from
+**The EYG CLI is not in this package** - nothing here builds it. Install one from
 <https://eyg.run/guides/install-a-prebuilt-binary> or
-<https://eyg.run/guides/install-from-source> (Gleam >= 1.7 and Bun). Neither page names
-`--policy`: it is this package's requirement of the binary it starts, and the sentence above
-and `guides/how-to-point-the-tool-at-your-runner.md` are where this package answers it.
+<https://eyg.run/guides/install-from-source> (Gleam >= 1.7 and Bun). Neither page says anything
+about this package's requirement of the binary, because the requirement is the ordinary one -
+`eyg run <file>` - and this package answers it here and in
+`guides/how-to-point-the-tool-at-your-runner.md`.
 
 Then the tool has to find what you installed. It starts one binary, from exactly two places,
 in this order (`runnerCandidates` in `lib/render-helpers.mjs`):
@@ -92,23 +91,14 @@ in this order (`runnerCandidates` in `lib/render-helpers.mjs`):
    considered, so installing the compiler somewhere off `PATH` is fine as long as you name it here.
 2. **`eyg` on `PATH`** - whatever `command -v eyg` finds.
 
-The binary has to know the command the tool builds, which always carries `--policy`. Check that
-it does, rather than merely that a binary exists:
-
-    <the eyg you installed> --help 2>&1 | grep -c -- --policy   # 0 => every call will be refused
-
-**Neither install route is enough today.** The published release predates the flag
-(`docs/world/entities/gap.runner-release-lacks-policy.md` carries the command that re-checks it),
-and the language repository's published default branch has no build that knows it either
-(`docs/world/entities/gap.policy-runner-not-on-main.md`). Installing this package and getting a
-refusal for every call is the honest outcome, not a bug to chase: the tool reaches `eyg` on
-`PATH` or a binary you name, and no other binary
-(`docs/world/entities/cli.runner-official-install-only.md`); the one line a refused call ends
-with names the remedy.
+Ask the binary nothing about what it can do: a missing binary, or one whose `run` command does
+not take a file, ends the call with one line that names the install and quotes the command that
+was run. What the installed release actually answers is a claim with its own command
+(`docs/world/entities/cli.prebuilt-binary.md`).
 
 What stays unproven is the package in use, not the checks: no long-running session
 (`docs/world/entities/pi.first-draft.md`), and the drift guard against
-`test/fixtures/rule_mapping.gleam` is a record of the language's security suite rather than a
+`test/fixtures/rule_mapping.gleam` is a record of the language's effect surface rather than a
 run of it.
 
 ## What it changes, and what it does not
@@ -146,8 +136,9 @@ Each path this package ships, and what it is for:
 
 | path | what it is |
 | --- | --- |
-| `extensions/eyg-codemode.ts` | the one pi extension: registers `eyg`, the `eyg_subagent` spawner and the operator's `/eyg-grant`, resolves policy/roots/runner from inside the package, starts the runner that checks every effect through argv, renders the rows, reads the registry scopes |
-| `policies/agent-roots.eyg` | the default policy: files under `EYG_ALLOWED_ROOTS`, nothing else, `.env.eyg` never readable |
+| `extensions/eyg-codemode.ts` | the one pi extension: registers `eyg`, the `eyg_subagent` spawner and the operator's `/eyg-grant`, resolves policy/roots/runner from inside the package, writes the entry that puts the guard around the program, renders the rows, reads the registry scopes |
+| `host/guard.eyg` | the host every call runs in: one handler per effect the surface file lists, the policy applied to each, and a label it does not name left with no host |
+| `policies/agent-roots.eyg` | the default policy: files under the call's roots, nothing else, `.env.eyg` never readable |
 | `policies/deny-all.eyg` | the narrowest policy: a session that may only compute |
 | `policies/spawner-effects.eyg` | `agent-roots` with an allowlist over each of its fields, for a child session: `EYG_SUBAGENT_EFFECTS` names the fields it may perform, unset refuses every gateable one |
 | `libraries/search.eyg` | the search helper bound as `search_lib` by the `libraries` parameter; carries the `metadata` record the registry reads |

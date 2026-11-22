@@ -1,0 +1,5 @@
+// A label the guard does not name. The guard names one clause per effect row of
+// `guides/eyg-surface.tsv`; a label outside that closed row reaches a host that has
+// no such label, so the run stops with `unhandled effect Foo({})` and nothing runs.
+// Run: node bin/agent/refusal-probe.mjs --program test/fixtures/unnamed-effect.eyg
+perform Foo({})

@@ -1,0 +1,11 @@
+// The same write the write probe asks for, reported where a refusal to print cannot
+// hide it: the program aborts with the policy's reason, so the reason reaches the
+// runtime's own error output whatever the `standard_out` rule decides. This is what
+// makes "the allowlist names nothing" a greppable row: with `ctx.fields` empty the
+// program above cannot print, because its `StandardOut` is refused too.
+// Run: node bin/agent/refusal-probe.mjs --with-policy spawner-effects --program test/fixtures/refusal-abort.eyg
+let refusal = perform WriteFile({path: "eyg-probe-refused.txt", contents: !string_to_binary("x")})
+match refusal {
+  Error(why) -> { !never(perform Abort(why)) }
+  Ok(_) -> { perform StandardOut("performed and wrote a file") }
+}

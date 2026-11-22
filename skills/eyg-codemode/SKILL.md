@@ -1,11 +1,13 @@
 ---
 name: eyg-codemode
-description: "Use when a session's side effects must go through EYG instead of bash or the built-in JavaScript codemode: the `eyg` tool is registered and a host policy module decides every effect. Trigger on the `eyg` tool, a policy module, EYG_ALLOWED_ROOTS, EYG_POLICY, `--policy`, or any attempt to reach a file, the network or a process. Not for editing this package's own source."
+description: "Use when a session's side effects must go through EYG instead of bash or the built-in JavaScript codemode: the `eyg` tool is registered and a host policy module decides every effect. Trigger on the `eyg` tool, a policy module, EYG_ALLOWED_ROOTS, EYG_POLICY, the guard, or any attempt to reach a file, the network or a process. Not for editing this package's own source."
 ---
 
 # EYG codemode: effects are the only channel to the outside world
 
-An EYG program reaches the outside world only through effects; a host policy decides each.
+An EYG program reaches the outside world only through effects, and the guard this package ships
+(`host/guard.eyg`) puts a policy's rule in front of every one. For the effects whose reply carries
+text a refusal is that reply's `Error` branch, so the program reads it and carries on.
 Capability question first: `guides/eyg-surface.tsv` answers "can I perform this here" without
 deriving it - one row per effect with the policy field that decides it, and `action: "effects"`
 answers what the policy in force decides for each. Then the one-line smoke test `perform StandardOut("ok")`
@@ -47,9 +49,9 @@ on its value, as the last two lines above do.
 - `match` arms: the first arm takes no leading `|`, an arm after it takes none either, and the only arm
   that carries a `|` is the **catch-all**, written `| (name) -> { ... }`. `_ -> { ... }` is not a
   pattern, and a constructor arm written `| Error(_) -> { ... }` fails with `unexpected ->` at the
-  arrow, which reads like a broken arm rather than a stray pipe. `eyg check <file>` type-checks a
-  module without running it and needs no policy, so it answers even on a CLI that cannot run a
-  program under a policy (`docs/world/entities/cli.prebuilt-binary.md`).
+  arrow, which reads like a broken arm rather than a stray pipe. A program must end with an
+  expression: a trailing `let` is a parse error in the file this tool writes, and the error names
+  that file rather than your program.
 
 - `action` selects what the call does: `run` (default, effects allowed by the policy), `eval` (pure,
   prints the value), `effects` (what the policy in force decides, one probe per effect - pass
@@ -67,8 +69,8 @@ on its value, as the last two lines above do.
   program performs `StandardOut`, so a refusal left as the trailing value is invisible. A performed effect
   that is not the last expression must be bound (`let _ = perform ...`) or the program does not parse.
 - with no `policy` argument the tool uses the policy it ships over the session working directory, and a
-  call is never unchecked. Paths must be absolute - the runner resolves a relative path before the policy
-  sees it - and a path outside the roots is refused, not truncated.
+  call is never unchecked. Prefer absolute paths: the guard resolves a relative one against the call's
+  working directory before the rule sees it, and a path outside the roots is refused, not truncated.
 - under the agent policy `Env` is refused and answers `None({})`: a token belongs in the policy module,
   which may read the environment, never in the program.
 - every result says how long the run took (`ran in 1.24 s wall`, `timed out after 2 s in 2.01 s wall`);
@@ -79,7 +81,11 @@ on its value, as the last two lines above do.
 A line such as `write_file denied by policy: /abs/path` is a fact about the permission, not a crash: this
 session has no other channel and a program cannot change the policy from inside, so report the refusal or
 change what the program asks for. A refused effect left nothing on disk, so after a program continues past
-one check the evidence with a later `ReadFile` or `ReadDirectory`.
+one check the evidence with a later `ReadFile` or `ReadDirectory`. Four effects answer a refusal another
+way, because their replies have nowhere to put one - `perform Now()`, `Random()`, `Flip()` and
+`Exit(code)` end the run with `Aborted with reason: <the policy's reason>` instead of resuming it. And a
+program whose `standard_out` rule refuses cannot report anything: under `policies/spawner-effects.eyg`
+with an allowlist that omits `standard_out`, a refusal of a write prints no reason at all.
 
 ## Re-usable functions
 
@@ -109,9 +115,9 @@ package refuses to keep rather than writing a module that would not work.
 ## Finding files
 
 `perform Search({path: "/abs/root", pattern: "**/*.eyg", limit: 20})` is one host action that answers absolute
-paths, or `Error("read_file denied by policy: /abs/root")` when the roots do not cover it - the policy decides
-the whole walk under its `read_file` rule (`Search` shares that field, which `guides/eyg-surface.tsv` records);
-matching and `limit` semantics are in the `Search` section of
+paths, or `Error("search denied by policy: /abs/root")` when the policy's `search` rule refuses the walk -
+it has a field of its own, which `guides/eyg-surface.tsv` records, so a session that may read files need
+not be allowed to search them. Matching and `limit` semantics are in the `Search` section of
 <https://eyg.run/guides/cli-effects-reference>.
 
 A search reports **names**, including the name of a path a read of would be refused for, so a listed path is

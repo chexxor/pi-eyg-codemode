@@ -34,7 +34,9 @@ another workspace at run time.**
 ## The layout, and what each directory is for
 
 `extensions/` the one pi extension (registers the `eyg` tool, resolves policy/roots/runner,
-spawns the binary that decides every effect through argv) · `lib/` the plain-JavaScript shapes shared by the
+writes the entry a call runs and spawns the installed binary on it through argv) ·
+`host/` the guard every call runs inside: one `handle` clause per effect row of
+`guides/eyg-surface.tsv`, the policy applied inside each · `lib/` the plain-JavaScript shapes shared by the
 tool and its tests · `libraries/` the EYG modules bound by the tool's `libraries`
 parameter · `policies/` the policies this package ships, each written out in full and importing
 nothing · `skills/` the pi skill a model reads before writing EYG · `test/` the unit test and the
@@ -49,7 +51,8 @@ the generated text of a kept binding, run through the CLI ·
 ## What the checks are, in facts
 
 A program reaches the host only through effects, and this package has no effect that runs
-shell commands; a policy module decides each effect before the host performs it.
+shell commands; the guard this package ships puts a policy rule in front of each effect before the
+host performs it.
 
 - A call is three files and one argv: the tool writes `program.eyg` (the model's source
   inside one `run` function) and `entry.eyg` (which imports the guard, the policy and the
@@ -110,13 +113,15 @@ shell commands; a policy module decides each effect before the host performs it.
 
 | Do this | cost | measured |
 | --- | --- | --- |
-| `bin/agent/audit.sh` (a human or a cron runs it; fourteen rows, each cost printed) | see its own last line | 2026-11-22 |
+| `bin/agent/audit.sh` (a human or a cron runs it; sixteen rows, each cost printed) | see its own last line | 2026-11-22 |
 | `node bin/agent/doc-checks.mjs --all` (the five prose checks: one term, citations, headings, mirrors, dated prose) | 0.07 s wall | 2026-11-22 |
 | `node bin/agent/gen-surface.mjs --check` (the surface file against its four inputs) | 0.04 s wall | 2026-11-22 |
-| `node --test 'test/*.mjs'` (or the single file; one named test per group) | 0.10 s wall, 39 tests, 0 fail | 2026-11-22 |
+| `node --test 'test/*.mjs'` (or the single file; one named test per group) | 0.10 s wall, 43 tests, 0 fail | 2026-11-22 |
+| `node bin/agent/refusal-probe.mjs` (one guarded call from a shell: the entry, the policy import and the program module the tool writes, run as `eyg run <entry>`; `--with-policy`, `--fields`, `--program`, `--inside-roots`) | 0.19 s wall | 2026-11-22 |
+| `node --test test/host-coverage.test.mjs` (the guard names every effect row of the surface file) | 0.09 s wall | 2026-11-22 |
 | `node bin/agent/check-variable-shapes.mjs` (generates a kept binding's text and runs it through the CLI on PATH, with no policy module loaded) | 0.40 s wall, eleven rows | 2026-11-22 |
 | `pi --print --mode json --tools eyg <prompt>` (one fresh session, one tool call) | 20-40 s wall; needs `--model`, the default model hangs | 2026-11-20 |
-| `for f in policies/*.eyg libraries/*.eyg; do eyg check "$f"; done` (the audit's `shipped EYG modules check` row) | 0.48 s wall | 2026-11-22 |
+| `for f in policies/*.eyg libraries/*.eyg host/*.eyg; do eyg check "$f"; done` (the audit's `shipped EYG modules check` row) | 0.65 s wall | 2026-11-22 |
 | `node pi-simple-world-model/bin/world_lint.mjs` | 0.06 s wall | 2026-11-18 |
 | `node pi-simple-world-model/bin/world_map.mjs --check` | 0.04 s wall | 2026-11-18 |
 | `node pi-simple-world-model/bin/world_verify.mjs --all` | 1.13 s wall, prints how many claims it checked | 2026-11-19 |
@@ -208,7 +213,7 @@ never put a workspace fact in a guide - a fact in two places drifts.
   language repository's; nothing here carries a queue. Trigger to port one: a task from the
   operator that spans several steps of its own.
 - **No CI.** There is no `.github/workflows` and no `entry.eyg` here. `bin/agent/audit.sh` is the
-  one command that runs the fourteen rows in the table above and prints what each cost (added
+  one command that runs the sixteen rows in the table above and prints what each cost (added
   2026-11-20, 5.70 s, 6/6); nothing in this tree runs it, so a failing check is still
   something a person notices. Trigger for CI: the first commit that lands with a failing
   check nobody saw.

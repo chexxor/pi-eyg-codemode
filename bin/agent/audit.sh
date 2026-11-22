@@ -81,13 +81,30 @@ sweep() {
 }
 
 # Every EYG module this package ships has to parse and type-check: a policy that does not
-# compile decides nothing, and a library that does not compile is a function nobody can call.
-# The CLI on `PATH` type-checks a module without running one, so this row needs no entry file.
+# compile decides nothing, a library that does not compile is a function nobody can call, and
+# a guard that does not compile runs no call at all. The CLI on `PATH` type-checks a module
+# without running one, so this row needs no entry file.
 eyg_modules() {
   local f
-  for f in policies/*.eyg libraries/*.eyg; do
+  for f in policies/*.eyg libraries/*.eyg host/*.eyg; do
     eyg check "$f" > /dev/null || return 1
   done
+  return 0
+}
+
+# The policy's answer, asked of the installed CLI exactly the way a session asks it: the entry,
+# the policy import and the program module this package writes, run as `eyg run <entry>`.
+# `bin/agent/refusal-probe.mjs` always exits 0, so the grep is the check: the row fails when a
+# policy stopped refusing, and also when the guard stopped naming the label.
+refusal_probe() {
+  node bin/agent/refusal-probe.mjs | grep -q 'write_file denied by policy: /tmp/' || return 1
+  node bin/agent/refusal-probe.mjs --with-policy deny-all | grep -q 'write_file denied by policy' || return 1
+  node bin/agent/refusal-probe.mjs --program test/fixtures/secret-probe.eyg --inside-roots |
+    grep -q 'read_file denied by policy: .*\.env\.eyg' || return 1
+  node bin/agent/refusal-probe.mjs --program test/fixtures/unnamed-effect.eyg |
+    grep -q 'unhandled effect Foo' || return 1
+  node bin/agent/refusal-probe.mjs --with-policy spawner-effects --program test/fixtures/refusal-abort.eyg |
+    grep -q 'write_file denied by policy: EYG_SUBAGENT_EFFECTS=' || return 1
   return 0
 }
 
@@ -95,6 +112,8 @@ echo "audit in $pkg"
 run_check "surface file current" node bin/agent/gen-surface.mjs --check
 run_check "unit test and drift guard" node --test 'test/*.mjs'
 run_check "shipped EYG modules check" eyg_modules
+run_check "guard covers every effect row" node --test test/host-coverage.test.mjs
+run_check "refusals the shipped policies owe" refusal_probe
 run_check "kept binding shapes" node bin/agent/check-variable-shapes.mjs
 run_check "world lint" node pi-simple-world-model/bin/world_lint.mjs
 run_check "world verify $verify_args" node pi-simple-world-model/bin/world_verify.mjs $verify_args

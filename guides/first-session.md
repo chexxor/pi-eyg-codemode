@@ -2,20 +2,20 @@
 
 You installed this package and want proof it does what it claims, in the smallest
 steps. Five of them, each with what you should see. If you only want the answer to
-"why is every call refused", go to step 2 and the last section.
+"why did my call never run", go to step 2 and the last section.
 
 The steps are:
 
 1. [Install the CLI](#install-the-cli)
-2. [Check that the CLI knows the command](#check-that-the-cli-knows-the-command)
+2. [Check that the tool can start it](#check-that-the-tool-can-start-it)
 3. [Ask what the policy allows](#ask-what-the-policy-allows)
 4. [Read a file, and print what you got](#read-a-file-and-print-what-you-got)
 5. [Write outside the roots, and read the refusal](#write-outside-the-roots-and-read-the-refusal)
 
 ## Install the CLI
 
-This package does not carry a CLI; the check that decides every effect lives in one. Get
-one from the EYG website: <https://eyg.run/guides/install-a-prebuilt-binary> or
+This package does not carry a CLI. Get one from the EYG website:
+<https://eyg.run/guides/install-a-prebuilt-binary> or
 <https://eyg.run/guides/install-from-source>. The website's own verify step is
 
 ```sh
@@ -25,44 +25,37 @@ eyg eval -c '!int_add(1, 1)'
 and it prints `2`. That proves the binary runs; it does not prove this package can use
 it, which is step 2.
 
-## Check that the CLI knows the command
+## Check that the tool can start it
 
-This package always asks the binary for a policy, so the check is whether the binary knows
-that command:
+The tool asks the binary for one thing: run the file it wrote. So the check is whether the
+binary is where the tool looks - `command -v eyg`, or the absolute path in
+`EYG_CODEMODE_RUNNER` - and whether one guarded program runs. The second half is one command,
+in this package, and it costs a fifth of a second:
 
 ```sh
-<the eyg you installed> --help 2>&1 | grep -c -- --policy
+node bin/agent/refusal-probe.mjs
 ```
 
-`0` means every call will be refused: the binary has no flag to carry a policy, so the run
-would have no checks in it, and this package will not start one. The binary it starts is
-`eyg` on your `PATH` or, if you set it, `EYG_CODEMODE_RUNNER` holding an absolute path -
-two places and no third (`guides/how-to-point-the-tool-at-your-runner.md`).
-
-Neither official install route carries the flag today: not the published release
-(`docs/world/entities/gap.runner-release-lacks-policy.md` has the command that re-checks it)
-nor a build of the published default branch
-(`docs/world/entities/gap.policy-runner-not-on-main.md`), so expect the refusal in the last
-section rather than a run. Two ways forward:
-
-- ask the language repository which ref carries `run --policy`, build that ref from source (the
-  second install link), then `export EYG_CODEMODE_RUNNER=<absolute path to that binary>`;
-- or read this package as documentation, and treat a refusal for every call as the honest
-  state of the release rather than a bug to chase.
+It prints the `eyg run <file>` it started, the policy and roots it handed the checks, and the
+refusal: `write_file denied by policy: <a path under the temporary directory>`. A binary that
+is missing, or that reads the mode word as a file name, answers with one line naming the
+install instead - both are quoted in `guides/how-to-point-the-tool-at-your-runner.md`.
 
 ## Ask what the policy allows
 
 Call the tool with `action: "effects"` and no program. You get one row per effect, as
 `effect | policy field | decision`, plus a header naming the policy that answered, where
-it came from, and the roots in force. The decisions are `available`, `refused`,
-`unavailable` (the runtime does not implement it) and `unknown` with a reason: `Env`,
-`Exit` and `StandardIn` are reported `unknown` because probing them would read your
-environment, stop the probe, or swallow the runner's input.
+it came from, and the roots in force. The decisions are `allowed for the probe value`,
+`refused by the policy in force`, `not implemented by this runner` and `unknown` with a
+reason: `Env`, `Exit` and `StandardIn` are `unknown` because probing them would read your
+environment, stop the probe, or swallow the runner's input, and `CWD`, `Sleep`,
+`StandardOut` and `StandardError` because the guard answers a refusal of them with the same
+value a pass is, so no probe could tell them apart.
 
 Under the policy this package ships, `policies/agent-roots.eyg`, the answers you want are:
-file effects `available` inside the session directory, `refused` outside it, `fetch`
-refused everywhere, and `DecodeJSON`, `EYGParse`, `Hash`, `Sign` shown with `none` as their
-field because no policy can forbid them.
+file effects `allowed` inside the session directory, `refused` outside it, `fetch` and
+`create_key` refused everywhere, and `DecodeJSON`, `EYGParse`, `Hash`, `Sign` shown with
+`none` as their field because no policy can forbid them.
 
 ## Read a file, and print what you got
 
@@ -102,20 +95,20 @@ crash. Nothing exists at that path. Bind `written` and use it: a refusal is a va
 `let _ = perform WriteFile(...)` throws the refusal away, which makes a failed write look
 like a success.
 
-## If every call is refused
+## If a call never runs
 
-A binary with no `--policy` flag reads the mode word as a file name, so your program never
-runs and the row ends with one line:
+A binary that does not take a file after the mode word reads the mode word as a file name,
+so your program never runs and the row ends with one line:
 
 ```
-the eyg binary this tool started did not understand `run --policy <module.eyg>` and read `run` as a file name, so no policy ran and nothing was performed: the install predates the flag this package needs, so install a newer release of the EYG CLI or name a binary that accepts the flag with EYG_CODEMODE_RUNNER=<absolute path>.
+the binary at <the path you named> has no `run` command, so it read `run` as a file name and ran nothing: `<the path you named> run /tmp/pi-eyg-codemode/2617833-mwsg7yjh-1/entry.eyg` is the command this package runs for every call. Install the EYG CLI (see <https://eyg.run/guides>), or name a binary that takes a file after the mode word with EYG_CODEMODE_RUNNER=<absolute path>.
 ```
 
-That is what a fresh session answers with, and
-`docs/world/entities/cli.runner-official-install-only.md` keeps the run that showed it. A
-missing binary rather than an old one answers `no eyg binary found at <where the tool looked>`.
+That is what a fresh session answers with, and the run that produced it is recorded in
+`guides/how-to-point-the-tool-at-your-runner.md`. A missing binary rather than an
+unreadable one answers `no eyg binary found at <where the tool looked>`.
 
-Work down that message: set `EYG_CODEMODE_RUNNER` to a binary that carries the flag, and
+Work down that message: name a binary that takes a file with `EYG_CODEMODE_RUNNER`, and
 re-run step 2. If the policy is the wrong one rather than missing, set
 `EYG_POLICY` to an absolute module path or pass the `policy` argument; a relative path is
 refused. To see which policy, runner and roots answered, expand the row (`Ctrl+O`), whose

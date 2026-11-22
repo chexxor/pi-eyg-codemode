@@ -53,34 +53,35 @@ project that named `deny-all` and one root, with what it refused and what it cos
 
 ## Learn what one record covers
 
-The record names 18 fields, and 19 effects share them: a `Search` is decided under the
-`read_file` field, so one rule covers a whole walk - `guides/eyg-surface.tsv` carries that
-sharing as data. <https://eyg.run/guides/cli-effects-reference> lists each effect with its
-field and the type a rule must return. Four effects have no field at
-all, because they are deterministic over the values they were given: `DecodeJSON`,
-`EYGParse`, `Hash` and `Sign`. No policy refuses them, so a plan that depends on forbidding
-one is a plan that cannot be built with a policy.
+The record names one field per effect the guard names: 19 fields for the 19 effects a policy
+can forbid, and `Search` has its own `search` field, so naming `read_file` lets a session read
+files without letting it walk a tree - `guides/eyg-surface.tsv` carries that table as data.
+<https://eyg.run/guides/cli-effects-reference> lists each effect with its value. Four effects
+have no field at all, because they are deterministic over the values they were given:
+`DecodeJSON`, `EYGParse`, `Hash` and `Sign`. No policy refuses them, so a plan that depends on
+forbidding one is a plan that cannot be built with a policy.
 
 A rule is a function of the effect's value. Three shapes cover the whole record:
 
 ```eyg
 let pass_through = (value) -> { Pass(value) }
-let refuse = (reason) -> { (_) -> { Mock(Error(reason)) } }
+let refuse = (reason) -> { (_) -> { Mock(reason) } }
 { now: pass_through, fetch: refuse("fetch denied by policy") }
 ```
 
 `Pass(value)` performs the effect with that value, and `Pass` of a different value rewrites
-a request the program never asked for. `Mock(x)` answers `x` without touching the host, so
-`x` is in the shape the effect returns; that is why the shipped `deny-all.eyg` writes
-`Mock(Error({}))` for `cwd` and `Mock(None({}))` for `env` while it refuses the other
-effects with a message. A rule may read the value before it decides, which is what a path
-check and a host check are.
+a request the program never asked for. `Mock(reason)` performs nothing and answers the program
+with `reason` - one string, the text the program reads. The guard puts it into the shape the
+effect returns, which is why one word covers all of them: a file effect gets an `Error` whose
+text names the field and the path, `env` gets `None({})`, an output effect gets the unit, and
+`Now`, `Random`, `Flip` and `Exit` end the program with the reason. A rule may read the value
+before it decides, which is what a path check and a host check are.
 
 ## Copy the shipped policy closest to what you need
 
 | policy | what it allows |
 | --- | --- |
-| `policies/agent-roots.eyg` | file effects under the roots named in `EYG_ALLOWED_ROOTS`; `CWD`, `Now`, `Random`, `Sleep`, `Flip`, `StandardOut`, `StandardError`, `Exit` performed; `Fetch`, `StandardIn`, `CreateKey` refused; `Env` answered as unset; a path ending `.env.eyg` never readable, even under a root |
+| `policies/agent-roots.eyg` | file effects under the roots the call was given; `CWD`, `Now`, `Random`, `Sleep`, `Flip`, `StandardOut`, `StandardError`, `Exit` performed; `Fetch`, `StandardIn`, `CreateKey` refused; `Env` answered as unset; a path ending `.env.eyg` never readable, even under a root |
 | `policies/deny-all.eyg` | values and output only; every file, network and environment effect refused |
 | `policies/spawner-effects.eyg` | the agent-roots rules, but only for the fields named in `EYG_SUBAGENT_EFFECTS`; unset names nothing and refuses every gateable effect. `eyg_subagent` installs it for a child session whose spawner named `effects`, and an allowlist there cannot add reach (`docs/world/entities/pi.spawner-policy.md`) |
 
@@ -90,8 +91,8 @@ readable in full where it is used; `notes/pi-codemode-policy-inlining.md` record
 policies are written out rather than imported.
 
 Copying is what the record forces rather than a style chosen here: a policy module cannot extend
-the record the runner loaded, so changing one handler of a policy you did not write means owning
-a copy of it. The one-line shape - `{ WebSearch: my_search } \ existing_policy`, register this
+the record the guard was built with, so changing one handler of a policy you did not write means
+owning a copy of it. The one-line shape - `{ WebSearch: my_search } \ existing_policy`, register this
 handler and keep the rest of that policy - is an ask against the language, not a feature of this
 package: `notes/pi-eyg-codemode-policy-record-extension.md` carries what was rejected and why,
 and `docs/world/entities/gap.policy-record-extension.md` carries the trigger that closes it.
@@ -119,10 +120,10 @@ at the top of the module, outside the checks your program is under, while the pr
 `Env` answers whatever the `env` rule says.
 
 Move the roots instead of the rules when the session is simply in the wrong place.
-`EYG_ALLOWED_ROOTS` is a comma separated list of absolute paths with no spaces; unset or
-empty names no roots, which refuses every file effect. When you name nothing the tool
-passes the session working directory, so a policy whose roots are wrong reads as a wall of
-refusals rather than as a broken module.
+`eyg.roots` in `.pi/settings.json` is a list of absolute paths; `EYG_ALLOWED_ROOTS` is the same
+list comma separated with no spaces, for a session started from a shell. When you name nothing
+the tool passes the session working directory, so a policy whose roots are wrong reads as a wall
+of refusals rather than as a broken module.
 
 ## Check the module and point the tool at it
 
@@ -133,7 +134,7 @@ eyg check <absolute path to your module>
 ```
 
 An exit code of 0 means the module parses and type-checks. The
-check reads the module as an expression, so it does not ask for all 18 fields - a record of
+check reads the module as an expression, so it does not ask for all 19 fields - a record of
 one field passes - and it runs nothing. `docs/world/entities/cli.prebuilt-binary.md` carries
 what the CLI installed here can and cannot do with a module, and the cost of checking the
 shipped ones.
@@ -161,6 +162,16 @@ says which slot named it - `argument`, `session grant`, `spawner`, `project sett
 wrote means the module the tool read is not the module you edited, and that line names
 which one it read.
 
+At the shell, one command runs a whole guarded program under the policy you name and prints
+the argv it used, in a fifth of a second and with nothing written in this tree:
+
+```sh
+node bin/agent/refusal-probe.mjs --with-policy <name> --fields <field,field> --program test/fixtures/refusal-probe.eyg
+```
+
+`--inside-roots` moves the program's working directory inside the roots, which is what makes
+`test/fixtures/secret-probe.eyg` a test of the `.env.eyg` rule rather than of the roots.
+
 ## Not this
 
 - This page does not build a CLI. `guides/how-to-point-the-tool-at-your-runner.md` points the
@@ -168,11 +179,6 @@ which one it read.
   builds one.
 - The language keeps a wider policy library than the policies this package ships, and it is not
   installed with this package, so the policy you need is a module you write here.
-- What a policy allows at run time is checkable, not something to take on faith: run one call
-  through a binary that accepts `--policy` and read what comes back. No officially installed
-  build accepts it yet (`docs/world/entities/gap.runner-release-lacks-policy.md`,
-  `docs/world/entities/cli.runner-official-install-only.md`), so on a machine that
-  installed only the release no call runs at all. Until a binary that accepts the flag is
-  installed here, whether a shipped policy would decide a particular path the same way at run
-  time is UNVERIFIED here; `docs/world/entities/pi.first-draft.md` carries the one run under a
-  shipped policy that this tree recorded, and what it still lacks.
+- What a policy allows at run time is checkable, not something to take on faith: the probe
+  above runs a program under the same guard a session runs under, and
+  `docs/world/entities/overlay.policy-rules.md` carries what a rule can and cannot do.
