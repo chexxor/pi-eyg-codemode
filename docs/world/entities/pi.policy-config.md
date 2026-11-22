@@ -3,8 +3,8 @@ id: pi.policy-config
 type: entity
 owner: delegate
 status: current
-verified_at: 2026-11-21
-verify: "grep -c 'the default preset' README.md && grep -c 'Which preset a call gets' guides/how-to-write-another-preset.md && grep -c 'eyg.policy' guides/how-to-write-another-preset.md && grep -q agent-roots .pi/settings.json && grep -q resolvePolicy extensions/eyg-codemode.ts && node pi-simple-world-model/bin/world_lint.mjs"
+verified_at: 2026-11-22
+verify: "grep -c 'the default preset' README.md && grep -c 'Which preset a call gets' guides/how-to-write-another-preset.md && grep -c 'eyg.policy' guides/how-to-write-another-preset.md && grep -q agent-roots .pi/settings.json && grep -q resolvePolicy extensions/eyg-codemode.ts && grep -q NARROWEST_POLICY_FILE lib/render-helpers.mjs && grep -q refusedArgument extensions/eyg-codemode.ts && node pi-simple-world-model/bin/world_lint.mjs"
 confidence: high
 sources: [README.md, guides/how-to-write-another-preset.md, guides/tool-reference.md, extensions/eyg-codemode.ts, lib/render-helpers.mjs, .pi/settings.json, notes/pi-codemode-project-settings-key.md, docs/world/entities/pi.session-grants.md]
 ---
@@ -18,8 +18,9 @@ you set nothing, and where to go to change it.
   behind a per-field allowlist and is installed for a child session rather than chosen by an operator
   (`docs/world/entities/pi.spawner-preset.md`). README.md names all three in its preset table.
 - The order a call's preset comes from is stated once, in
-  `guides/how-to-write-another-preset.md`: the `policy` argument of the call (a preset the
-  package ships, so it can only narrow), a grant the operator made in this session, the policy a
+  `guides/how-to-write-another-preset.md`: the `policy` argument of the call (a policy this
+  package ships, honoured only when it names the policy the other slots already chose or the
+  narrowest shipped one, so it can only narrow), a grant the operator made in this session, the policy a
   spawner named for a child session (`EYG_SUBAGENT_POLICY`, read only when `EYG_CODEMODE_DEPTH`
   says this package started the process), `eyg.policy` in `.pi/settings.json`, `EYG_POLICY`, the
   preset in the package, and if none exists the tool refuses to run anything rather than run
@@ -49,9 +50,13 @@ relative/too` without running anything.
 
 What is **not** configurable per call:
 
-- a call cannot widen itself: its `policy` argument may only name a preset the package ships,
-  and a wider module comes from the operator's grant (`docs/world/entities/pi.session-grants.md`),
-  the project key, or the environment.
+- a call cannot widen itself: its `policy` argument is honoured only when it names the policy
+  the other slots already chose, or the narrowest policy the package ships (`deny-all.eyg`,
+  `NARROWEST_POLICY_FILE` in `lib/render-helpers.mjs`); any other name is refused and the tool
+  says which name it refused. A wider module comes from the operator's grant
+  (`docs/world/entities/pi.session-grants.md`), the project key, or the environment. A spawner
+  naming a child's policy is held to the same rule: the spawn is refused when `resolvePolicy`
+  reports `refusedArgument`.
 
 ## Not this
 
@@ -64,3 +69,9 @@ What is **not** configurable per call:
 and `grep -q resolvePolicy extensions/eyg-codemode.ts` (both found), the scratch-project session
 above, and `node --test 'test/*.mjs'` (pass 1, fail 0, 0.05 s: the six-step precedence, both
 roots orders, the preset-name rules and the settings shaping are asserted).
+
+Re-measured 2026-11-21 with the argument held to narrowing: `node --test 'test/*.mjs'` (pass 1,
+fail 0, 0.06 s) asserts the equal case, the `deny-all.eyg` case, and three refusals (a wider
+shipped policy, a module of the model's own, `spawner-effects.eyg` over a package default), and
+`grep -q NARROWEST_POLICY_FILE lib/render-helpers.mjs` with
+`grep -q refusedArgument extensions/eyg-codemode.ts` both answer found.

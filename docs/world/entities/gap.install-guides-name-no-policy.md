@@ -3,7 +3,7 @@ id: gap.install-guides-name-no-policy
 type: entity
 owner: delegate
 status: current
-verified_at: 2026-11-21
+verified_at: 2026-11-22
 verify: "grep -q -- '--policy' guides/how-to-get-a-checked-runner.md && grep -q -- '--policy' guides/how-to-point-the-tool-at-your-runner.md && ! grep -q -- '--policy' guides/install_prebuilt.md && ! grep -q -- '--policy' guides/install_from_source.md"
 confidence: high
 sources: [guides/install_prebuilt.md, guides/install_from_source.md, guides/how-to-get-a-checked-runner.md, guides/how-to-point-the-tool-at-your-runner.md, README.md, docs/world/decisions/ADR-003-doc-delegation.md]

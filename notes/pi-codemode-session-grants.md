@@ -22,13 +22,25 @@ details are used together.
 **The widening is the operator's act, and the tool's own parameter was narrowed to match.**
 Until this change a call could pass `policy: <absolute path>`. A program that can write inside
 its roots can write a permissive module there and hand the runner its path, so a "grant" that
-the model could reach was not a boundary. Now `argumentPolicyPath` accepts only a preset this
-package ships - `deny-all` or `agent-roots` - which can only narrow, and a wider module comes
-from `/eyg-grant`, `eyg.policy` or `EYG_POLICY`, none of which a program writes. What it costs:
+the model could reach was not a boundary. Now `argumentPolicyPath` accepts only a policy this
+package ships, and `resolvePolicy` honours that argument only when it names the policy the other
+slots already chose or the narrowest shipped one (`NARROWEST_POLICY_FILE`, `deny-all.eyg`); every
+other name is refused and the message names the name it refused. A wider module comes from
+`/eyg-grant`, `eyg.policy` or `EYG_POLICY`, none of which a program writes. What it costs:
 a one-off session that needs a hand-written module must set the project key or the environment
 before it starts, or the operator must grant its path; the argument is no longer that lever.
 This is also why the command takes an absolute path only through its own prompts, after a
 `ctx.ui.confirm`.
+
+**The argument had to be proved narrower, not merely shipped (2026-11-21).** The sentence above
+was not yet true: naming `agent-roots` was accepted even in a project whose key named
+`deny-all`, so a model could undo an operator's narrowing with a tool argument. Paths cannot be
+ordered by permissiveness - `agent-roots.eyg` is wider than a hand-written module that happens to
+sit next to it - so the rule is by name, not by comparison: the argument may name the module the
+other slots already picked, or `NARROWEST_POLICY_FILE`, and `resolvePolicy` reports
+`refusedArgument` instead of quietly running the wider one. What it costs: a session in a
+`deny-all` project can no longer widen one call to `agent-roots`, which is the point, and a
+spawner can no longer send a child somewhere wider than its own project names.
 
 **A duration counts tool calls that reached a policy, not effects.** `one call` is spent by the
 next call whose policy decided something; a call refused before the spawn (no runner, a bad

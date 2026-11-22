@@ -3,7 +3,7 @@ id: cli.prebuilt-binary
 type: entity
 owner: delegate
 status: current
-verified_at: 2026-11-21
+verified_at: 2026-11-22
 verify: "test -f guides/install_prebuilt.md && test -f guides/install_from_source.md && ! $HOME/.local/bin/eyg --help 2>&1 | grep -q -- '--policy'"
 confidence: high
 sources: [guides/install_prebuilt.md, guides/install_from_source.md, notes/pi_codemode_runner_probe.md, guides/pi_codemode_agent.md, docs/world/entities/cli.checked-runner-on-this-host.md]

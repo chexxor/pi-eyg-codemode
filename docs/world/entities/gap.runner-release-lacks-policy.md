@@ -3,7 +3,7 @@ id: gap.runner-release-lacks-policy
 type: entity
 owner: delegate
 status: current
-verified_at: 2026-11-21
+verified_at: 2026-11-22
 verify: "! $HOME/.local/bin/eyg --help 2>&1 | grep -q -- '--policy' && test ! -e bin/agent/build-checked-runner.sh && grep -q 'No official install can answer for an effect today' guides/how-to-get-a-checked-runner.md"
 confidence: high
 sources: [README.md, docs/world/entities/cli.prebuilt-binary.md, docs/world/traps.md, guides/install_prebuilt.md, guides/how-to-get-a-checked-runner.md, docs/world/entities/cli.runner-official-install-only.md]

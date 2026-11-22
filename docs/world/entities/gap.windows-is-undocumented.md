@@ -3,7 +3,7 @@ id: gap.windows-is-undocumented
 type: entity
 owner: delegate
 status: current
-verified_at: 2026-11-21
+verified_at: 2026-11-22
 verify: "! grep -qi 'windows' README.md && grep -qi 'windows' guides/install_prebuilt.md"
 confidence: medium
 sources: [README.md, guides/install_prebuilt.md, extensions/eyg-codemode.ts]

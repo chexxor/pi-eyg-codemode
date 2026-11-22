@@ -3,7 +3,7 @@ id: pi.spawner-preset
 type: entity
 owner: delegate
 status: current
-verified_at: 2026-11-21
+verified_at: 2026-11-22
 verify: "eyg check policies/spawner-effects.eyg > /dev/null && test -z \"${EYG_CODEMODE_RUNNER:-}\" || { EYG_ALLOWED_ROOTS=$PWD EYG_SUBAGENT_EFFECTS=read_file,standard_out \"$EYG_CODEMODE_RUNNER\" run --policy $PWD/policies/spawner-effects.eyg test/fixtures/refusal-probe.eyg 2>&1 | grep -q 'write_file denied by policy: EYG_SUBAGENT_EFFECTS=read_file,standard_out' && env -u EYG_SUBAGENT_EFFECTS EYG_ALLOWED_ROOTS=$PWD \"$EYG_CODEMODE_RUNNER\" run --policy $PWD/policies/spawner-effects.eyg test/fixtures/refusal-probe.eyg 2>&1 | grep -q 'standard_out denied by policy: EYG_SUBAGENT_EFFECTS=$'; }"
 confidence: high
 sources: [policies/spawner-effects.eyg, extensions/eyg-codemode.ts, lib/render-helpers.mjs, test/render-helpers.test.mjs, guides/how-to-spawn-a-subagent.md, notes/spawner-effect-allowlist.md, docs/world/entities/pi.subagent-spawn.md]

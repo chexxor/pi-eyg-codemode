@@ -11,7 +11,7 @@
  */
 
 import assert from "node:assert/strict";
-import { argumentPolicyPath, budgetRefusal, builtinErrors, builtinHintRows, builtinRows, callBudget, callLines, checkDeclaredEffects, CHILD_TOOL_ALLOWLIST, classifyProbeOutput, COLLAPSED_SOURCE_LINES, childAnswer, childArgv, childCalls, childEnvOverrides, childRefusalRows, childTools, describeGrant, EFFECT_ALLOWLIST_ENV, effectFieldsFor, effectLine, effectsUsed, eygCallCount, eygSettings, findMetadata, fieldsOutside, formatDuration, grantEvents, GRANT_ENTRY, GUIDE_BUILTINS, GUIDE_EFFECTS, GUIDE_SYNTAX, isUnder, MAX_CALLS_ENV, outsideRoot, prepareCallArguments, presetPath, probeArguments, probeProgram, POLICY_FIELDS, referenceLines, refusalHints, replayGrants, resolvePolicy, resolveRoots, resultLines, ruleMappingEffects, rootsInside, runnerCandidates, sessionDepth, spawnerPolicy, spawnerRoots, subagentCallLines, subagentResultRows, suggestGrant } from "../lib/render-helpers.mjs";
+import { argumentPolicyPath, budgetRefusal, builtinErrors, builtinHintRows, builtinRows, callBudget, callLines, checkDeclaredEffects, CHILD_TOOL_ALLOWLIST, classifyProbeOutput, COLLAPSED_SOURCE_LINES, childAnswer, childArgv, childCalls, childEnvOverrides, childRefusalRows, childTools, describeGrant, EFFECT_ALLOWLIST_ENV, effectFieldsFor, effectLine, effectsUsed, eygCallCount, eygSettings, findMetadata, fieldsOutside, formatDuration, grantEvents, GRANT_ENTRY, GUIDE_BUILTINS, GUIDE_EFFECTS, GUIDE_SYNTAX, isUnder, MAX_CALLS_ENV, outsideRoot, prepareCallArguments, shippedPolicyPath, probeArguments, probeProgram, POLICY_FIELDS, referenceLines, refusalHints, replayGrants, resolvePolicy, resolveRoots, resultLines, ruleMappingEffects, rootsInside, runnerCandidates, sessionDepth, spawnerPolicy, spawnerRoots, subagentCallLines, subagentResultRows, suggestGrant } from "../lib/render-helpers.mjs";
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
 
@@ -202,44 +202,68 @@ let metadata = {
     "one candidate when nothing is configured: the installed CLI on PATH",
   );
 
-  // The config surface: what the project's `eyg` key says, and which of the five
+  // The config surface: what the project's `eyg` key says, and which of the six
   // names wins for the policy and for the roots. Every step of both orders is
   // pinned, because the whole point of the key is that a project can say "this
-  // directory, this preset" and mean it (`pi.policy-config`).
+  // directory, this policy" and mean it (`pi.policy-config`). The one slot a model
+  // controls is the call's `policy` argument, so it is pinned too: it may only
+  // narrow, which means naming the policy the session already runs under or naming
+  // the narrowest shipped policy (`notes/pi-codemode-session-grants.md`).
+  const choice = (policy, source) => ({ policy, source, refusedArgument: null });
   assert.deepEqual(eygSettings(undefined), { policy: null, roots: [] }, "no settings is no configuration");
-  assert.deepEqual(eygSettings({ eyg: { policy: "deny-all", roots: ["/a", "", 5, "/b"] } }), { policy: "deny-all", roots: ["/a", "/b"] }, "a named preset and absolute roots, junk dropped");
+  assert.deepEqual(eygSettings({ eyg: { policy: "deny-all", roots: ["/a", "", 5, "/b"] } }), { policy: "deny-all", roots: ["/a", "/b"] }, "a named shipped policy and absolute roots, junk dropped");
   assert.deepEqual(eygSettings({ eyg: { roots: "/only" } }), { policy: null, roots: ["/only"] }, "one root may be written without a list");
   assert.deepEqual(eygSettings({ eyg: "nonsense" }), { policy: null, roots: [] }, "a key of the wrong shape is no configuration");
-  assert.equal(presetPath("deny-all", "/pkg"), join("/pkg", "policies", "deny-all.eyg"), "a bare name resolves inside the package");
-  assert.equal(presetPath("/srv/my.eyg", "/pkg"), "/srv/my.eyg", "an absolute path is taken as given");
-  assert.equal(presetPath("../outside.eyg", "/pkg"), null, "a relative path names nothing, so the caller can say which key is wrong");
+  assert.equal(shippedPolicyPath("deny-all", "/pkg"), join("/pkg", "policies", "deny-all.eyg"), "a bare name resolves inside the package");
+  assert.equal(shippedPolicyPath("/srv/my.eyg", "/pkg"), "/srv/my.eyg", "an absolute path is taken as given");
+  assert.equal(shippedPolicyPath("../outside.eyg", "/pkg"), null, "a relative path names nothing, so the caller can say which key is wrong");
   assert.deepEqual(
-    resolvePolicy({ argument: "/a", grant: "/g", project: "/p", env: "/e", packageDefault: "/d" }),
-    { policy: "/a", source: "argument" },
-    "the argument of the call wins",
+    resolvePolicy({ argument: "/pkg/policies/agent-roots.eyg", grant: "/pkg/policies/agent-roots.eyg", project: "/p", env: "/e", packageDefault: "/d" }),
+    choice("/pkg/policies/agent-roots.eyg", "argument"),
+    "the argument of the call wins when it names the policy the other slots already chose",
+  );
+  assert.deepEqual(
+    resolvePolicy({ argument: "/pkg/policies/deny-all.eyg", project: "/pkg/policies/agent-roots.eyg", packageDefault: "/d" }),
+    choice("/pkg/policies/deny-all.eyg", "argument"),
+    "and wins when it names the narrowest shipped policy, which can only take reach away",
+  );
+  assert.deepEqual(
+    resolvePolicy({ argument: "/pkg/policies/agent-roots.eyg", project: "/pkg/policies/deny-all.eyg" }),
+    { policy: "/pkg/policies/deny-all.eyg", source: "project settings", refusedArgument: "/pkg/policies/agent-roots.eyg" },
+    "an argument that would widen an operator-narrowed session loses, and the refused name comes back so the caller can say why",
+  );
+  assert.deepEqual(
+    resolvePolicy({ argument: "/mine.eyg", project: "/pkg/policies/deny-all.eyg" }),
+    { policy: "/pkg/policies/deny-all.eyg", source: "project settings", refusedArgument: "/mine.eyg" },
+    "a module of the model's own is refused for the same reason: nothing proves it narrower",
+  );
+  assert.deepEqual(
+    resolvePolicy({ argument: "/pkg/policies/spawner-effects.eyg", packageDefault: "/pkg/policies/agent-roots.eyg" }),
+    { policy: "/pkg/policies/agent-roots.eyg", source: "package default", refusedArgument: "/pkg/policies/spawner-effects.eyg" },
+    "and so is a shipped policy that is neither the one in force nor the narrowest one",
   );
   assert.deepEqual(
     resolvePolicy({ grant: "/g", project: "/p", env: "/e", packageDefault: "/d" }),
-    { policy: "/g", source: "session grant" },
+    choice("/g", "session grant"),
     "then the grant the operator made this session",
   );
   assert.deepEqual(
     resolvePolicy({ project: "/p", env: "/e", packageDefault: "/d" }),
-    { policy: "/p", source: "project settings" },
+    choice("/p", "project settings"),
     "then the project's eyg.policy",
   );
   assert.deepEqual(
     resolvePolicy({ env: "/e", packageDefault: "/d" }),
-    { policy: "/e", source: "EYG_POLICY" },
+    choice("/e", "EYG_POLICY"),
     "then the environment",
   );
   assert.deepEqual(
     resolvePolicy({ packageDefault: "/d" }),
-    { policy: "/d", source: "package default" },
-    "then the preset shipped in the package",
+    choice("/d", "package default"),
+    "then the policy shipped in the package",
   );
-  assert.deepEqual(resolvePolicy({}), { policy: null, source: "none" }, "and nothing to run at all if none of them names a module");
-  assert.deepEqual(resolvePolicy({ grant: "", project: "/p" }), { policy: "/p", source: "project settings" }, "an empty name names nothing");
+  assert.deepEqual(resolvePolicy({}), choice(null, "none"), "and nothing to run at all if none of them names a module");
+  assert.deepEqual(resolvePolicy({ grant: "", project: "/p" }), choice("/p", "project settings"), "an empty name names nothing");
   assert.equal(resolveRoots({ project: ["/p1", "/p2"], env: "/e", cwd: "/c" }), "/p1,/p2", "the project roots win, as a list the preset parses");
   assert.equal(resolveRoots({ project: [], env: "/e", cwd: "/c" }), "/e", "then EYG_ALLOWED_ROOTS");
   assert.equal(resolveRoots({ project: [], env: null, cwd: "/c" }), "/c", "then the working directory");
@@ -391,12 +415,12 @@ let metadata = {
   // model may not name the module it is checked against.
   assert.deepEqual(
     resolvePolicy({ grant: "/g", spawner: "/s", project: "/p", env: "/e", packageDefault: "/d" }),
-    { policy: "/g", source: "session grant" },
+    choice("/g", "session grant"),
     "the operator's grant outranks what a spawner chose",
   );
   assert.deepEqual(
     resolvePolicy({ spawner: "/s", project: "/p", env: "/e", packageDefault: "/d" }),
-    { policy: "/s", source: "spawner" },
+    choice("/s", "spawner"),
     "then the policy the spawner of a subagent session named, which outranks the project key",
   );
   assert.equal(rootsInside(["/work/a", "/work/b"], ["/work"]).ok, true, "several slices are fine");

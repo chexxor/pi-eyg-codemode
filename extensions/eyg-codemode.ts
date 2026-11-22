@@ -33,7 +33,7 @@
  *
  * A refusal is the start of a negotiation, not a dead end: the result names the
  * refused path and the exact grant that would allow it, and `/eyg-grant` is how the
- * operator answers - a preset or module path, roots to add, and a duration of one
+ * operator answers - a policy or module path, roots to add, and a duration of one
  * tool call, N calls or the rest of the session. The grant is a session entry the
  * human's command appends, never a tool parameter, so a program cannot widen itself
  * (`notes/pi-codemode-session-grants.md`).
@@ -107,10 +107,11 @@ import {
   subagentResultRows,
   suggestGrant,
   eygSettings,
-  presetPath,
+  shippedPolicyPath,
   POLICY_FIELDS,
-  SPAWNER_PRESET_NEVER,
-  SPAWNER_PRESET_NOOP,
+  NARROWEST_POLICY_FILE,
+  SPAWNER_POLICY_NEVER,
+  SPAWNER_POLICY_NOOP,
   UNPROBED_EFFECTS,
 } from "../lib/render-helpers.mjs";
 
@@ -133,11 +134,11 @@ const SUBAGENT_MAX_TIMEOUT_S = 300;
 const MIN_TIMEOUT_MS = 100;
 const PROBE_TIMEOUT_MS = 5_000;
 const ACTIONS = ["run", "eval", "effects", "reference", "list_functions", "describe_function"];
-/// The preset a spawner's effect allowlist is enforced by, and the preset it is a
+/// The policy a spawner's effect allowlist is enforced by, and the policy it is a
 /// narrowing of. Both live inside this package, so the two paths are resolved here
 /// rather than written out.
-const NARROWING_PRESET = "spawner-effects";
-const BASE_PRESET = "agent-roots";
+const NARROWING_POLICY = "spawner-effects";
+const BASE_POLICY = "agent-roots";
 
 /// What a call in this session gets from everything except the call's own argument:
 /// the project settings, and the grants on this session's branch. `error` names what
@@ -146,7 +147,7 @@ const BASE_PRESET = "agent-roots";
 type PolicyChain = {
   error: string | null;
   settings: { policy: string | null; roots: string[] };
-  projectPreset: string | null;
+  projectPolicy: string | null;
   grants: ReturnType<typeof replayGrants>;
   depth: number;
 };
@@ -154,16 +155,16 @@ type PolicyChain = {
 function policyChain(pi: ExtensionAPI, ctx: unknown, dir: string | null): PolicyChain {
   const depth = sessionDepth(process.env);
   const settings = eygSettings(typeof pi.getSettings === "function" ? pi.getSettings() : {});
-  const projectPreset = settings.policy === null ? null : presetPath(settings.policy, dir);
+  const projectPolicy = settings.policy === null ? null : shippedPolicyPath(settings.policy, dir);
   const empty = replayGrants([]);
-  if (settings.policy !== null && projectPreset === null) {
-    return { error: `eyg.policy in the project settings must name a shipped preset or an absolute module path, got ${settings.policy}`, settings, projectPreset: null, grants: empty, depth };
+  if (settings.policy !== null && projectPolicy === null) {
+    return { error: `eyg.policy in the project settings must name a shipped policy or an absolute module path, got ${settings.policy}`, settings, projectPolicy: null, grants: empty, depth };
   }
   const relativeRoot = settings.roots.find((root) => !root.startsWith("/"));
   if (relativeRoot !== undefined) {
-    return { error: `every eyg.roots entry must be an absolute path, got ${relativeRoot}`, settings, projectPreset, grants: empty, depth };
+    return { error: `every eyg.roots entry must be an absolute path, got ${relativeRoot}`, settings, projectPolicy, grants: empty, depth };
   }
-  return { error: null, settings, projectPreset, grants: grantState(ctx as { sessionManager?: { getBranch?: () => unknown[] } }), depth };
+  return { error: null, settings, projectPolicy, grants: grantState(ctx as { sessionManager?: { getBranch?: () => unknown[] } }), depth };
 }
 
 function refuseToRun(reason: string) {
@@ -226,12 +227,12 @@ function listModules(dir: string): string[] {
   }
 }
 
-/// The presets this package ships, as the bare names a call may choose. A call may
+/// The policies this package ships, as the bare names a call may choose. A call may
 /// narrow itself to one of these and may not name a module of its own: a program
 /// that could write a permissive policy inside its own roots and hand the runner its
 /// path would be granting itself, which is the route the grant loop closes
 /// (`notes/pi-codemode-session-grants.md`).
-function shippedPresets(dir: string | null): string[] {
+function shippedPolicies(dir: string | null): string[] {
   if (dir === null) return [];
   return listModules(join(dir, "policies")).map((file) => file.replace(/\.eyg$/, ""));
 }
@@ -385,10 +386,10 @@ export default function (pi: ExtensionAPI) {
       "refusal surfaces as the ordinary Error(...) value inside the program.",
       "A refusal is an ask you make in chat, not a thing you work around: the result names",
       "the refused path and the exact grant that would allow it. Ask the operator to run",
-      "/eyg-grant and choose a preset (or an absolute module path), the roots to add and a",
+      "/eyg-grant and choose a policy (or an absolute module path), the roots to add and a",
       "duration - one tool call, N calls, or the rest of the session - with your recommendation",
       "(the narrowest that retries the refused program), then retry the same program.",
-      "No parameter of this tool widens a policy: `policy` only narrows to a shipped preset.",
+      "No parameter of this tool widens a policy: `policy` may name only the policy this call already runs under, or the narrowest shipped policy (`deny-all`).",
     ].join(" "),
     promptSnippet: "Run an EYG program whose every effect is decided by a host policy module",
     promptGuidelines: [
@@ -430,7 +431,7 @@ export default function (pi: ExtensionAPI) {
       policy: Type.Optional(
         Type.String({
           description:
-            "Name a preset this package ships (`agent-roots`, `deny-all`) to narrow this call to it. An absolute module path is refused: a wider policy comes from the operator's /eyg-grant, the project's eyg.policy key, or EYG_POLICY.",
+            "Name the policy this call already runs under, or `deny-all` (the narrowest policy this package ships), to narrow this call. Any other name is refused, and so is an absolute module path: a wider policy comes from the operator's /eyg-grant, the project's eyg.policy key, or EYG_POLICY.",
         }),
       ),
       libraries: Type.Optional(
@@ -485,7 +486,7 @@ export default function (pi: ExtensionAPI) {
       }
 
       // The policy: the argument of this call, a grant the operator made this
-      // session, the project's `eyg.policy` key, `EYG_POLICY`, the preset shipped
+      // session, the project's `eyg.policy` key, `EYG_POLICY`, the policy shipped
       // in this package - `resolvePolicy` in `lib/render-helpers.mjs` holds that
       // order and the tests read it. A program is never run without one: an
       // unchecked run performs every effect the host can reach, and a registry
@@ -512,14 +513,14 @@ export default function (pi: ExtensionAPI) {
         }
       }
       const settings = chain.settings;
-      const projectPreset = chain.projectPreset;
+      const projectPolicy = chain.projectPolicy;
       const grants = chain.grants;
       const grantDetails = { grants: grants.grants, grantId: grants.active === null ? null : grants.active.id };
-      const presets = shippedPresets(dir);
+      const shippedNames = shippedPolicies(dir);
       const argumentPolicy = params.policy === undefined ? null : argumentPolicyPath(params.policy, dir);
       if (params.policy !== undefined && argumentPolicy === null) {
         return refuseToRun(
-          `the policy argument may only narrow this call to a preset the package ships (${presets.join(", ") || "none"}), not name a module of its own: got ${params.policy}. ` +
+          `the policy argument may only name a policy this package ships (${shippedNames.join(", ") || "none"}), not a module of its own: got ${params.policy}. ` +
             "A wider policy is the operator's to give: /eyg-grant for this session, eyg.policy in the project settings, or EYG_POLICY.",
         );
       }
@@ -527,15 +528,26 @@ export default function (pi: ExtensionAPI) {
         argument: argumentPolicy,
         grant: grants.policy,
         spawner: spawnerPolicy(process.env, chain.depth),
-        project: projectPreset,
+        project: projectPolicy,
         env: process.env.EYG_POLICY ?? null,
         packageDefault: defaultPolicy(),
       });
       const policy = chosen.policy ?? "";
       const policySource = chosen.source;
+      // The argument is the one policy slot a program controls, so it is the one slot
+      // that has to be proved narrower: the module this call already runs under, or
+      // `NARROWEST_POLICY_FILE`. Anything else is a widening the operator has to make,
+      // and `resolvePolicy` says which name it refused rather than running the wider
+      // module quietly (`notes/pi-codemode-session-grants.md`).
+      if (chosen.refusedArgument !== null && chosen.refusedArgument !== undefined) {
+        return refuseToRun(
+          `the policy argument may only narrow: ${chosen.refusedArgument} is not the policy this call runs under (${policy} from ${policySource}) and is not the narrowest shipped policy (${NARROWEST_POLICY_FILE}), so it would widen the session. ` +
+            "A wider policy is the operator's to give: /eyg-grant for this session, eyg.policy in the project settings, or EYG_POLICY.",
+        );
+      }
       if (policy === "") {
         return refuseToRun(
-          "no policy module was configured and this package ships no preset. Set eyg.policy in the project settings, set EYG_POLICY to an absolute path, or pass policy. A program is never run ungated.",
+          "no policy module was configured and this package ships no policy of its own. Set eyg.policy in the project settings, set EYG_POLICY to an absolute path, or pass policy. A program is never run ungated.",
         );
       }
       if (!policy.startsWith("/")) {
@@ -549,7 +561,7 @@ export default function (pi: ExtensionAPI) {
       // keeps asking - which builtins exist, and what the effect surface is - from the
       // reference guide this package ships and from `POLICY_FIELDS`. It spawns no process,
       // performs no effect and asks the policy no question, so it answers on a machine with
-      // no runner as well; `action: effects` is the call that asks the preset what it
+      // no runner as well; `action: effects` is the call that asks the policy what it
       // decides for each effect, and it is offered in the last line of the answer.
       if (action === "reference") {
         const guide = dir === null ? null : join(dir, GUIDE_BUILTINS);
@@ -619,7 +631,7 @@ export default function (pi: ExtensionAPI) {
       // `effects` is the capability question one session keeps asking: which effects
       // the policy in force will perform. Every probe is a whole spawned program, so
       // the answer comes from the same gate that will run the real program rather than
-      // from a copy of the preset in this file. Probes are chosen by `probeArguments`
+      // from a copy of the policy in this file. Probes are chosen by `probeArguments`
       // to fail at the host before they could change anything.
       if (action === "effects") {
         const probeTimeoutMs = Math.min(PROBE_TIMEOUT_MS, MAX_TIMEOUT_S * 1000);
@@ -902,7 +914,7 @@ export default function (pi: ExtensionAPI) {
 
   // A second pi session, started by this one, that can do nothing this session could
   // not already do: the same channel, a policy this project's settings name or a
-  // preset this package ships, and roots inside the roots this session has. The child
+  // policy this package ships, and roots inside the roots this session has. The child
   // is started as argv with no shell in between, in this working directory, with only
   // the `eyg` tool declared, so delegating work cannot smuggle in reach or a shell.
   pi.registerTool(defineTool({
@@ -916,10 +928,10 @@ export default function (pi: ExtensionAPI) {
       "this project's files and none of this conversation, so `task` must carry the paths,",
       "what to do and what to report.",
       "You bound it in three places: `roots` to a slice of the roots this session has;",
-      "`effects` to the effects it may perform, enforced by the `spawner-effects` preset,",
-      "which is the agent-roots preset narrowed to those fields, so a name you omit is",
+      "`effects` to the effects it may perform, enforced by the `spawner-effects` policy,",
+      "which is the agent-roots policy narrowed to those fields, so a name you omit is",
       "refused; and `max_calls` to the eyg calls it may spend, after which it is refused",
-      "and told to report what it has. `policy` may only be a preset this package ships.",
+      "and told to report what it has. `policy` may only be a policy this package ships.",
       "A subagent narrows your reach and never widens it: it cannot be given a root, an",
       "effect or a tool you do not have, and a grant the operator made with /eyg-grant",
       "covers the session the operator is in, not a child session.",
@@ -946,7 +958,7 @@ export default function (pi: ExtensionAPI) {
       }),
       policy: Type.Optional(
         Type.String({
-          description: "Name a preset this package ships (`agent-roots`, `deny-all`) for the child. An absolute module path is refused: it must be a policy this package authored, not one you wrote. An `effects` list is enforced by the `spawner-effects` preset, which is agent-roots narrowed, so it combines only with agent-roots.",
+          description: "Name a policy this package ships (`agent-roots`, `deny-all`) for the child. An absolute module path is refused: it must be a policy this package authored, not one you wrote. An `effects` list is enforced by the `spawner-effects` policy, which is agent-roots narrowed, so it combines only with agent-roots.",
         }),
       ),
       tools: Type.Optional(
@@ -959,7 +971,7 @@ export default function (pi: ExtensionAPI) {
       effects: Type.Optional(
         Type.Array(
           Type.String({
-            description: 'Effect names the child may perform, e.g. ["ReadFile","Search","StandardOut"]. Each must be an effect the policy in force already performs for this session, and the list is enforced by the spawner-effects preset - agent-roots narrowed to those fields - so every name you omit is refused and no name can open the network. `Search` shares the `read_file` field with `ReadFile`. DecodeJSON, EYGParse, Hash and Sign are not policy fields and no preset can forbid them, so naming or omitting them changes nothing. Omit the list to leave the child its policy\'s whole surface.',
+            description: 'Effect names the child may perform, e.g. ["ReadFile","Search","StandardOut"]. Each must be an effect the policy in force already performs for this session, and the list is enforced by the spawner-effects policy - agent-roots narrowed to those fields - so every name you omit is refused and no name can open the network. `Search` shares the `read_file` field with `ReadFile`. DecodeJSON, EYGParse, Hash and Sign are not policy fields and no policy can forbid them, so naming or omitting them changes nothing. Omit the list to leave the child its policy\'s whole surface.',
           }),
         ),
       ),
@@ -1017,27 +1029,36 @@ export default function (pi: ExtensionAPI) {
       }
 
       // What the child may run under: the policy this session's settings name, or a
-      // preset this package ships. A grant the operator made here is deliberately not
+      // policy this package ships. A grant the operator made here is deliberately not
       // read - it covers calls in the session the operator said yes in, so a one-call
       // grant cannot be spent over and over by a child with no call limit.
-      const presets = shippedPresets(dir);
+      const shippedNames = shippedPolicies(dir);
       const argumentPolicy = params.policy === undefined ? null : argumentPolicyPath(params.policy, dir);
       if (params.policy !== undefined && argumentPolicy === null) {
         return refuseToRun(
-          `the child's policy may only be a preset this package ships (${presets.join(", ") || "none"}), not a module of your own choosing: got ${params.policy}. ` +
+          `the child's policy may only be a policy this package ships (${shippedNames.join(", ") || "none"}), not a module of your own choosing: got ${params.policy}. ` +
             "A wider policy is the operator's to give: /eyg-grant in this session, eyg.policy in the project settings, or EYG_POLICY.",
         );
       }
       const child = resolvePolicy({
         argument: argumentPolicy,
-        project: chain.projectPreset,
+        project: chain.projectPolicy,
         env: process.env.EYG_POLICY ?? null,
         packageDefault: defaultPolicy(),
       });
+      // The same narrowing rule as a call's own `policy` argument: a spawner may send a
+      // child under the policy this session's settings name or under the narrowest one
+      // shipped, never under a wider one the operator did not choose.
+      if (child.refusedArgument !== null && child.refusedArgument !== undefined) {
+        return refuseToRun(
+          `the child's policy may only narrow: ${child.refusedArgument} is not the policy this session runs under (${child.policy} from ${child.source}) and is not the narrowest shipped policy (${NARROWEST_POLICY_FILE}), so it would widen the child. ` +
+            "A wider policy is the operator's to give: /eyg-grant in this session, eyg.policy in the project settings, or EYG_POLICY.",
+        );
+      }
       const childPolicy = child.policy ?? "";
       if (childPolicy === "") {
         return refuseToRun(
-          "no policy module was configured for the child and this package ships no preset. Set eyg.policy in the project settings, set EYG_POLICY to an absolute path, or name a preset.",
+          "no policy module was configured for the child and this package ships no policy. Set eyg.policy in the project settings, set EYG_POLICY to an absolute path, or name a policy.",
         );
       }
       if (!childPolicy.startsWith("/") || !existsSync(childPolicy)) {
@@ -1084,10 +1105,10 @@ export default function (pi: ExtensionAPI) {
       }
 
       // The effect allowlist. Effect names come in; policy fields go out to the
-      // preset. Two names share one field (`Search` is gated as `read_file`), the four
-      // unchecked effects are outside every preset, and three names are refused here
-      // rather than left for the child to discover, because the narrowing preset keeps
-      // the plain refusals its base preset gives them.
+      // policy. Two names share one field (`Search` is gated as `read_file`), the four
+      // unchecked effects are outside every policy, and three names are refused here
+      // rather than left for the child to discover, because the narrowing policy keeps
+      // the plain refusals its base policy gives them.
       const requestedEffects = params.effects === undefined ? [] : params.effects;
       const mapped = effectFieldsFor(requestedEffects);
       if (mapped.unknown.length > 0) {
@@ -1096,53 +1117,53 @@ export default function (pi: ExtensionAPI) {
             'The `eyg` tool\'s action "reference" prints the whole surface with the field that decides each one.',
         );
       }
-      const namedNever = requestedEffects.filter((name) => SPAWNER_PRESET_NEVER.includes(name));
+      const namedNever = requestedEffects.filter((name) => SPAWNER_POLICY_NEVER.includes(name));
       if (namedNever.length > 0) {
         return refuseToRun(
-          `an effect allowlist removes reach, it does not add it: policies/${NARROWING_PRESET}.eyg keeps the plain refusals ${BASE_PRESET}.eyg gives ${SPAWNER_PRESET_NEVER.join(", ")}, allowlist or not. ` +
+          `an effect allowlist removes reach, it does not add it: policies/${NARROWING_POLICY}.eyg keeps the plain refusals ${BASE_POLICY}.eyg gives ${SPAWNER_POLICY_NEVER.join(", ")}, allowlist or not. ` +
             `Names it cannot grant: ${namedNever.join(", ")}. Ask the operator for a policy that has them (/eyg-grant, eyg.policy, EYG_POLICY) instead.`,
         );
       }
-      const namedNoop = requestedEffects.filter((name) => SPAWNER_PRESET_NOOP.includes(name) || mapped.unchecked.includes(name));
-      const checkedEffects = requestedEffects.filter((name) => !SPAWNER_PRESET_NOOP.includes(name) && !mapped.unchecked.includes(name));
+      const namedNoop = requestedEffects.filter((name) => SPAWNER_POLICY_NOOP.includes(name) || mapped.unchecked.includes(name));
+      const checkedEffects = requestedEffects.filter((name) => !SPAWNER_POLICY_NOOP.includes(name) && !mapped.unchecked.includes(name));
       const effectFields = effectFieldsFor(checkedEffects).fields;
 
-      // An allowlist is enforced by the narrowing preset this package ships, which is
-      // the base preset with a gate over its fields. It may only replace the base
-      // preset: replacing a policy this project made narrower would widen it.
-      const narrowingPreset = dir === null ? null : presetPath(NARROWING_PRESET, dir);
-      const basePreset = dir === null ? null : presetPath(BASE_PRESET, dir);
+      // An allowlist is enforced by the narrowing policy this package ships, which is
+      // the base policy with a gate over its fields. It may only replace the base
+      // policy: replacing a policy this project made narrower would widen it.
+      const narrowingPolicy = dir === null ? null : shippedPolicyPath(NARROWING_POLICY, dir);
+      const basePolicy = dir === null ? null : shippedPolicyPath(BASE_POLICY, dir);
       if (checkedEffects.length > 0) {
-        if (narrowingPreset === null || !existsSync(narrowingPreset)) {
-          return refuseToRun(`this package ships no policies/${NARROWING_PRESET}.eyg, so an effect allowlist could not be enforced: omit effects, or restore the preset.`);
+        if (narrowingPolicy === null || !existsSync(narrowingPolicy)) {
+          return refuseToRun(`this package ships no policies/${NARROWING_POLICY}.eyg, so an effect allowlist could not be enforced: omit effects, or restore the policy.`);
         }
-        if (childPolicy !== basePreset) {
+        if (childPolicy !== basePolicy) {
           return refuseToRun(
-            `an effect allowlist is enforced by policies/${NARROWING_PRESET}.eyg, the ${BASE_PRESET} preset with an allowlist over its fields, and this child's policy resolves to ${childPolicy} (${child.source}). ` +
-              `Replacing a policy the project made narrower with the narrowing preset would widen it, so effects combines with ${BASE_PRESET} only: omit effects to let the child run under ${childPolicy}, or ask the operator for eyg.policy ${BASE_PRESET}.`,
+            `an effect allowlist is enforced by policies/${NARROWING_POLICY}.eyg, the ${BASE_POLICY} policy with an allowlist over its fields, and this child's policy resolves to ${childPolicy} (${child.source}). ` +
+              `Replacing a policy the project made narrower with the narrowing policy would widen it, so effects combines with ${BASE_POLICY} only: omit effects to let the child run under ${childPolicy}, or ask the operator for eyg.policy ${BASE_POLICY}.`,
           );
         }
       }
 
       // The list is then checked against the reach this session actually has, with the
       // same probe `action: effects` answers with. A field this session's own policy
-      // refuses would not widen the child - the preset can only take fields away - but
+      // refuses would not widen the child - the policy can only take fields away - but
       // naming it would spend the child's calls on a refusal nobody could act on.
       const effectNotes: string[] = [];
       if (checkedEffects.length > 0) {
         const parent = resolvePolicy({
           grant: chain.grants.policy,
           spawner: spawnerPolicy(process.env, chain.depth),
-          project: chain.projectPreset,
+          project: chain.projectPolicy,
           env: process.env.EYG_POLICY ?? null,
           packageDefault: defaultPolicy(),
         });
         const parentPolicy = parent.policy ?? "";
         const reachableRoots = resolveRoots({ grant: chain.grants.roots, project: chain.settings.roots, env: process.env.EYG_ALLOWED_ROOTS ?? null, cwd });
         const candidates = runnerCandidates(cwd, process.env);
-        // The preset reads its roots from the environment, so a probe is run with this
+        // The policy reads its roots from the environment, so a probe is run with this
         // session's roots set for the call and restored after it, exactly as a checked
-        // run does. Probing without them would ask the preset what it allows with no
+        // run does. Probing without them would ask the policy what it allows with no
         // roots at all, and answer that - which is what this call used to report.
         const exec = async (binary: string, args: string[]) => {
           const previousRoots = process.env.EYG_ALLOWED_ROOTS;
@@ -1173,7 +1194,7 @@ export default function (pi: ExtensionAPI) {
           const field = POLICY_FIELDS[name];
           if (typeof field !== "string") continue;
           if (UNPROBED_EFFECTS[name] !== undefined) {
-            effectNotes.push(`${name}: not probed (${UNPROBED_EFFECTS[name]}), so the preset's own rule for it stands`);
+            effectNotes.push(`${name}: not probed (${UNPROBED_EFFECTS[name]}), so the policy's own rule for it stands`);
             if (!performed.includes(field)) performed.push(field);
             continue;
           }
@@ -1195,7 +1216,7 @@ export default function (pi: ExtensionAPI) {
         }
       }
       if (namedNoop.length > 0) {
-        effectNotes.push(`${namedNoop.join(", ")}: no preset can forbid it (DecodeJSON, EYGParse, Hash, Sign) or the answer is the same named or not (Env), so naming it changes nothing`);
+        effectNotes.push(`${namedNoop.join(", ")}: no policy can forbid it (DecodeJSON, EYGParse, Hash, Sign) or the answer is the same named or not (Env), so naming it changes nothing`);
       }
 
       // The call budget, passed to the child as a marker and spent there by the
@@ -1223,7 +1244,7 @@ export default function (pi: ExtensionAPI) {
       // marker is what makes the child read `EYG_SUBAGENT_POLICY`, those roots, the
       // effect allowlist and the call budget as a spawner's word rather than its
       // project's.
-      const runPolicy = checkedEffects.length > 0 && narrowingPreset !== null ? narrowingPreset : childPolicy;
+      const runPolicy = checkedEffects.length > 0 && narrowingPolicy !== null ? narrowingPolicy : childPolicy;
       const policySource = checkedEffects.length > 0 ? `${child.source} narrowed to the fields named` : child.source;
       const overrides: Record<string, string> = childEnvOverrides({ policy: runPolicy, roots: childRoots.join(","), depth: chain.depth + 1, effects: effectFields, maxCalls });
       const previous: Record<string, string | undefined> = {};
@@ -1298,7 +1319,7 @@ export default function (pi: ExtensionAPI) {
       const budgetLine = maxCalls === null ? "call budget: none" : `call budget: ${maxCalls}${calls.some((call) => call.budget !== null) ? ", spent" : ", not spent"}`;
       const text = [
         `eyg_subagent: ${status}`,
-        `child under ${runPolicy} (${policySource}), roots ${childRoots.join(", ")}, tools ${given.tools.join(", ")}, ${budgetLine}. Its policy comes from this session's settings or a shipped preset; a grant made here does not reach it.`,
+        `child under ${runPolicy} (${policySource}), roots ${childRoots.join(", ")}, tools ${given.tools.join(", ")}, ${budgetLine}. Its policy comes from this session's settings or a shipped policy; a grant made here does not reach it.`,
         `child's final message:\n${answer === "" ? "(the child left no final message)" : answer}`,
         `child eyg calls: ${calls.length}${calls.length === 0 && stderr !== "" ? ` (stderr: ${stderr.split("\n").slice(-5).join(" | ")})` : ""}`,
         ...calls.map((call, index) => `  ${index + 1}. under ${call.policy ?? "?"} (${call.policySource ?? "?"}) roots ${call.roots ?? "?"} exit ${call.exit ?? "?"}${call.budget !== null ? ` out of calls (budget ${call.budget})` : ""}${call.refusals.length > 0 ? ` refused ${call.refusals.map((hint) => `${hint.field} at ${hint.path}`).join(", ")}` : ""}`),
@@ -1319,7 +1340,7 @@ export default function (pi: ExtensionAPI) {
     description: "grant the eyg tool a wider policy for one call, N calls or the rest of the session (operator only)",
     handler: async (args, ctx) => {
       const dir = packageDir();
-      const presets = shippedPresets(dir);
+      const shippedNames = shippedPolicies(dir);
       const inForce = grantState(ctx).grants;
       const tokens = (args ?? "").trim().split(/\s+/).filter((token) => token !== "");
       const say = (message: string, kind: "info" | "warning" | "error" = "info") => ctx.ui.notify(message, kind);
@@ -1358,16 +1379,16 @@ export default function (pi: ExtensionAPI) {
           calls = 1;
         } else if (token === "session") {
           sessionLong = true;
-        } else if (policyName === null && (token.startsWith("/") || (dir !== null && presetPath(token, dir) !== null))) {
+        } else if (policyName === null && (token.startsWith("/") || (dir !== null && shippedPolicyPath(token, dir) !== null))) {
           policyName = token;
         }
       }
 
       if (policyName === null) {
         if (!ctx.hasUI) {
-          return say(`which policy? /eyg-grant <${presets.join(" | ")} | an absolute module path> <one | N | session> [roots=/abs,/abs]. ${state()}`, "error");
+          return say(`which policy? /eyg-grant <${shippedNames.join(" | ")} | an absolute module path> <one | N | session> [roots=/abs,/abs]. ${state()}`, "error");
         }
-        const options = [...presets, "an absolute module path"];
+        const options = [...shippedNames, "an absolute module path"];
         const picked = await ctx.ui.select("Which policy do the next eyg calls run under?", options);
         if (picked === undefined) return say("grant cancelled.");
         if (picked === "an absolute module path") {
@@ -1378,8 +1399,8 @@ export default function (pi: ExtensionAPI) {
           policyName = picked;
         }
       }
-      const policy = dir === null ? (policyName.startsWith("/") ? policyName : null) : presetPath(policyName, dir);
-      if (policy === null) return say(`a policy is a preset this package ships (${presets.join(", ")}) or an absolute module path, not ${policyName}`, "error");
+      const policy = dir === null ? (policyName.startsWith("/") ? policyName : null) : shippedPolicyPath(policyName, dir);
+      if (policy === null) return say(`a policy is one this package ships (${shippedNames.join(", ")}) or an absolute module path, not ${policyName}`, "error");
       if (!existsSync(policy)) return say(`no policy module at ${policy}`, "error");
 
       if (calls === null && !sessionLong) {
@@ -1403,7 +1424,7 @@ export default function (pi: ExtensionAPI) {
       const badRoot = roots.find((root) => !root.startsWith("/"));
       if (badRoot !== undefined) return say(`every root must be an absolute path, got ${badRoot}`, "error");
       if (roots.length === 0 && ctx.hasUI) {
-        const picked = await ctx.ui.select("Add roots for the preset that reads them?", ["no new roots (recommended)", "add absolute roots, comma separated"]);
+        const picked = await ctx.ui.select("Add roots for the policy that reads them?", ["no new roots (recommended)", "add absolute roots, comma separated"]);
         if (picked === undefined) return say("grant cancelled.");
         if (picked.startsWith("add")) {
           const typed = await ctx.ui.input("Roots to add, comma separated, absolute", "/abs/one,/abs/two");
@@ -1417,7 +1438,7 @@ export default function (pi: ExtensionAPI) {
       const duration = sessionLong ? "the rest of the session" : `${calls} tool call${calls === 1 ? "" : "s"}`;
       const summary =
         `${policy}\nfor ${duration}${roots.length > 0 ? `, adding roots ${roots.join(", ")}` : ""}\n${state()}\n` +
-        "the preset file is not changed and the program cannot widen itself: this entry is the widening";
+        "the policy file is not changed and the program cannot widen itself: this entry is the widening";
       if (ctx.hasUI && !(await ctx.ui.confirm("Grant this policy?", summary))) return say("grant cancelled.");
 
       const id = `g${Date.now().toString(36)}`;

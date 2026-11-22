@@ -3,7 +3,7 @@ id: codemode.effect-surface
 type: entity
 owner: delegate
 status: current
-verified_at: 2026-11-21
+verified_at: 2026-11-22
 verify: "grep -q '^## Every effect at a glance' guides/cli_effects_reference.md && test $(grep -c 'PolicyField(' test/fixtures/rule_mapping.gleam) -eq 19 && for n in AppendFile CreateKey CWD DecodeJSON DeleteFile Env Exit EYGParse Fetch Flip Hash MakeDirectory Now Random ReadDirectory ReadFile Search Sign Sleep StandardError StandardIn StandardOut WriteFile; do grep -q \"^| $n \" guides/cli_effects_reference.md || exit 1; done"
 confidence: high
 sources: [guides/cli_effects_reference.md, test/fixtures/rule_mapping.gleam, policies/agent-roots.eyg, policies/deny-all.eyg, README.md]

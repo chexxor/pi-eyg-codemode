@@ -16,7 +16,7 @@ The steps are:
 
 | in order | where it comes from |
 | --- | --- |
-| 1 | the `policy` argument of this call, which may only name a preset this package ships - it narrows a call and cannot widen one |
+| 1 | the `policy` argument of this call, honoured only when it names the policy a lower row already chose or the narrowest policy this package ships (`deny-all`), so it can only narrow; any other name is refused and the refusal names the name it refused |
 | 2 | a grant the operator made in this session with `/eyg-grant`, for one tool call, N calls or the rest of the session |
 | 3 | the policy the spawner of a subagent session named (`EYG_SUBAGENT_POLICY`), read only when `EYG_CODEMODE_DEPTH` says this package started the process - so a spawner can narrow a child in a project that names its own preset |
 | 4 | `eyg.policy` in `.pi/settings.json` - a preset shipped in this package (`agent-roots`, `deny-all`, `spawner-effects`) or an absolute path to a module of your own |

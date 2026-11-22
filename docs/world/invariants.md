@@ -7,7 +7,7 @@ id: invariant.eyg-over-bash
 type: invariant
 owner: human
 status: current
-verified_at: 2026-11-21
+verified_at: 2026-11-22
 verify: "grep -q 'does not have an effect to run shell' AGENTS.md"
 confidence: high
 sources: [AGENTS.md]
@@ -24,7 +24,7 @@ id: invariant.notes-frontmatter
 type: invariant
 owner: human
 status: current
-verified_at: 2026-11-21
+verified_at: 2026-11-22
 verify: "for f in notes/*.md; do grep -q ^name: $f || exit 1; done"
 confidence: high
 sources: [notes/pi-codemode-preset-inlining.md, AGENTS.md]
@@ -41,7 +41,7 @@ id: invariant.purpose-every-dir
 type: invariant
 owner: human
 status: current
-verified_at: 2026-11-21
+verified_at: 2026-11-22
 verify: "for d in */; do test -f ${d}PURPOSE || exit 1; done"
 confidence: high
 sources: [docs/PURPOSE, pi-simple-world-model/lib/world_model.mjs]
@@ -58,7 +58,7 @@ id: invariant.policy-self-contained
 type: invariant
 owner: human
 status: current
-verified_at: 2026-11-21
+verified_at: 2026-11-22
 verify: "! grep -q 'import \"' policies/agent-roots.eyg && ! grep -q 'import \"' policies/deny-all.eyg"
 confidence: high
 sources: [policies/agent-roots.eyg, policies/deny-all.eyg, notes/pi-codemode-preset-inlining.md]
