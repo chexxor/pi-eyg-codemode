@@ -6,7 +6,7 @@ status: suspect
 verified_at: 2026-11-22
 verify: "grep -q 'Plan first, then act' guides/tool-reference.md && grep -q 'advanced embedding scenarios' guides/tool-reference.md"
 confidence: high
-sources: [policies/agent-roots.eyg, policies/deny-all.eyg, README.md, guides/syntax.md, notes/pi-codemode-handler-seam.md]
+sources: [policies/agent-roots.eyg, policies/deny-all.eyg, README.md, notes/pi-codemode-handler-seam.md, guides/tool-reference.md]
 supersedes: null
 superseded_by: null
 ---

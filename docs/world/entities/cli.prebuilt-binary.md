@@ -4,9 +4,9 @@ type: entity
 owner: delegate
 status: current
 verified_at: 2026-11-22
-verify: "test -f guides/install_prebuilt.md && test -f guides/install_from_source.md && ! $HOME/.local/bin/eyg --help 2>&1 | grep -q -- '--policy'"
+verify: "test -x $HOME/.local/bin/eyg && $HOME/.local/bin/eyg --version 2>&1 | grep -q 'v0\\.1\\.0' && ! $HOME/.local/bin/eyg --help 2>&1 | grep -q -- '--policy'"
 confidence: high
-sources: [guides/install_prebuilt.md, guides/install_from_source.md, notes/pi_codemode_runner_probe.md, guides/pi_codemode_agent.md, docs/world/entities/cli.checked-runner-on-this-host.md]
+sources: [notes/pi_codemode_runner_probe.md, docs/world/entities/cli.checked-runner-on-this-host.md, docs/world/entities/gap.install-guides-name-no-policy.md]
 supersedes: null
 superseded_by: null
 ---
@@ -37,6 +37,7 @@ Consequences for this workspace, stated as facts:
 Not the install instructions for a user who wants the language: those are on the EYG
 website (<https://eyg.run/guides/install-a-prebuilt-binary>,
 <https://eyg.run/guides/install-from-source>) and the README points there rather than
-repeating them; `guides/install_prebuilt.md` and `guides/install_from_source.md` are offline
-copies of those pages, belonging to the language repository's build. Vendoring a runner here is
-a decision with a trigger, recorded in `AGENTS.md` ("the runner that checks effects is not in this workspace").
+repeating them. The offline copies of those pages this tree carried were deleted on 2026-11-22,
+with the rest of the page copies (`docs/world/entities/guides.index.md`). Vendoring a runner here
+is a decision with a trigger, recorded in `AGENTS.md` ("What is not here yet": a release or default
+branch whose `--help` mentions `--policy` moves those records).

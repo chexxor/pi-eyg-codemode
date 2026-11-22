@@ -6,7 +6,7 @@ status: current
 verified_at: 2026-11-22
 verify: "test -f test/fixtures/rule_mapping.gleam && grep -q 'pub const rule_mapping' test/fixtures/rule_mapping.gleam && grep -q 'policy.Unchecked' test/fixtures/rule_mapping.gleam && grep -q 'hide_secrets' policies/agent-roots.eyg && grep -q 'Mock(Error' policies/deny-all.eyg && grep -q 'Pass(value)' policies/agent-roots.eyg"
 confidence: high
-sources: [test/fixtures/rule_mapping.gleam, policies/agent-roots.eyg, policies/deny-all.eyg, README.md, guides/cli_effects_reference.md]
+sources: [test/fixtures/rule_mapping.gleam, policies/agent-roots.eyg, policies/deny-all.eyg, README.md, guides/eyg-surface.tsv]
 supersedes: null
 superseded_by: null
 ---

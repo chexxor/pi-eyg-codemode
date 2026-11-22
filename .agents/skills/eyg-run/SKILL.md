@@ -6,9 +6,10 @@ verified: 2026-11-21
 
 # Running EYG
 
-The CLI's own reference lives in the language repository, which this tree does not
-read; the effect surface this package documents is here, in
-`guides/cli_effects_reference.md`. Read that rather than guessing at effects.
+The CLI's own reference is upstream at <https://eyg.run/guides>. The surface this package
+ships is one generated file, `guides/eyg-surface.tsv`: a builtin row per name, an effect
+row per name with the policy field that decides it. Read that rather than guessing, and
+`node bin/agent/gen-surface.mjs --check` says whether it is still true.
 
 ## Which execute command
 | Need | Do |

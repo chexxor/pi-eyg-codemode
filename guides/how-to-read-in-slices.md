@@ -16,7 +16,7 @@ The steps are:
 size, so you learn the length without reading the file. `perform ReadDirectory("/abs/the
 directory")` takes a bare path and answers `Ok(List({name, type}))` where `type` is
 `Directory({})` or `File({size: Int})`. `let` takes the record apart, since `match` only
-deconstructs tagged values (`guides/syntax.md`):
+deconstructs tagged values (<https://eyg.run/guides/eyg-syntax-guide>):
 
 ```eyg
 let report = (entries) -> {
@@ -74,8 +74,8 @@ name, so the four lines shown are your names rather than a nested `match`.
 
 `eyg check -c '<snippet>'` answered exit 0 for both programs on 2026-11-19, on the CLI on
 this host. That check reads a program that is never run, so the shapes of the answers -
-`ReadDirectory` entries, `ReadFile` bytes - are the ones `guides/cli_effects_reference.md`
-documents rather than ones observed here.
+`ReadDirectory` entries, `ReadFile` bytes - are the ones
+<https://eyg.run/guides/cli-effects-reference> documents rather than ones observed here.
 
 ## Not this
 
@@ -83,7 +83,7 @@ documents rather than ones observed here.
   and its `limit` is a budget spent while walking, not a slice taken afterwards; `search_lib`
   walks with `ReadDirectory` instead, one directory checked at a time. Both report names and
   never contents, and a listed name is not permission to read that path
-  (`guides/cli_effects_reference.md`).
+  (`guides/eyg-surface.tsv` names the effect and its policy field).
 - A read you expected and did not get is the policy's decision, not the file's: see
   `guides/how-to-write-a-policy.md`, where a path ending `.env.eyg` is refused by both
   shipped policies.

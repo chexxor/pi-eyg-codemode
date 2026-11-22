@@ -6,7 +6,7 @@ status: suspect
 verified_at: 2026-11-22
 verify: "! $HOME/.local/bin/eyg --help 2>&1 | grep -q -- '--policy' && ! $HOME/.local/bin/eyg run --policy $PWD/policies/deny-all.eyg -c '!int_add(1, 1)' 2>&1 | grep -q '^2$' && grep -q 'did not understand `run --policy <module.eyg>`' guides/how-to-point-the-tool-at-your-runner.md && test ! -e bin/agent/build-checked-runner.sh"
 confidence: high
-sources: [README.md, docs/world/entities/cli.prebuilt-binary.md, docs/world/traps.md, guides/install_prebuilt.md, docs/world/entities/cli.runner-official-install-only.md, docs/world/entities/cli.runner-official-install-only.md]
+sources: [README.md, docs/world/entities/cli.prebuilt-binary.md, docs/world/traps.md, docs/world/entities/cli.runner-official-install-only.md]
 supersedes: null
 superseded_by: null
 ---

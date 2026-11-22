@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Run the six checks this package answers with, and print what each one cost.
+# Run the seven checks this package answers with, and print what each one cost.
 #
 # A human, or a script a human runs, runs this. Nothing inside the package runs it:
 # the package has no effect that starts a shell command (AGENTS.md, "Bash is not the
@@ -37,7 +37,7 @@ failures=0
 started=$SECONDS
 
 # run_check <label> <command...>: run one check, print its wall time and its exit code,
-# and remember a failure without stopping the run - an operator wants all six answers, not
+# and remember a failure without stopping the run - an operator wants all seven answers, not
 # the first one that failed.
 run_check() {
   local label=$1
@@ -79,6 +79,7 @@ sweep() {
 }
 
 echo "audit in $pkg"
+run_check "surface file current" node bin/agent/gen-surface.mjs --check
 run_check "unit test and drift guard" node --test 'test/*.mjs'
 run_check "world lint" node pi-simple-world-model/bin/world_lint.mjs
 run_check "world verify $verify_args" node pi-simple-world-model/bin/world_verify.mjs $verify_args
@@ -92,5 +93,5 @@ if [[ -n "$moved" ]]; then
   printf '  %s\n' "$moved"
 fi
 
-echo "audit: $((6 - failures))/6 passed, $failures failed, $((SECONDS - started)) s wall"
+echo "audit: $((7 - failures))/7 passed, $failures failed, $((SECONDS - started)) s wall"
 [[ $failures -eq 0 ]] || exit 1

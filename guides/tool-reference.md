@@ -2,8 +2,9 @@
 
 *This page is this package's own reference - it is not a copy of a website page. It states
 what the extension does, where in the package each fact comes from, and what stays UNVERIFIED.
-The language's own effect and syntax references are `guides/cli_effects_reference.md` and
-`guides/syntax.md`; the sections here are linked by the README and by the how-to pages.*
+The language's own effect and syntax prose is at <https://eyg.run/guides>; the surface this
+package ships is one generated file, `guides/eyg-surface.tsv`. The sections here are linked by
+the README and by the how-to pages.*
 
 The sections:
 
@@ -50,7 +51,7 @@ and the `/eyg-grant` that would have allowed it.
 A policy module may read the environment; the program under it may not. The module's own
 `perform Env("EYG_ALLOWED_ROOTS")` runs at the top of the file, outside the checks the
 program is under (`policies/agent-roots.eyg:144`), and that is why a token belongs in a
-policy module rather than in a program (`guides/pi_codemode_agent.md`).
+policy module rather than in a program (`policies/agent-roots.eyg` is written out in full).
 
 ## What a policy handler answers with
 
@@ -105,7 +106,7 @@ an `overlay.access` package applied *inside* a program - `access.apply(policy, (
 `access.write_file.mock_success`. The website marks that package as "currently unpublished",
 and it manages six effects; the CLI's policy decides the 18 fields above.
 
-One seam this tree cannot check: `guides/syntax.md:383` documents `handle EffectName` in two
+One seam this tree cannot check: the language syntax page documents `handle EffectName` in two
 lines - "used to install custom effect handlers in advanced embedding scenarios" - and those
 are the only two lines about it. The website expands it
 (<https://eyg.run/guides/advanced-effects>, read 2026-11-18): `handle EffectName(handler_fn, fallback)`
@@ -157,7 +158,7 @@ readable through a search, but its existence and name are; hide names by rooting
 narrower, or by giving `Search` its own rule wrapped the way `hide_secrets` wraps `read_file` in
 `policies/agent-roots.eyg`. Pattern semantics - one `*` per segment, a whole `**` segment spans
 depths, `limit` is a budget spent while walking, 32 directories deep - are in the `Search`
-section of `guides/cli_effects_reference.md`.
+section of <https://eyg.run/guides/cli-effects-reference>.
 
 **Adding an effect is a change to the language, not to this package**, and it is an escalation in
 the language repository's own rules. What this package does when the language lands one is follow
@@ -169,11 +170,12 @@ exists here. `docs/world/entities/overlay.policy-rules.md` carries the claim ove
 `action: "reference"` (`code: ""`) answers the other question a session asks twice: what may I call,
 and what may I ask for. Its first line counts what it prints - `eyg reference: 29 builtins, 23
 effects, nothing performed` - then one line per builtin with its signature and notes, grouped under
-the sections of `guides/builtins_reference.md`, then one line per effect with the policy field that
-decides it (`none` for the four no policy can forbid). It spawns no process and asks the policy
-nothing, so it answers on a machine where no runner was found; the builtins come from the shipped
-copy, so the answer says the compiler is the source, and it names `action: "effects"` as the call
-that asks the policy what it decides.
+the sections the language's page organises them by, then one line per effect with the policy field
+that decides it (`none` for the four no policy can forbid), then the line naming `guides/eyg-surface.tsv`
+and `node bin/agent/gen-surface.mjs --check`. It spawns no process and asks the policy nothing, so it
+answers on a machine where no runner was found; the builtin rows are a dated capture, so the answer
+says the compiler is the source, and it names `action: "effects"` as the call that asks the policy what
+it decides.
 
 A program that named a builtin the runtime does not have gets the same pointer in its rows. The
 runner prints `error: builtin undefined: !str_len` with a hint that names no path; the tool adds
@@ -257,8 +259,8 @@ and the date for each remaining claim are beside it.
 
 ## Not this
 
-- Not the language's reference: `guides/syntax.md`, `guides/builtins_reference.md` and
-  `guides/cli_effects_reference.md` carry the surface, the builtins and the effects.
+- Not the language's prose: that is at <https://eyg.run/guides>. `guides/eyg-surface.tsv` is
+  the machine-readable surface this package ships, and this page is its prose.
 - Not the how-tos: the runner, the policy, the slices and the registry are the `guides/how-to-*.md`
   set, and `guides/first-session.md` is the tutorial.
 - Not the claims: every re-checkable statement about this tree is in `docs/world/` with the command

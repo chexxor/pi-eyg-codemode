@@ -1,19 +1,22 @@
 ---
 name: reference-answer-shape
-description: Why `action: "reference"` reads the shipped guide instead of asking the runner, why it prints the surface rather than verdicts, and what that costs
+description: Why `action: "reference"` reads the generated surface file instead of asking the runner, why it prints the surface rather than verdicts, and what that costs
 date: 2026-11-20
 ---
 Three choices the code makes and does not argue.
 
-**The guide file is the source, not the runner.** The runtime has no builtin for listing builtins,
+**The surface file is the source, not the runner.** The runtime has no builtin for listing builtins,
 and inventing one would be a new effect in the language to answer a documentation question. So the
-tool parses `guides/builtins_reference.md`, the offline copy this package already ships for a
-session that cannot load a page, and says so in the first line of its answer ("an offline mirror of
-the language's page; the compiler is the source"). The cost is a stale answer when the copy is
-stale: the mirror is dated 2026-11-18 and this tree has never built a compiler to re-check it
-(`docs/world/entities/guides.index.md`). The scan is narrow on purpose - the first table cell is
-the name, the rest of the row travels with it - because a signature may contain `|`
-(`(a, a) -> True({}) | False`) and a cell split on `|` would cut a real signature in half.
+tool reads `guides/eyg-surface.tsv`, the one generated surface file this package ships, and says so
+in the first line of its answer ("a capture of the language's page; the compiler is the source under
+it"). The cost is a stale answer when the capture is stale, and the answer says which rows are a
+capture and which are generated: the effect rows are re-derived from the recorded `rule_mapping` by
+`node bin/agent/gen-surface.mjs --check`, the builtin rows are a dated capture of the language's
+page (`test/fixtures/surface.PROVENANCE.md`), and this tree has never built a compiler to re-check
+them. The capture scan is narrow on purpose - the page's first table cell is the name and the rest
+of the row travels with it - because a signature may contain `|` (`(a, a) -> True({}) | False`) and
+a cell split on `|` would cut a real signature in half. The file the scan writes is tab-separated,
+so the hazard does not follow the rows into it.
 
 **Surface, not verdicts.** The answer prints each effect with the policy *field* that decides it, and
 points at `action: "effects"` for what the policy in force decides. Asking the policy 19 questions

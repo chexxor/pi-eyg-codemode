@@ -44,7 +44,7 @@ choice as a decision record named for the topic (`docs/world/decisions/`). This 
 `verify` fails the moment such a record exists, which is how it retires.
 
 Trigger to decide, either of: the front-matter fix lands upstream and a re-run beats the
-mirrors by more than reading the mirrors costs; or the first `npm` or git release of either
+surface this package generates, plus its own skill, by more than reading those costs; or the first `npm` or git release of either
 package, which lets the declaration be written by name instead of by path.
 
 ## Not this

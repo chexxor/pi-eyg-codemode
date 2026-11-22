@@ -65,7 +65,6 @@ import {
   buildRegistry,
   builtinErrors,
   builtinHintRows,
-  builtinRows,
   callBudget,
   callLines,
   CHILD_TOOL_ALLOWLIST,
@@ -89,7 +88,7 @@ import {
   formatDuration,
   grantEvents,
   GRANT_ENTRY,
-  GUIDE_BUILTINS,
+  LANGUAGE_DOCS,
   MAX_CALLS_ENV,
   prepareCallArguments,
   probeProgram,
@@ -108,6 +107,8 @@ import {
   subagentCallLines,
   subagentResultRows,
   suggestGrant,
+  surfaceRows,
+  SURFACE_FILE,
   eygSettings,
   shippedPolicyPath,
   POLICY_FIELDS,
@@ -376,8 +377,8 @@ export default function (pi: ExtensionAPI) {
       "A search lists names under an allowed root, including names of files a read of would be refused for, so a listed path is not permission to read it.",
       "On a runtime without the `Search` effect, ask for the package's library instead of writing a walk: `libraries: [\"search\"]` and `search_lib.search({root, pattern, limit})`.",
       "Before writing a helper, call `action: \"list_functions\"` - the registry names re-usable EYG functions with their signature, description and required effects; a function you need may already exist.",
-      "When a capability question is in the air, call `action: \"effects\"` once instead of probing effects one program at a time: it runs one probe per effect under the policy in force and answers effect | policy field | decision. Read `guides/cli_effects_reference.md` in the repository for the gate classes.",
-      "When a run answers `builtin undefined`, do not guess another name: the result rows name `guides/builtins_reference.md` and `guides/syntax.md`, and `action: \"reference\"` prints the builtins and the effect surface in one call without performing an effect. pi's own `read` tool is not policy-gated, so a session that has it can open those guides directly; `ReadFile` reaches only the roots.",
+      "When a capability question is in the air, call `action: \"effects\"` once instead of probing effects one program at a time: it runs one probe per effect under the policy in force and answers effect | policy field | decision. `guides/eyg-surface.tsv` lists every effect the CLI names and the policy field that decides it.",
+      "When a run answers `builtin undefined`, do not guess another name: the result rows name `guides/eyg-surface.tsv`, and `action: \"reference\"` prints the builtins and the effect surface in one call without performing an effect. pi's own `read` tool is not policy-gated, so a session that has it can open that file directly; `ReadFile` reaches only the roots.",
       "Pass `timeout` in seconds when a run is longer than 30 s; the result says how long it took in wall time, so a timeout is visible rather than guessed.",
       "The effects listed for a registry function are advisory: availability is re-probed at each listing and the policy can change mid-session, and a run whose effect is refused simply gets the ordinary Error value.",
       "When an effect is refused, report what was refused and ask the operator for the grant the result names (/eyg-grant: one call, N calls, or the rest of the session), recommending the narrowest one that retries the refused program; then retry it. Never write a policy module of your own and never look for another channel.",
@@ -531,28 +532,29 @@ export default function (pi: ExtensionAPI) {
       }
 
       // `reference` answers the two questions a session whose only channel is effects
-      // keeps asking - which builtins exist, and what the effect surface is - from the
-      // reference guide this package ships and from `POLICY_FIELDS`. It spawns no process,
-      // performs no effect and asks the policy no question, so it answers on a machine with
-      // no runner as well; `action: effects` is the call that asks the policy what it
-      // decides for each effect, and it is offered in the last line of the answer.
+      // keeps asking - which builtins exist, and what the effect surface is - from the one
+      // surface file this package ships and generates. It spawns no process, performs no
+      // effect and asks the policy no question, so it answers on a machine with no runner
+      // as well; `action: effects` is the call that asks the policy what it decides for
+      // each effect, and it is offered in the last line of the answer.
       if (action === "reference") {
-        const guide = dir === null ? null : join(dir, GUIDE_BUILTINS);
-        const markdown = guide !== null && existsSync(guide) ? readFileSync(guide, "utf8") : "";
-        const lines = referenceLines(markdown, { policy, policySource });
-        if (markdown === "") {
-          lines.unshift(`this package carries no ${GUIDE_BUILTINS}: <https://eyg.run/guides> does`);
+        const surfacePath = dir === null ? null : join(dir, SURFACE_FILE);
+        const surfaceText = surfacePath !== null && existsSync(surfacePath) ? readFileSync(surfacePath, "utf8") : "";
+        const lines = referenceLines(surfaceText, { policy, policySource });
+        if (surfaceText === "") {
+          lines.unshift(`this package carries no ${SURFACE_FILE}: <${LANGUAGE_DOCS}> does`);
         }
+        const rows = surfaceRows(surfaceText);
         return {
-          content: [{ type: "text", text: [`eyg reference: ${builtinRows(markdown).length} builtins, ${Object.keys(POLICY_FIELDS).length} effects, nothing performed`, ...lines].join("\n") }],
+          content: [{ type: "text", text: [`eyg reference: ${rows.filter((row) => row.kind === "builtin").length} builtins, ${rows.filter((row) => row.kind === "effect").length} effects, nothing performed`, ...lines].join("\n") }],
           details: {
             gated: true,
             ran: true,
             action,
             policy,
             policySource,
-            builtinCount: builtinRows(markdown).length,
-            effectCount: Object.keys(POLICY_FIELDS).length,
+            builtinCount: rows.filter((row) => row.kind === "builtin").length,
+            effectCount: rows.filter((row) => row.kind === "effect").length,
             ...grantDetails,
           },
         };

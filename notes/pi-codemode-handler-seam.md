@@ -5,8 +5,9 @@ date: 2026-11-18
 ---
 
 The question an operator asks is "which effect handler is mine to rewrite" - EYG separates an
-effect's description from its implementation (`guides/syntax.md:349`: "Scripts declare effects
-they need; the runner decides what to do with them"), so there are four candidate seams and
+effect's description from its implementation (the language's syntax page,
+<https://eyg.run/guides/eyg-syntax-guide>: "Scripts declare effects they need; the runner decides
+what to do with them"), so there are four candidate seams and
 only two of them are this package's.
 
 **The seams, and who owns each.** The **policy rule** is this package's and is host-authored:
@@ -16,7 +17,8 @@ module** (`libraries/`, `.pi/eyg-functions/`) is the operator's composition of e
 tool the model calls - also available today. The **runtime implementation** of an effect is the
 language repository's and an escalation there; the effect-to-field map is recorded here at
 `test/fixtures/rule_mapping.gleam` and is not ours to edit. `handle EffectName`
-(`guides/syntax.md:383`) is the one route where a *program* supplies a handler, and whether it
+(two lines on that page, quoted in `guides/tool-reference.md`) is the one route where a *program*
+supplies a handler, and whether it
 can shadow the host's rule is **UNVERIFIED from this workspace** (`docs/world/traps.md` carries
 the question and the command that shows it is still unanswerable: the runner on PATH has no
 `--policy`). Nothing in this tree relies on it, and trust must never be expressed through it.

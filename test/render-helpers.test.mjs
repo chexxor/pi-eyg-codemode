@@ -11,7 +11,8 @@
  */
 
 import assert from "node:assert/strict";
-import { argumentPolicyPath, budgetRefusal, builtinErrors, builtinHintRows, builtinRows, callBudget, callLines, checkDeclaredEffects, CHILD_TOOL_ALLOWLIST, classifyProbeOutput, COLLAPSED_SOURCE_LINES, childAnswer, childArgv, childCalls, childEnvOverrides, childRefusalRows, childTools, describeGrant, EFFECT_ALLOWLIST_ENV, effectFieldsFor, effectLine, effectsUsed, eygCallCount, eygSettings, findMetadata, fieldsOutside, formatDuration, grantEvents, GRANT_ENTRY, GUIDE_BUILTINS, GUIDE_EFFECTS, GUIDE_SYNTAX, isUnder, MAX_CALLS_ENV, outsideRoot, prepareCallArguments, shippedPolicyPath, probeArguments, probeProgram, POLICY_FIELDS, referenceLines, refusalHints, replayGrants, resolvePolicy, resolveRoots, resultLines, ruleMappingEffects, rootsInside, runnerCandidates, runnerFailureLine, sessionDepth, spawnerPolicy, spawnerRoots, subagentCallLines, subagentResultRows, suggestGrant } from "../lib/render-helpers.mjs";
+import { surfaceDriftProblems } from "../bin/agent/gen-surface.mjs";
+import { argumentPolicyPath, budgetRefusal, builtinErrors, builtinHintRows, builtinRows, callBudget, callLines, checkDeclaredEffects, CHILD_TOOL_ALLOWLIST, classifyProbeOutput, COLLAPSED_SOURCE_LINES, childAnswer, childArgv, childCalls, childEnvOverrides, childRefusalRows, childTools, describeGrant, EFFECT_ALLOWLIST_ENV, effectFieldsFor, effectLine, effectsUsed, eygCallCount, eygSettings, findMetadata, fieldsOutside, formatDuration, grantEvents, GRANT_ENTRY, GENERATED_MARK, isUnder, LANGUAGE_DOCS, MAX_CALLS_ENV, outsideRoot, prepareCallArguments, shippedPolicyPath, probeArguments, probeProgram, POLICY_FIELDS, referenceLines, refusalHints, replayGrants, resolvePolicy, resolveRoots, resultLines, ruleMappingEffects, rootsInside, runnerCandidates, runnerFailureLine, sessionDepth, spawnerPolicy, spawnerRoots, subagentCallLines, subagentResultRows, suggestGrant, surfaceFileLines, surfaceRows, SURFACE_FILE } from "../lib/render-helpers.mjs";
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
 
@@ -551,35 +552,70 @@ let metadata = {
   assert.equal(unchecked, "DecodeJSON,EYGParse,Hash,Sign", "exactly four effects carry no policy field and are available under every policy");
 }
 
-// --- the reference answer: the builtins the shipped guide lists, and the effect surface ---
+// --- the reference answer: the surface file, both halves of it ---
 
 {
-  const guide = readFileSync(join(import.meta.dirname, "..", "guides", "builtins_reference.md"), "utf8");
-  const rows = builtinRows(guide);
-  assert.ok(rows.length >= 25, `the shipped guide yields its builtin rows, got ${rows.length}`);
-  for (const row of rows) {
+  const text = readFileSync(join(import.meta.dirname, "..", SURFACE_FILE), "utf8");
+  const rows = surfaceRows(text);
+  const builtins = rows.filter((row) => row.name.startsWith("!"));
+  const effects = rows.filter((row) => !row.name.startsWith("!"));
+  assert.ok(builtins.length >= 25, `the surface file yields its builtin rows, got ${builtins.length}`);
+  for (const row of builtins) {
     assert.match(row.name, /^![a-z0-9_]+$/, `${row.name} is a builtin name`);
     assert.ok(row.signature !== "", `${row.name} carries its signature and notes`);
+    assert.ok(!/\|$/.test(row.signature), `${row.name} carries no dangling table separator`);
   }
-  const byName = new Map(rows.map((row) => [row.name, row]));
+  const byName = new Map(builtins.map((row) => [row.name, row]));
   for (const name of ["!int_add", "!string_split_once", "!binary_size", "!list_pop", "!never"]) {
     assert.ok(byName.has(name), `${name} is listed`);
   }
-  assert.equal(byName.get("!int_add").section, "Integers", "the section heading travels with the row");
-  assert.match(byName.get("!equal").signature, /True\(\{\}\) \| False/, "a signature containing | survives a row that is itself |-delimited");
-  assert.ok(!rows.some((row) => row.section === "Common idioms"), "a prose section adds no rows");
-  assert.ok(!byName.get("!int_add").signature.endsWith("|"), "an empty notes cell leaves no dangling |");
+  assert.equal(byName.get("!int_add").detail1, "Integers", "the section heading travels with the row");
+  assert.ok(!builtins.some((row) => row.detail1 === "Common idioms"), "a prose section adds no rows");
+  // The effect half is generated from the recorded rule_mapping, so it is the
+  // advertised surface exactly, in order, with what the policy decides for each.
+  assert.deepEqual(effects.map((row) => row.name), Object.keys(POLICY_FIELDS), "its effect rows are POLICY_FIELDS, in order");
+  for (const [name, field] of Object.entries(POLICY_FIELDS)) {
+    const row = effects.find((r) => r.name === name);
+    assert.equal(row.detail1, field ?? "none", `${name} carries the policy field that decides it, or none`);
+  }
+  assert.ok(text.includes(GENERATED_MARK), "the file says it is generated, and by what");
+  assert.ok(text.includes(LANGUAGE_DOCS), "and names the language's pages rather than copying them");
+  assert.match(text, /captured from <[^>]+> on \d{4}-\d{2}-\d{2}; md5 of the copy this tree/, "the builtin rows say where they were captured, when, and of what");
+  assert.match(text, /deleted is [0-9a-f]{32}/, "with the checksum of the capture");
 
-  const lines = referenceLines(guide, { policy: "/pkg/policies/agent-roots.eyg", policySource: "project settings" });
-  assert.match(lines[0], new RegExp(`builtins: ${rows.length}, from ${GUIDE_BUILTINS}`), "the count and the file it came from");
+  const lines = referenceLines(text, { policy: "/pkg/policies/agent-roots.eyg", policySource: "project settings" });
+  assert.match(lines[0], new RegExp(`builtins: ${builtins.length}, read from ${SURFACE_FILE}`), "the count and the file it came from");
   for (const name of Object.keys(POLICY_FIELDS)) {
     assert.ok(lines.some((line) => line.startsWith(`  ${name} | `)), `${name} is in the effect surface`);
   }
   assert.ok(lines.some((line) => line.includes("DecodeJSON | none")), "an unchecked effect says no policy can forbid it");
+  assert.ok(lines.some((line) => line.startsWith("effects:") && line.includes(SURFACE_FILE)), "the effect half names the file it was generated into");
+  assert.ok(lines.some((line) => line.startsWith(surfaceFileLines()[0])), "and points at the generator that keeps it true");
   assert.ok(lines.some((line) => line.includes('policy in force: /pkg/policies/agent-roots.eyg (project settings)')), "the policy in force is named");
   assert.ok(lines.some((line) => line.includes('action "effects"')), "and the call that asks it what it decides, effect by effect");
   assert.ok(lines.some((line) => line.includes("read tool is not policy-gated")), "the harness read tool's standing is stated");
   assert.ok(!/\| (allowed|refused|unavailable|unknown)/.test(lines.join("\n")), "it reports no verdict, so it asked the policy nothing");
+}
+
+// --- the drift check over the surface file: four inputs, and a planted rename answers ---
+
+{
+  const text = readFileSync(join(import.meta.dirname, "..", SURFACE_FILE), "utf8");
+  assert.deepEqual(surfaceDriftProblems(text), [], "the file agrees with the fixture, POLICY_FIELDS, this tree's calls and its own rebuild");
+
+  const renamed = surfaceDriftProblems(text.replace("effect\tWriteFile\twrite_file", "effect\tWriteFileX\twrite_file"));
+  assert.ok(renamed.some((p) => p.includes("missing row: effect\tWriteFile\twrite_file")), "a renamed effect row is a missing row");
+  assert.ok(renamed.some((p) => p.includes("row not in the inputs: effect\tWriteFileX")), "and an invented one is an extra row");
+  assert.ok(renamed.some((p) => p === "the file does not match what the generator rebuilds"), "and the byte-for-byte rebuild notices");
+
+  const dropped = surfaceDriftProblems(text.replace("effect\tSearch\tread_file\t\n", ""));
+  assert.ok(dropped.some((p) => p.includes("missing row: effect\tSearch")), "a deleted effect row is caught by the recorded mapping");
+
+  const builtinRenamed = surfaceDriftProblems(text.replace("builtin\t!int_add\tIntegers\t", "builtin\t!int_addx\tIntegers\t"));
+  assert.ok(
+    builtinRenamed.some((p) => p === "builtin this tree calls is not listed: !int_add"),
+    "a renamed builtin this tree calls is caught by the sources that call it",
+  );
 }
 
 // --- the rows a failed run adds when it named a builtin the runtime does not have ---
@@ -597,10 +633,10 @@ let metadata = {
   const rows = builtinHintRows(builtinErrors(out));
   const shown = flat(rows);
   assert.match(shown, /no such builtin: !str_len/, "the name is repeated back");
-  assert.ok(shown.includes(GUIDE_BUILTINS), "the row names the guide path");
+  assert.ok(shown.includes(SURFACE_FILE), "the row names the surface file");
   assert.match(shown, /action "reference"/, "and the action that prints the list without leaving the tool");
   assert.ok(shown.includes("read tool is not policy-gated"), "and says pi's own read tool is not policy-gated");
-  assert.ok(shown.includes(GUIDE_SYNTAX), "the syntax guide is named too, since invented syntax is the other failure");
+  assert.equal(shown.split(SURFACE_FILE).length - 1, 2, "builtins and syntax share one file, so it is named twice and no guide path is invented");
   assert.equal(builtinHintRows([]).length, 0, "no invented builtin, no lecture");
 
   const result = {

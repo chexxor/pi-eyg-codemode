@@ -15,11 +15,11 @@ and the reference lives where a reader at work reads it.
 and it holds the whole middle of the old README nearly as it was written. The alternative -
 split it across pages named by Diátaxis kind - was rejected in the same commit the audit
 landed in: the world-model lint requires a claim id to equal its filename stem, so moving
-pages moves ids, pointers and verify commands; and the two `guides/install_*.md` files would
-stop being mirrors of the website's pages and stop being checkable against them. A page this
-package writes carries no "copied from the language repository" note, so the mirror record in
-`guides/pi_codemode_agent.md` and `guides/cli_effects_reference.md` stays the only such note
-in `guides/`, and `guides/PURPOSE` says which set each file belongs to.
+pages moves ids, pointers and verify commands; and the two `guides/install_*.md` files then in
+the tree would stop being mirrors of the website's pages and stop being checkable against them
+(they were deleted on 2026-11-22, which removed that constraint along with them). A page this
+package writes carries no "copied from the language repository" note; the surface file says where
+its builtin rows were captured, and `guides/PURPOSE` says what the directory holds.
 
 What stays in the README is what only the README can carry: what the package is, who reads
 it, the words a reader cannot look up elsewhere, the one fact that has to be true on their

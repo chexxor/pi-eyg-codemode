@@ -16,7 +16,7 @@ nothing here reads it at run time, and this tree never writes outside itself.
 | bin/ | The shell scripts a human runs outside this package. One: `agent/audit.sh`, which runs the |
 | docs/ | The world model records for this workspace: docs/world/00-map.md (tier-0 index), the entity, decision and runbook pages, invariants.md, traps.md and roster.yaml. The lint, map and verify CLIs that check them live in pi-simple-world-model/. |
 | extensions/ | The one pi extension: it registers the `eyg` tool, resolves the policy, the roots and the runner from inside the package, and spawns the runner that checks every effect through argv. |
-| guides/ | Prose guides read before writing EYG, in two sets: the language reference copied from the |
+| guides/ | Prose this package writes for its own users - the tour (`first-session.md`), the how-tos |
 | lib/ | The pure JavaScript shapes the tool and its tests share: render rows, the effect scan, availability-probe arguments, the registry walk, the argument mapping. |
 | libraries/ | EYG modules this package ships: bound by the tool's `libraries` parameter and listed in its function registry. |
 | notes/ | Design notes with name/description/date front-matter; the record of trade-offs that are not clear in the code. |
@@ -43,14 +43,15 @@ nothing here reads it at run time, and this tree never writes outside itself.
 | cli.runner-official-install-only | `runnerCandidates` in `lib/render-helpers.mjs` returns two things and nothing else: the value of `EYG_CODEMODE_RUNNER` ... | delegate | 2026-11-22 |
 | codemode.effect-surface | A running program reaches the host only through effects, and the set it may perform is an intersection of three files. | delegate | 2026-11-22 |
 | gap.grant-polish-undecided | The mechanism is recorded and partly measured in `docs/world/entities/pi.session-grants.md`: a refusal names the ask, ... | delegate | 2026-11-22 |
-| gap.install-guides-name-no-policy | Neither install route - the website's pages and this tree's mirrors, `guides/install_prebuilt.md` and ... | delegate | 2026-11-22 |
+| gap.install-guides-name-no-policy | Neither install page at <https://eyg.run/guides> - `install-a-prebuilt-binary` and `install-from-source`, the index ... | delegate | 2026-11-22 |
 | gap.language-skill-home-undecided | `.pi/settings.json` declares the EYG language-skill pi package by path, one directory above this one (`@measured ... | delegate | 2026-11-22 |
 | gap.policy-record-extension | `guides/how-to-write-a-policy.md` tells an operator to copy the shipped policy nearest what they need and change the ... | delegate | 2026-11-22 |
 | gap.policy-runner-not-on-main | The one-shot run this package starts — `eyg run --policy <module.eyg>` — is not in the language repository's `main` as ... | delegate | 2026-11-22 |
 | gap.roots-have-no-config-file | This page recorded the hole: the roots in force were the session working directory or `EYG_ALLOWED_ROOTS`, ... | delegate | 2026-11-22 |
 | gap.runner-release-lacks-policy | The latest release the language repository serves is `gleam_cli-v0.1.0` (read from its release feed on 2026-11-19), and ... | delegate | 2026-11-22 |
-| gap.windows-is-undocumented | `guides/install_prebuilt.md` offers `eyg-windows-x64.exe` as a release asset, and `README.md` mentions Windows nowhere. | delegate | 2026-11-22 |
-| guides.index | `guides/` holds the prose an agent reads before writing EYG, in two sets. | delegate | 2026-11-22 |
+| gap.windows-is-undocumented | The language's prebuilt-install page (<https://eyg.run/guides/install-a-prebuilt-binary>, read as a copy here on ... | delegate | 2026-11-22 |
+| guides.index | `guides/` holds what an agent reads before writing EYG, and it is one set now: prose this package wrote, plus ... | delegate | 2026-11-22 |
+| guides.surface-file | `guides/eyg-surface.tsv` is the whole offline answer to "what may I call, and what may I ask for": 29 `builtin` rows ... | delegate | 2026-11-22 |
 | notes.format | `notes/` is where trade-offs go when they are not clear from the code: one file per subject, `name:`, `description:` ... | delegate | 2026-11-22 |
 | overlay.agent-harness | Overlay is the EYG repository's own agent. | delegate | 2026-11-22 |
 | overlay.policy-rules | A running EYG program is stopped at every effect before the host performs it, and a user-supplied function decides. | delegate | 2026-11-22 |
@@ -78,7 +79,7 @@ nothing here reads it at run time, and this tree never writes outside itself.
 
 ## Where to look for a claim
 
-- entities: 25 · invariants: 4 · decisions: 6 · runbooks: 2 · traps: 49
+- entities: 26 · invariants: 4 · decisions: 6 · runbooks: 2 · traps: 50
 - suspect right now: ADR-002-handler-seam, gap.runner-release-lacks-policy, overlay.agent-harness, pi.policy-config
 - re-check everything: `npm run world` · checks: `npm run world:lint` · regenerate this index: `npm run world:map`
 <!-- END GENERATED -->

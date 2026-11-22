@@ -56,8 +56,9 @@ by `node --test` regardless.
 ## Learn what one record covers
 
 The record names 18 fields, and 19 effects share them: a `Search` is decided under the
-`read_file` field, so one rule covers a whole walk. `guides/cli_effects_reference.md` lists
-each effect with its field and the type a rule must return. Four effects have no field at
+`read_file` field, so one rule covers a whole walk - `guides/eyg-surface.tsv` carries that
+sharing as data. <https://eyg.run/guides/cli-effects-reference> lists each effect with its
+field and the type a rule must return. Four effects have no field at
 all, because they are deterministic over the values they were given: `DecodeJSON`,
 `EYGParse`, `Hash` and `Sign`. No policy refuses them, so a plan that depends on forbidding
 one is a plan that cannot be built with a policy.
@@ -112,7 +113,8 @@ let one_host = (request) -> {
 
 The `Fetch` value is a record with `method`, `scheme`, `host`, `port`, `path`, `query`,
 `headers` and `body`, so a rule reads `request.host`. To attach a token, `Pass` a rebuilt
-request: a record update overwrites only fields that already exist (`guides/syntax.md`), so
+request: a record update overwrites only fields that already exist
+(<https://eyg.run/guides/eyg-syntax-guide>), so
 a rewritten request lists every field. A token belongs in the policy module rather than in
 the program, because the module is authored on the host: its own `perform Env("...")` runs
 at the top of the module, outside the checks your program is under, while the program's

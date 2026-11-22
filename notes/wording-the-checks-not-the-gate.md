@@ -14,13 +14,14 @@ reworded at the same time as the paragraphs were cut to say each fact once.
 - Two entity claim ids moved, because the world-model lint requires an id to equal its
   filename stem (`pi-simple-world-model/lib/world_model.mjs:464`):
   `overlay.policy-gate` → `overlay.policy-rules`, `pi.codemode-gate` → `pi.codemode-tool`.
-  Every pointer to them moved in the same commit (README, `guides/pi_codemode_agent.md`,
+  Every pointer to them moved in the same commit (README, the page copy since deleted,
   ADR-002, `notes/pi-eyg-codemode-workspace-port.md`); `docs/world/00-map.md` is generated
   and was regenerated.
 - Claim verify commands that grep prose moved with the prose, or the claim would read as
   suspect the day the wording changed: `ADR-003-doc-delegation` greps the install
-  sentence, `traps.md` greps `one-shot evaluation is not checked` in
-  `guides/pi_codemode_agent.md`. `docs/world/traps.md` carries the trap and a verify
+  sentence, `ADR-003-doc-delegation` greps the install sentence, and a `traps.md` entry that
+  grepped a page copy for that sentence now greps the claim record that carries it.
+  `docs/world/traps.md` carries the trap and a verify
   command that answers 0 while the README is clean.
 - The tier-0 index line "gate: `npm run world:lint`" is generated, so the generator
   template in `pi-simple-world-model/lib/world_model.mjs` was edited, not the output.
@@ -42,8 +43,9 @@ reworded at the same time as the paragraphs were cut to say each fact once.
   word for the mechanism, and the four unchecked effects are the reason the set needs a name.
 - `CHANGELOG.md` keeps the entries' substance; its header says the wording was replaced on
   2026-11-19, so the record does not claim the releases used this tree's words.
-- The two `guides/` mirrors of the language's pages (`pi_codemode_agent.md`,
-  `cli_effects_reference.md`) were reworded so a new user reading them hits no jargon;
+- The two `guides/` copies of the language's pages (`pi_codemode_agent.md`,
+  `cli_effects_reference.md`, both deleted 2026-11-22) were reworded so a new user reading them
+  hit no jargon;
   the guide's header note says the replacement happened on 2026-11-19 and that the page's
   wording is this tree's, not the website's. Rejected: leaving them verbatim, which keeps
   the biggest concentration of the word in the two files a new user reads most. Trigger

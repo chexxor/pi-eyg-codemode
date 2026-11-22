@@ -4,9 +4,9 @@ type: entity
 owner: delegate
 status: current
 verified_at: 2026-11-22
-verify: "grep -q '^## Every effect at a glance' guides/cli_effects_reference.md && test $(grep -c 'PolicyField(' test/fixtures/rule_mapping.gleam) -eq 19 && for n in AppendFile CreateKey CWD DecodeJSON DeleteFile Env Exit EYGParse Fetch Flip Hash MakeDirectory Now Random ReadDirectory ReadFile Search Sign Sleep StandardError StandardIn StandardOut WriteFile; do grep -q \"^| $n \" guides/cli_effects_reference.md || exit 1; done"
+verify: "test $(grep -c 'PolicyField(' test/fixtures/rule_mapping.gleam) -eq 19 && test $(grep -c '^effect' guides/eyg-surface.tsv) -eq 23 && node bin/agent/gen-surface.mjs --check"
 confidence: high
-sources: [guides/cli_effects_reference.md, test/fixtures/rule_mapping.gleam, policies/agent-roots.eyg, policies/deny-all.eyg, README.md]
+sources: [guides/eyg-surface.tsv, bin/agent/gen-surface.mjs, test/fixtures/rule_mapping.gleam, policies/agent-roots.eyg, policies/deny-all.eyg, README.md]
 supersedes: null
 superseded_by: null
 ---
@@ -16,8 +16,10 @@ superseded_by: null
 A running program reaches the host only through effects, and the set it may perform is an
 intersection of three files. Read them in this order, and the answer costs one lookup:
 
-1. `guides/cli_effects_reference.md`, section `Every effect at a glance` - one row per effect,
-   with the policy field it sits under and what that field allows. That is the capability question.
+1. `guides/eyg-surface.tsv`, the `effect` rows - one row per effect with the policy field that
+   decides it (`none` for the four no policy can forbid). `action: "effects"` answers what the policy
+   in force decides for each. The argument type a rule must return is on
+   <https://eyg.run/guides/cli-effects-reference>.
 2. The policy in force - `policies/agent-roots.eyg` decides each policy field for the roots
    named in `EYG_ALLOWED_ROOTS`; the vocabulary is written out inline, one rule per field.
 3. The roots themselves, for a path question. The tool reports the policy it used and its

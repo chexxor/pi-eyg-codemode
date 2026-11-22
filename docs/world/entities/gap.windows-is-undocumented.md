@@ -4,16 +4,21 @@ type: entity
 owner: delegate
 status: current
 verified_at: 2026-11-22
-verify: "! grep -qi 'windows' README.md && grep -qi 'windows' guides/install_prebuilt.md"
+verify: "! grep -qi 'windows' README.md && grep -q 'eyg-windows-x64.exe' docs/world/entities/gap.windows-is-undocumented.md && grep -q 'install-a-prebuilt-binary' README.md"
 confidence: medium
-sources: [README.md, guides/install_prebuilt.md, extensions/eyg-codemode.ts]
+sources: [README.md, extensions/eyg-codemode.ts]
 supersedes: null
 superseded_by: null
 ---
 
 # Gap: the Windows route is named by the install guide and answered by no page
 
-`guides/install_prebuilt.md` offers `eyg-windows-x64.exe` as a release asset, and `README.md` mentions Windows nowhere. What the package does on that platform is untested and undocumented: the runner candidates are `eyg` and `<cwd>/packages/gleam_cli/dist/eyg`, resolved through pi's `exec`, and the shipped policy reads `EYG_ALLOWED_ROOTS`, which is set and restored around the call. Nothing here proves either half works without a POSIX shell.
+The language's prebuilt-install page (<https://eyg.run/guides/install-a-prebuilt-binary>, read as a
+copy here on 2026-11-18 and at the website on 2026-11-22) offers `eyg-windows-x64.exe` as a release
+asset, and `README.md` mentions Windows nowhere. What the package does on that platform is untested
+and undocumented: the runner is what `EYG_CODEMODE_RUNNER` names, else `eyg` on PATH
+(`runnerCandidates` in `lib/render-helpers.mjs`), spawned through pi's `exec` with no shell, and the
+shipped policy reads `EYG_ALLOWED_ROOTS`, which is set and restored around the call. Nothing here proves either half works without a POSIX shell.
 
 ## What to do about it
 

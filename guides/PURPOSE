@@ -1,4 +1,5 @@
-Prose guides read before writing EYG, in two sets: the language reference copied from the
-website (`syntax.md`, `builtins_reference.md`, `cli_effects_reference.md`, `pi_codemode_agent.md`,
-the two install pages), and this package's own tutorial (`first-session.md`), how-tos
-(`how-to-*.md`) and reference (`tool-reference.md`).
+Prose this package writes for its own users - the tour (`first-session.md`), the how-tos
+(`how-to-*.md`), the tool's reference (`tool-reference.md`) - and the one machine-readable
+surface: `eyg-surface.tsv`, one builtin row per name and one effect row per name with the
+policy field that decides it, generated and drift-checked by `bin/agent/gen-surface.mjs`.
+The language's prose is not copied here; it is at <https://eyg.run/guides>.

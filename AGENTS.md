@@ -26,7 +26,7 @@ another workspace at run time.**
   path in `.pi/settings.json` - the one line of this tree that reaches outside it, and the
   only reason a session here can see the language reference. `pi list` prints where each
   declared package resolves. A session that needs the language reference loads that
-  package; a session that needs the effect reference reads `guides/` here. Whether that
+  package; a session that needs the effect surface reads `guides/eyg-surface.tsv` here. Whether that
   skill belongs inside this package or out as its own release is an open question, with its
   evidence and its two triggers in
   `docs/world/entities/gap.language-skill-home-undecided.md`.
@@ -38,7 +38,7 @@ spawns the binary that decides every effect through argv) · `lib/` the plain-Ja
 tool and its tests · `libraries/` the EYG modules bound by the tool's `libraries`
 parameter · `policies/` the policies this package ships, each written out in full and importing
 nothing · `skills/` the pi skill a model reads before writing EYG · `test/` the unit test and the
-recorded `rule_mapping` snapshot the drift guard compares against · `guides/` the prose
+recorded `rule_mapping` snapshot the drift guard compares against, and `guides/eyg-surface.tsv` the generated surface · `guides/` the prose
 reference · `notes/` the trade-offs the code cannot show · `docs/world/` the claims with
 their verify commands · `pi-simple-world-model/` the vendored tool over those claims ·
 `.agents/skills/` the skills the coding agent loads. Every one carries a `PURPOSE` file.
@@ -100,7 +100,8 @@ shell commands; a policy module decides each effect before the host performs it.
 
 | Do this | cost | measured |
 | --- | --- | --- |
-| `bin/agent/audit.sh` (a human or a cron runs it; six checks, each cost printed) | 5.70 s wall, 6/6 passed | 2026-11-20 |
+| `bin/agent/audit.sh` (a human or a cron runs it; seven checks, each cost printed) | see its own last line | 2026-11-22 |
+| `node bin/agent/gen-surface.mjs --check` (the surface file against its four inputs) | 0.04 s wall | 2026-11-22 |
 | `node --test 'test/*.mjs'` (or the single file) | 0.09 s wall, pass 1 fail 0 | 2026-11-18 |
 | `pi --print --mode json --tools eyg <prompt>` (one fresh session, one tool call) | 20-40 s wall; needs `--model`, the default model hangs | 2026-11-20 |
 | `for f in policies/*.eyg libraries/*.eyg; do eyg check "$f"; done` | 0.43 s wall | 2026-11-18 |
@@ -211,7 +212,7 @@ never put a workspace fact in a guide - a fact in two places drifts.
   it as `pi-simple-world-model/` is vendored, publish it and declare it by name) are unwritten down as
   a decision (`gap.language-skill-home-undecided`; options and costs in
   `notes/pi-codemode-language-skill-packaging.md`). It is the next milestone's first row. Trigger: the
-  upstream `SKILL.md` front-matter fix lands and a re-run beats the `guides/` mirrors, or the first
+  upstream `SKILL.md` front-matter fix lands and a re-run beats the surface this package ships, or the first
   release of either package lets the declaration be written by name.
 - **Three copies of the world model tool.** This one, the language repository's, and the
   publisher's; drift between them is invisible. Revisit trigger: two `CHANGELOG.md`s differ,

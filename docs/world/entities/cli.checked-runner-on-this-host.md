@@ -65,8 +65,8 @@ printed nothing after both the direct calls and the pi session.
 - whether a *release* carries the flag: `gap.runner-release-lacks-policy`; and whether `main`
   has the runner: `gap.policy-runner-not-on-main`;
 - how much of the package is still unproven in use: `pi.first-draft`;
-- what the policies decide, effect by effect: `overlay.policy-rules` and
-  `guides/cli_effects_reference.md`;
+- what the policies decide, effect by effect: `overlay.policy-rules` and the effect rows of
+  `guides/eyg-surface.tsv`;
 - how to point the tool at a runner of your own: `guides/how-to-point-the-tool-at-your-runner.md`.
 
 @measured 2026-11-20 by `.local/eyg-checked --help 2>&1 | grep -c -- --policy` (3),

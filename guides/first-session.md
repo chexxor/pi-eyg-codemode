@@ -123,7 +123,7 @@ last line reads `policy: <path> (<source>) runner: <path> roots: <path>`.
 
 ## What to read next
 
-- `guides/cli_effects_reference.md` - every effect, its policy field and its argument type.
+- `guides/eyg-surface.tsv` - one row per effect with the policy field that decides it; <https://eyg.run/guides/cli-effects-reference> adds the argument type.
 - `guides/how-to-write-a-policy.md` - a session that works somewhere else, or that may
   reach the network.
 - `guides/how-to-point-the-tool-at-your-runner.md` - a CLI you built yourself.

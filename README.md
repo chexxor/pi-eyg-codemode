@@ -55,8 +55,8 @@ Three readers, and each needs one thing from this tree:
 | to reuse a function rather than write a helper | `guides/how-to-share-functions.md` |
 | to hand a chunk of work to a second session that cannot reach more than you can | `guides/how-to-spawn-a-subagent.md` |
 | the tool's knobs, rows, probes, limits and the seam it cannot check | `guides/tool-reference.md` |
-| the language itself: surface syntax, builtins, every effect | <https://eyg.run/guides>, mirrored offline in `guides/syntax.md`, `guides/builtins_reference.md`, `guides/cli_effects_reference.md` |
-| to run a whole pi agent in EYG rather than one call | `guides/pi_codemode_agent.md`, with `skills/eyg-codemode/SKILL.md` loaded for the model |
+| the language itself: surface syntax, builtins, every effect | <https://eyg.run/guides>; the machine-readable surface this package ships is `guides/eyg-surface.tsv` |
+| to run a whole pi agent in EYG rather than one call | `skills/eyg-codemode/SKILL.md` loaded for the model, and the `policies/` records written out in full |
 | to compare this package with the language's own agent harness (Overlay) and choose between them | `docs/world/entities/overlay.agent-harness.md` for what each owns, `notes/pi-eyg-codemode-vs-overlay.md` for the trade-off |
 | what this tree claims about itself, and the command that re-checks each claim | `docs/world/00-map.md` |
 | the commands a session here runs, with measured costs and the hard rules | `AGENTS.md` |
@@ -79,10 +79,9 @@ the claims in `docs/world/`.
 the tool starts a runner begun with `--policy <module.eyg>`, and only that runner can answer
 for an effect. Install one from
 <https://eyg.run/guides/install-a-prebuilt-binary> or
-<https://eyg.run/guides/install-from-source> (Gleam >= 1.7 and Bun).
-`guides/install_prebuilt.md` and `guides/install_from_source.md` are copies of those two
-pages, taken 2026-11-18, for a session that cannot load a page; the paths inside the second
-belong to the language repository, not to this tree.
+<https://eyg.run/guides/install-from-source> (Gleam >= 1.7 and Bun). Neither page names
+`--policy`: it is this package's requirement of the binary it starts, and the sentence above
+and `guides/how-to-point-the-tool-at-your-runner.md` are where this package answers it.
 
 Then the tool has to find what you installed. It starts one binary, from exactly two places,
 in this order (`runnerCandidates` in `lib/render-helpers.mjs`):
@@ -127,8 +126,8 @@ run of it.
 - **What you give up:** the model writes EYG rather than JavaScript and `bash`. The forms it needs
   are in `skills/eyg-codemode/SKILL.md` (loaded automatically); the surface syntax is
   <https://eyg.run/guides/eyg-syntax-guide> and the effect reference is
-  <https://eyg.run/guides/cli-effects-reference> (offline copies of both live here as
-  `guides/syntax.md` and `guides/cli_effects_reference.md`). The language *skill* is the separate
+  <https://eyg.run/guides/cli-effects-reference>; `action: "reference"` prints the builtin
+  names and the effect surface without performing an effect. The language *skill* is the separate
   pi package, declared in `.pi/settings.json`; `pi list` prints the absolute path a
   declaration of it resolves to on your machine.
 - **When not to use it:** a workspace whose agent must run arbitrary host commands - builds, git,
@@ -150,9 +149,11 @@ run of it.
 | `libraries/search.eyg` | the search helper bound as `search_lib` by the `libraries` parameter; carries the `metadata` record the registry reads |
 | `lib/render-helpers.mjs` | the pure shapes the tool and its test share (plain JS: jiti does not transform a `.mjs`, so annotations in it are a parse error at load) |
 | `test/render-helpers.test.mjs` | the unit test over those shapes and the drift guard |
+| `bin/agent/gen-surface.mjs` | generates `guides/eyg-surface.tsv` and drift-checks it: `--check` against four inputs, `--builtins <the page as markdown> --write` to re-capture the builtin rows |
+| `test/fixtures/surface.PROVENANCE.md` | where the surface file's builtin rows were captured, when, their checksum, and how to re-capture them |
 | `test/fixtures/rule_mapping.gleam` | the runtime's `rule_mapping` recorded verbatim, so the guard runs without the language repository present (`test/fixtures/rule_mapping.PROVENANCE.md`: where it came from, its checksums, how to refresh it) |
 | `skills/eyg-codemode/SKILL.md` | the pi skill loaded when a model writes EYG: the forms, what a refusal means, how to ask the registry |
-| `guides/` | the reference copied from the language repository, and this package's tutorial, how-tos and reference |
+| `guides/` | this package's tutorial, how-tos and tool reference, plus `eyg-surface.tsv`: the builtin rows and one effect row per name with the policy field that decides it |
 | `notes/`, `docs/world/`, `pi-simple-world-model/` | the decision record, the claims with the tool that checks them |
 
 ## Commands that run here

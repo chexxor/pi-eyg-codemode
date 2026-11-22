@@ -26,7 +26,7 @@
 //
 // `ReadDirectory` takes a bare path and answers
 // `Result(List({name: String, type: Directory({}) | File({size: Int})}), String)`
-// as documented in guides/cli_effects_reference.md; the shapes here are that
+// as the effect rows of guides/eyg-surface.tsv record it; the shapes here are that
 // shape, not a guess.
 // There is no `!list_length`; a count is a fold, so it is named once here.
 let length = (items) -> {

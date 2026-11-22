@@ -35,9 +35,8 @@
 // `Search` is not in this record: the CLI gates it as the `read_file` field, so
 // whatever decides `ReadFile` decides a search.
 //
-// See guides/pi_codemode_agent.md for the policies that open hosts, and
-// policies/agent-roots.eyg for the default that lets a session work in one
-// directory.
+// <https://eyg.run/guides/cli-effects-reference> says what each effect does;
+// policies/agent-roots.eyg is the default that lets a session work in one directory.
 
 let deny = (reason) -> {
   (_) -> { Mock(Error(reason)) }

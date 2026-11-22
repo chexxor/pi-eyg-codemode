@@ -4,9 +4,9 @@ type: adr
 owner: human
 status: accepted
 verified_at: 2026-11-22
-verify: "grep -q 'eyg.run/guides/install-a-prebuilt-binary' README.md && ! grep -q 'not from this README' README.md && test -f guides/install_prebuilt.md"
+verify: "grep -q 'eyg.run/guides/install-a-prebuilt-binary' README.md && ! grep -q 'not from this README' README.md && ! test -f guides/install_prebuilt.md && test -f guides/eyg-surface.tsv"
 confidence: high
-sources: [README.md, guides/install_prebuilt.md, guides/install_from_source.md, guides/syntax.md, guides/cli_effects_reference.md, docs/world/entities/guides.index.md]
+sources: [README.md, docs/world/entities/guides.index.md, guides/eyg-surface.tsv]
 supersedes: null
 superseded_by: null
 ---
@@ -28,19 +28,30 @@ copy is wrong the day the site changes - the trap that covers "a fact in two pla
 
 The README states **only this package's contract** - what has to be true on your machine
 (a runner that accepts `--policy`), where the tool looks for it (the candidate list, in order,
-with `EYG_CODEMODE_RUNNER` first), what the probe accepts, and what is UNVERIFIED until such a
-runner runs here - and links the website for every step of getting the CLI. Install commands
-are not quoted in the README. The offline copies in `guides/` stay in the tree as a mirror for
-a session that cannot load a page, and are labelled as copies with the date they were taken,
-never presented as current instructions.
+with `EYG_CODEMODE_RUNNER` first), what a call answers when the binary it starts does not know
+the flag, and what is UNVERIFIED until a build that knows it runs here - and links the website for
+every step of getting the CLI. Install commands are not quoted in the README.
+
+**Amended 2026-11-22, and this is the half that changed.** The offline copies do not stay. What a
+session with no network needs is the *surface* - builtin names, effect names, the policy field that
+decides each - and that is now one generated file, `guides/eyg-surface.tsv`, whose builtin rows keep
+this decision's labelling discipline (a capture, with its date and checksum in the file's own
+header) and whose effect rows are re-derived from a recorded snapshot
+(`docs/world/entities/guides.surface-file.md`). The prose those pages carried is not reproduced in
+any form; a page this package did not write is a link, not a copy. The README-contract half of this
+decision - the README states only this package's contract and links the website for the rest - is
+unchanged.
 
 ## Alternatives rejected
 
 - **Reproducing the install steps in the README:** one more copy of a moving fact, and the
   README is the file most likely to be read by a new user, so it drifts first.
-- **Deleting the offline guide copies:** the world model's `sources` and several claim verify
-  commands read those files, and a session with no network would lose the effect and syntax
-  reference mid-task. Keeping them as labelled mirrors keeps the claim honest ("copied 2026-11-18").
+- **Deleting the offline guide copies** (rejected in 2026-11-18 for these reasons, adopted on
+  2026-11-22): the world model's `sources` and several claim verify commands read those files, and a
+  session with no network would lose the effect and syntax reference mid-task. Both reasons went
+  away the same way: the `sources` and verifies moved to the generated file and the snapshot, and
+  the offline reference a session needs is rows, which the file carries, rather than prose, which it
+  does not.
 - **Pointing only at the language repository's copies:** that repository is not on a new user's
   machine, and a path into it is one more thing that does not resolve.
 
@@ -51,6 +62,7 @@ never presented as current instructions.
 + The copies remain useful offline, and their staleness window is dated on their face.
 - Two documents describe the same how-to, so a guide copy and its page can disagree; the
   README says which one wins (the website), and `docs/world/traps.md` carries the trap.
-- This package's claims still verify against the local copies (`guides/install_prebuilt.md`
-  and friends), because those files are the local, checkable artefact - the README does not
-  have to be the place that carries them.
+- *(2026-11-18)* This package's claims verified against the local copies, because those files
+  were the local, checkable artefact. *(2026-11-22)* The artefact is `guides/eyg-surface.tsv` and
+  `test/fixtures/rule_mapping.gleam`; a claim that greps a page copy is a claim that can only go
+  stale, and every one of those verifies moved.

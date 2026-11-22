@@ -6,7 +6,7 @@ status: accepted
 verified_at: 2026-11-22
 verify: "grep -q 'diataxis.fr' docs/world/decisions/ADR-004-doc-shape-for-two-readers.md && grep -q 'fuchsia.dev/fuchsia-src/contribute/docs/documentation-style-guide' docs/world/decisions/ADR-004-doc-shape-for-two-readers.md && grep -q '## Alternatives rejected' docs/world/decisions/ADR-004-doc-shape-for-two-readers.md && test -f skills/eyg-codemode/SKILL.md"
 confidence: high
-sources: [README.md, AGENTS.md, guides/pi_codemode_agent.md, guides/cli_effects_reference.md, skills/eyg-codemode/SKILL.md, .agents/skills/eyg-run/SKILL.md, docs/world/decisions/ADR-003-doc-delegation.md, docs/world/runbooks/runbook.check-a-change.md]
+sources: [README.md, AGENTS.md, skills/eyg-codemode/SKILL.md, .agents/skills/eyg-run/SKILL.md, docs/world/decisions/ADR-003-doc-delegation.md, docs/world/runbooks/runbook.check-a-change.md, guides/eyg-surface.tsv, guides/tool-reference.md]
 supersedes: null
 superseded_by: null
 ---
@@ -47,8 +47,8 @@ The language's how-to stays delegated (ADR-003). What the delegation does **not*
 this package's own requirement. The website's install pages verify only
 `eyg eval -c '!int_add(1, 1)'` and never mention `--policy`; the repository's
 `releases/latest` serves `gleam_cli-v0.1.0` (fetched 2026-11-19), which is the build whose
-`--help` has no `--policy` on this host (`docs/world/traps.md` trap-17, and
-`guides/install_prebuilt.md` copies the same one-line installer). So the recommended install
+`--help` has no `--policy` on this host (`docs/world/traps.md` trap-17, and the page copy this
+tree then carried quoted the same one-line installer). So the recommended install
 route hands a new reader a CLI this package's probe rejects, and the README says so in a
 paragraph framed as "this host".
 
@@ -59,6 +59,8 @@ paragraph framed as "this host".
 | tutorial | nothing | `guides/first-session.md` |
 | how-to | nothing; the goals sit in README sections written as reference | `guides/how-to-point-the-tool-at-your-runner.md`, `guides/how-to-write-a-policy.md`, `guides/how-to-read-in-slices.md`, `guides/how-to-share-functions.md` |
 | reference | `guides/cli_effects_reference.md`, `guides/syntax.md`, `guides/builtins_reference.md`, the README tables, `AGENTS.md`'s command table | - |
+
+*(2026-11-22: the three page copies in that row are deleted. The reference this tree keeps is* `guides/eyg-surface.tsv` *- generated rows - and the README and `AGENTS.md` tables; the prose is the language's page, linked.)*
 | explanation | the README's prose, `notes/`, `docs/world/decisions/` | - |
 
 The two missing kinds are filled in this milestone. The functionality holes are claims whose
@@ -69,8 +71,8 @@ commands answer while the hole is open, listed in `docs/world/runbooks/runbook.n
 Reader 1 (a person installing the package):
 
 - **No tutorial.** Nothing walks "I have the package" to "one effect performed". The README's
-  first-session block stops at `pi list`. Diátaxis: this tree has reference (`guides/cli_effects_reference.md`,
-  `guides/syntax.md`, the README tables) and explanation, and no tutorial and no how-to.
+  first-session block stops at `pi list`. Diátaxis: this tree has reference (the page copies then
+  in `guides/`, since deleted, and the README tables) and explanation, and no tutorial and no how-to.
 - **Reference before action.** The knobs table, the env table, the policy vocabulary and the
   registry are all in the file the new reader opens first. Reference serves a reader at work;
   a new reader is at study.

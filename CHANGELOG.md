@@ -8,6 +8,20 @@ history, not as instructions for this tree. On 2026-11-19 the word "gate" was re
 
 ## Unreleased
 
+- **One generated surface, not six page copies.** The offline copies of the language's pages
+  (`syntax.md`, `builtins_reference.md`, `cli_effects_reference.md`, `install_prebuilt.md`,
+  `install_from_source.md`, `pi_codemode_agent.md`) are deleted, and every pointer to them moved in
+  the same commit. What a session with no network needs is the surface rather than the prose, so it
+  is one generated file: `guides/eyg-surface.tsv`, a builtin row per name with its section and
+  signature, an effect row per name with the policy field that decides it (`none` for the four no
+  policy can forbid). Its header carries where its builtin rows were captured and when; its effect
+  rows come from the recorded `rule_mapping`. `node bin/agent/gen-surface.mjs --check` (0.04 s)
+  re-derives the file and compares it with the fixture, with `POLICY_FIELDS`, with every `!builtin`
+  this tree's own `.eyg` sources call, and byte for byte with its own rebuild - and the unit suite
+  plants a renamed effect row, a deleted effect row and a renamed builtin this tree calls, and
+  asserts the check answers each. `action: "reference"` and the invented-builtin hint rows read the
+  file (`docs/world/entities/guides.surface-file.md`, `test/fixtures/surface.PROVENANCE.md`, and the
+  amendment at the end of ADR-003's Decision).
 - **No probe, one line.** The tool stopped asking the binary what it can do before running it. The
   binary is chosen by name (`EYG_CODEMODE_RUNNER`, else `eyg` on `PATH`), every command line carries
   `--policy <module.eyg>`, and a binary too old for the flag — which reads the mode word as a file
@@ -46,7 +60,7 @@ history, not as instructions for this tree. On 2026-11-19 the word "gate" was re
   its signatures and the effect surface with the policy field that decides each effect, performing
   nothing and asking the policy nothing, so it answers where no runner was found as well as where one
   was. A run that named a builtin the runtime does not have now carries rows naming
-  `guides/builtins_reference.md`, `guides/syntax.md` and `action: "reference"`, and says pi's own `read`
+  the reference guides then shipped and `action: "reference"`, and says pi's own `read`
   tool is not policy-gated while `ReadFile` reaches only the roots. Measured 2026-11-20 in one fresh
   one-shot session: 20 tool calls and 0 `builtin undefined`, against the 41-93 calls and 16-57 such
   errors of the rounds that guessed (`docs/world/entities/pi.reference-action.md`,
@@ -96,8 +110,8 @@ history, not as instructions for this tree. On 2026-11-19 the word "gate" was re
   `test/fixtures/rule_mapping.PROVENANCE.md`. `node --test test/render-helpers.test.mjs` passes
   here: pass 1, fail 0, 45 ms in process on 2026-11-18.
 - The always-loaded context came with the package: `AGENTS.md` rewritten for this tree, the
-  guides (`pi_codemode_agent`, `cli_effects_reference`, `syntax`, `builtins_reference`,
-  `install_from_source`, `install_prebuilt`), the codemode notes, and a `docs/world/` tree
+  guides (six copies of the language's pages, since deleted; the surface they carried is now
+  `guides/eyg-surface.tsv`), the codemode notes, and a `docs/world/` tree
   checked by a `pi-simple-world-model` copy vendored into this workspace - the tool is copied
   per workspace, never declared across workspaces.
 - Not done here, and named rather than claimed: end-to-end run behaviour. The CLI on `PATH`
@@ -117,8 +131,8 @@ history, not as instructions for this tree. On 2026-11-19 the word "gate" was re
   in order, to the record the tool advertises, so an effect added to the runtime or a field
   renamed fails the test rather than leaving a stale list. `ruleMappingEffects` and
   `effectLine` are the pure helpers behind it in `lib/render-helpers.mjs`.
-- The effect list moved out of prose and into the repository's effect reference: the table
-  at the top of `guides/cli_effects_reference.md` names all 23 effects with their field and
+- The effect list moved out of prose and into a reference table: the table then at the top of
+  `guides/cli_effects_reference.md` (since deleted) named all 23 effects with their field and
   what the field allows, and gains a `Search` section (the skill pointed at one that did not exist).
   `docs/world/entities/codemode.effect-surface.md` claims the same thing with a verify
   command that greps the table and counts the `PolicyField` lines.

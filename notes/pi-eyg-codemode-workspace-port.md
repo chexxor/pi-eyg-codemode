@@ -42,7 +42,7 @@ package is the root; they are one level deep in both cases.
 | `AGENTS.md` | `AGENTS.md` | `AGENTS.md` | rewritten for this tree: the Gleam, `eyg_packages`, fork-sync and CI rows do not apply here |
 | `.agents/skills/` | 7 skills (`effect-change`, `eyg-run`, `eyg-test`, `fork-sync`, `gleam-gate`, `note-keeping`, `snapshot-review`) | only the applicable ones | no Gleam build, no birdie suites, no `eyg_packages`, no remote push flow |
 | `notes/pi_codemode_*.md` | `pi_codemode_host_gate.md`, `pi_codemode_runner_probe.md`, `pi_codemode_registry_probe.md` | `notes/` | the codemode design record |
-| `guides/` | `pi_codemode_agent.md`, `cli_effects_reference.md`, `syntax.md` | `guides/` | cited by the README and the package skill |
+| `guides/` | `pi_codemode_agent.md`, `cli_effects_reference.md`, `syntax.md` (the six page copies, deleted 2026-11-22; the surface they carried is generated rows) | `guides/` | cited by the README and the package skill |
 | `docs/world/` | `00-map.md`, `roster.yaml`, `invariants.md`, `traps.md`, `decisions/`, `entities/` | `docs/world/` | the codemode entities `pi.codemode-tool`, `codemode.effect-surface`, `overlay.policy-rules` carry the claims this package makes |
 | `pi-simple-world-model/` | 15 files, pi package v1.0.0 | `pi-simple-world-model/` | copied per workspace, never declared across workspaces: see that repository's `docs/world/decisions/ADR-001-world-model-import.md` |
 | `.pi/settings.json` | `.pi/settings.json` | `.pi/settings.json` | mirror of the installed context: `./pi-simple-world-model`, `npm:@woksin/pi-context-budget`, the EYG language skill declared from outside this tree, `"-builtin:codemode"`, compaction off, same `defaultTools` |
@@ -224,7 +224,7 @@ Read as: v0.1.0 reads `run` as a program path, so the checked call never started
 decision was therefore **not observed** from this workspace on that binary. The claims about what
 each policy does at run time were **UNVERIFIED** here at the time and said so wherever they
 appear (`docs/world/entities/cli.prebuilt-binary.md`, `docs/world/entities/pi.codemode-tool.md`,
-`AGENTS.md`, `guides/pi_codemode_agent.md`, this note); on 2026-11-20 a refusal was
+`AGENTS.md`, the page copies since deleted, this note); on 2026-11-20 a refusal was
 observed through a development build that is gone (`cli.checked-runner-on-this-host`, superseded),
 and this machine names no runner today. What *is* proven here
 is that both

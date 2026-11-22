@@ -23,7 +23,8 @@ self-contained: a `pi install <this package> -l` gives a session everything it n
 declaration can dangle on a machine without the sibling checkout. The cost is a second copy
 of prose the language owns, which is exactly the drift this package already tracks for the
 world-model tool ("three copies of the world model tool", `AGENTS.md`) and for the guide
-mirrors (`docs/world/traps.md`, the offline-copy trap). Two copies of the *language* would
+copies this tree carried until 2026-11-22 (`docs/world/traps.md`, the offline-copy trap). Two
+copies of the *language* would
 be worse than two copies of a tool: the language changes with every release.
 
 **Option two - publish it as its own package** and declare it by name, the way
@@ -39,10 +40,10 @@ numbers, and what a session can reach today without that package, are recorded o
 `docs/world/entities/usability.without-language-skill.md` and
 `notes/pi-codemode-language-reference-reachability.md`; they are not repeated here. What they buy
 for this decision: vendoring would copy a skill that points outside itself and a second copy of
-the language's prose, and buy nothing the `guides/` mirrors do not already buy. So: keep the
-declaration as the operator's convenience, ask for the one-line front-matter fix in the other
-workspace (not this tree's to edit), and rely on `skills/eyg-codemode/SKILL.md` pointing at this
-package's own mirrors.
+the language's prose, and buy nothing `action: "reference"` and `guides/eyg-surface.tsv` do not
+already buy. So: keep the declaration as the operator's convenience, ask for the one-line
+front-matter fix in the other workspace (not this tree's to edit), and rely on
+`skills/eyg-codemode/SKILL.md` pointing at the surface this package generates.
 
 **Not chosen, and why.** 2026-11-20: the operator asked for this to be reviewed later rather
 than answered now, and the choice is theirs - it is a publishing decision, and publishing is
@@ -53,8 +54,9 @@ drift.
 **Trigger.** The first trigger fired on 2026-11-20: a session rooted here cannot load the
 language-skill package (front matter, not the path - the path resolves, the skill does not load).
 Reopen the decision when either of two things happens: the front-matter fix lands and a re-run of
-the same A/B shows the loaded skill beating the `guides/` mirrors by more than the mirror read
-costs; or the first `npm` or git release of either package, which lets the declaration be written
+the same A/B shows the loaded skill beating the reference this package generates by more than the
+surface read costs; or the first `npm` or git release of either package, which lets the declaration
+be written
 by name. Both are written on the record that tracks the hole,
 `docs/world/entities/gap.language-skill-home-undecided.md`, whose `verify` fails once a decision
 record exists. Until then `README.md` and `AGENTS.md` say the skill is a separate package and
