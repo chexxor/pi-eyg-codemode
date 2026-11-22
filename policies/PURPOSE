@@ -1,1 +1,1 @@
-The policy modules this package ships: one record, one rule per refusable effect, written out in full and importing nothing outside this tree.
+The policy modules this package ships, each written out in full and importing nothing outside this tree.

@@ -4,9 +4,9 @@ type: runbook
 owner: delegate
 status: current
 verified_at: 2026-11-22
-verify: "test -f docs/world/runbooks/runbook.next-milestone.md && grep -q 'gap.runner-release-lacks-policy' docs/world/runbooks/runbook.next-milestone.md && grep -q 'gap.policy-runner-not-on-main' docs/world/runbooks/runbook.next-milestone.md && grep -q 'gap.grant-polish-undecided' docs/world/runbooks/runbook.next-milestone.md"
+verify: "test -f docs/world/runbooks/runbook.next-milestone.md && grep -q 'gap.runner-release-lacks-policy' docs/world/runbooks/runbook.next-milestone.md && grep -q 'gap.policy-runner-not-on-main' docs/world/runbooks/runbook.next-milestone.md && grep -q 'gap.grant-polish-undecided' docs/world/runbooks/runbook.next-milestone.md && grep -q 'gap.policy-record-extension' docs/world/runbooks/runbook.next-milestone.md"
 confidence: high
-sources: [docs/world/entities/gap.runner-release-lacks-policy.md, docs/world/entities/gap.install-guides-name-no-policy.md, docs/world/entities/gap.roots-have-no-config-file.md, docs/world/entities/gap.windows-is-undocumented.md, docs/world/entities/gap.policy-runner-not-on-main.md, docs/world/entities/gap.language-skill-home-undecided.md, docs/world/entities/gap.grant-polish-undecided.md, docs/world/decisions/ADR-004-doc-shape-for-two-readers.md]
+sources: [docs/world/entities/gap.runner-release-lacks-policy.md, docs/world/entities/gap.install-guides-name-no-policy.md, docs/world/entities/gap.roots-have-no-config-file.md, docs/world/entities/gap.windows-is-undocumented.md, docs/world/entities/gap.policy-runner-not-on-main.md, docs/world/entities/gap.language-skill-home-undecided.md, docs/world/entities/gap.grant-polish-undecided.md, docs/world/entities/gap.policy-record-extension.md, docs/world/decisions/ADR-004-doc-shape-for-two-readers.md]
 supersedes: null
 superseded_by: null
 ---
@@ -26,6 +26,7 @@ the new evidence rather than leaving it suspect.
 | `gap.policy-runner-not-on-main` | the checked one-shot runner in the language's default branch, not only in a branch of it | land it there and publish it (the row above), then re-capture `test/fixtures/rule_mapping.gleam` and re-run the live guard against that source |
 | `gap.language-skill-home-undecided` | a decision about where the EYG language-skill package lives: the sibling checkout declared by path, a copy inside this package, or a published package declared by name | read `notes/pi-codemode-language-skill-packaging.md`; if the upstream `SKILL.md` front-matter fix has landed, re-run the A/B recorded in `usability.without-language-skill`; then write the choice as a decision record in `docs/world/decisions/` named for the topic, which retires the row |
 | `gap.grant-polish-undecided` | the grant polish the child-surface milestone parked: a live proof of the N-call duration, any time bound on a grant, and a way for the operator to list the grants in force without starting one | drive one RPC session that spends a 2-call grant and record it in `pi.session-grants.md`; then decide the expiry shape in a note before coding it, and add the listing subcommand with a `guides/tool-reference.md` row |
+| `gap.policy-record-extension` | a way to extend or override the policy record the host loaded, so changing one handler stops meaning copying a file | ask the language for the shape named in `notes/pi-eyg-codemode-policy-record-extension.md`; when a release carries it, shrink `policies/spawner-effects.eyg` to the handlers it changes and move the record with the new count |
 
 The audit that produced this list is `ADR-004-doc-shape-for-two-readers`. Two further gaps are
 documentation, not functionality, and were fixed in the same milestone as this record: the

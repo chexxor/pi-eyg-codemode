@@ -25,7 +25,7 @@ snapshot of its rule table.
   `Unchecked`.
 - The checks are host-side, so a program cannot opt out of them by writing different code;
   the CLI resolves relative file paths to absolute *before* a check sees them, so a
-  preset compares resolved paths.
+  policy compares resolved paths.
 - The EYG-side vocabulary that used to be imported from `eyg_packages/overlay/policy.eyg`
   is written out inside `policies/agent-roots.eyg` and `policies/deny-all.eyg`: deny-by-
   default plus `read_write(roots)`-shaped rules, `hide_secrets` for `.env.eyg`, and the

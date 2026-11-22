@@ -33,15 +33,15 @@ checks that before performing is UNVERIFIED here - the build that knew `--policy
 (`docs/world/entities/cli.checked-runner-on-this-host.md`) was never pointed at a mis-typed
 mock - so a mis-typed mock should be read as a runtime error rather than a refusal until proven.
 
-**Do not mock in an act preset.** An act preset that mocks `write_file` reports a successful
+**Do not mock in an act policy.** An act policy that mocks `write_file` reports a successful
 run with nothing on disk - the trap file already records the neighbouring failure mode
-(`let _ = perform WriteFile(...)` looked like success). Simulation belongs in a **plan** preset,
+(`let _ = perform WriteFile(...)` looked like success). Simulation belongs in a **plan** policy,
 where "nothing lands" is the point. The staged session is the cheapest thing this package
 buys an operator who wants a plan approved before a change: the same program run under
 `policies/deny-all.eyg` (which performs only `Now`, `Random`, `Sleep`, `Flip`,
 `StandardOut`, `StandardError`, `Exit`) prints its plan and gets a refusal value for every
 effect it would have used, then the same program runs under `policies/agent-roots.eyg` to act.
-It works because a refusal is a value, not a crash. Two presets, no new field, no new tool,
+It works because a refusal is a value, not a crash. Two policies, no new field, no new tool,
 one extra runner start-up (0.06-0.07 s measured in the language repository).
 
 **Rejected: a `tools` parameter in the extension** that maps names to modules and dispatches
@@ -50,7 +50,7 @@ them. That is a second answer to "what may this reach", and it would disagree wi
 check (`notes/pi_codemode_registry_probe.md`). Permission belongs in the one record the host
 loads. **Rejected: a new domain effect** (`QueryKB`, `Snapshot`) to get such a tool: an effect
 is an escalation in the language repository's rules, the 19 fields already decide the paths it
-needs, and a new effect would still need a rule in every preset.
+needs, and a new effect would still need a rule in every policy.
 
 **The store discipline, and the one number that matters.** Context that lives under a root and
 is pulled by `ReadFile` `offset`/`limit` or `Search` `limit` stays out of the conversation
@@ -81,13 +81,13 @@ It manages six effects (`Fetch`, `ReadFile`, `ReadDirectory`, `WriteFile`, `Appe
 What that changes about this note, and what it does not:
 
 - It backs the staging decision. The docs name dry-run mocking as an intended pattern
-  (`write_file: access.write_file.mock_success`), the same shape as this package's plan preset -
+  (`write_file: access.write_file.mock_success`), the same shape as this package's plan policy -
   a separate, named policy that answers instead of performing. The rule stays: never in the
   record that acts.
-- It gives names this package's presets do not have: `max_bytes`, `allow_exact`, host allow-lists
+- It gives names this package's policies do not have: `max_bytes`, `allow_exact`, host allow-lists
   for `Fetch`. Ours are `under(effect, roots, path_of)` and `hide_secrets`, inline, host-side.
   Trigger to reconcile: once `overlay.access` is published and a `--policy` runner exists here,
-  decide once whether the presets should be written in that vocabulary, and record what the host
+  decide once whether the policies should be written in that vocabulary, and record what the host
   layer can express that it cannot (the 19 fields, `Env`, `Search` under `read_file`, `cwd`) -
   rather than letting two vocabularies drift.
 - It narrows but does not close the `handle` question: <https://eyg.run/guides/advanced-effects>

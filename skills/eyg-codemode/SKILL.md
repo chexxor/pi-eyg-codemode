@@ -9,11 +9,11 @@ An EYG program reaches the outside world only through effects; a host policy dec
 Capability question first: `guides/cli_effects_reference.md` opens with `Every effect at a glance`,
 one row per effect with the policy field it sits under and what that field allows - that answers "can I
 perform this here" without deriving it. Then the one-line smoke test `perform StandardOut("ok")`
-shows the policy answering. The presets this package ships are written out in full in
+shows the policy answering. The policies this package ships are written out in full in
 `policies/agent-roots.eyg`, `policies/deny-all.eyg` and `policies/spawner-effects.eyg`, so authoring
 another one means editing
 one of those records, not reading a library somewhere else; the renderer, the timeout shape and
-the registry scopes are in `README.md`, presets and security in `guides/pi_codemode_agent.md`,
+the registry scopes are in `README.md`, policies and security in `guides/pi_codemode_agent.md`,
 surface syntax in `guides/syntax.md`.
 
 ## Before writing EYG
@@ -66,10 +66,10 @@ on its value, as the last two lines above do.
 - `code` is EYG source and the last expression is the value. In `run` mode nothing is printed unless the
   program performs `StandardOut`, so a refusal left as the trailing value is invisible. A performed effect
   that is not the last expression must be bound (`let _ = perform ...`) or the program does not parse.
-- with no `policy` argument the tool uses the preset it ships over the session working directory, and a
+- with no `policy` argument the tool uses the policy it ships over the session working directory, and a
   call is never unchecked. Paths must be absolute - the runner resolves a relative path before the policy
   sees it - and a path outside the roots is refused, not truncated.
-- under the agent preset `Env` is refused and answers `None({})`: a token belongs in the policy module,
+- under the agent policy `Env` is refused and answers `None({})`: a token belongs in the policy module,
   which may read the environment, never in the program.
 - every result says how long the run took (`ran in 1.24 s wall`, `timed out after 2 s in 2.01 s wall`);
   quote that wall time rather than estimating a cost.
@@ -111,9 +111,9 @@ not permission to read it and contents never come through. Without the `Search` 
 module like you do, and returns its final message, one row per call and every refusal it got. Three
 knobs, each checked against what this session already has: `tools` (`eyg`, or `eyg` plus pi's `read`
 tool - never a tool you do not have yourself), `effects` (an allowlist of effects, enforced by the
-shipped narrowing preset `policies/spawner-effects.eyg`; it removes reach and cannot add it, so `Fetch`
+shipped narrowing policy `policies/spawner-effects.eyg`; it removes reach and cannot add it, so `Fetch`
 is not in it), and `max_calls` (how many `eyg` calls the child may make before it is told to report what
-it has). It can be given a preset this package ships and roots **inside** the roots you have, and
+it has). It can be given a policy this package ships and roots **inside** the roots you have, and
 nothing wider: no root you lack, no module you wrote, no grant this session holds, and a session that is
 itself a subagent gets no children. Use it for work you can state completely in `task`; do not use it to get
 past a refusal. Hand the child programs to paste rather than a description of them - a child left to

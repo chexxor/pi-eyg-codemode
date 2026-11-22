@@ -78,11 +78,11 @@ program whose every effect is decided by the policy in force before the host per
   names under an allowed root - including the name of a file a read of that path would
   be refused for - and never its contents.
 - `policies/agent-roots.eyg` is the policy module: it imports nothing and answers the
-  roots named in `EYG_ALLOWED_ROOTS` with the preset written out inline, one rule per
+  roots named in `EYG_ALLOWED_ROOTS` with the policy written out inline, one rule per
   effect that can be refused, denying `.env.eyg`. `policies/deny-all.eyg` and
-  `policies/spawner-effects.eyg` are the other shipped presets, the second one enforcing a child
+  `policies/spawner-effects.eyg` are the other shipped policies, the second one enforcing a child
   session's effect allowlist (`docs/world/entities/pi.spawner-policy.md`).
-  The presets were inlined from the language repository's `overlay/policy.eyg` on
+  The policies were inlined from the language repository's `overlay/policy.eyg` on
   2026-11-18 (`notes/pi-codemode-policy-inlining.md`).
 - A refusal is reported, not swallowed: the runner exits 1 with the reason on stderr,
   and the tool result carries `gated: true, ran: true, exit: 1` plus the reason.

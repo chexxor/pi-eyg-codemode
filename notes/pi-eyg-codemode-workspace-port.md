@@ -61,7 +61,7 @@ files. Each one is classified here:
 
 - `policies/agent-roots.eyg:15` and `policies/deny-all.eyg:5`:
   `let policy = import "../../eyg_packages/overlay/policy.eyg"` — the only real
-  out-of-workspace dependency. Both modules are made self-contained: the preset records
+  out-of-workspace dependency. Both modules are made self-contained: the policy records
   (`deny_all`, `read_write`) are inlined from `eyg_packages/overlay/policy.eyg`, so the
   package carries no `eyg_packages/` source and no `import` outside itself.
 
@@ -73,7 +73,7 @@ files. Each one is classified here:
 - `README.md:183,188,210,211,312,578,579,580`, `skills/eyg-codemode/SKILL.md:12`,
   `CHANGELOG.md:55,98`, `libraries/search.eyg:25` — prose pointers to
   `eyg_packages/overlay/policy.eyg` and `eyg_packages/codemode_policy/*`. With no vendored
-  presets they now point at the inline presets in `policies/` and at the note that records
+  policies they now point at the inline policies in `policies/` and at the note that records
   the same vocabulary.
 
 **Kept verbatim (historical evidence, labelled as such):**
@@ -98,7 +98,7 @@ the `--policy` flag. The package's own runner probe (`/\-\-policy/` against `<ru
 therefore finds no runner on this host, and the policy decision cannot be re-observed here
 without building `packages/gleam_cli` from source inside the language repository — out of
 this port's scope. At the time of writing, run behaviour in this workspace was **UNVERIFIED**
-for want of a runner that checks; the inlined presets are held to the preset source
+for want of a runner that checks; the inlined policies are held to the policy source
 read on 2026-11-18. Superseded on 2026-11-20, when a development build reached this tree through a
 candidate that no longer exists, and superseded again on 2026-11-21: the probe reaches `PATH` and
 `EYG_CODEMODE_RUNNER` only (`docs/world/entities/cli.runner-official-install-only.md`), and
@@ -156,7 +156,7 @@ all", the boundary that the checks are not in this package was at line 638, and 
 a capture from the other workspace. The file was rewritten around those four facts and
 shortened from 662 lines to 288 (`wc -l README.md`, 2026-11-18):
 
-- **Kept as instructions:** install (`pi install . -l`), the knob/env tables, preset authoring
+- **Kept as instructions:** install (`pi install . -l`), the knob/env tables, policy authoring
   (the 18 fields and the three path shapes), the effect listing, both search routes and the
   name-not-contents boundary, the registry, the renderer and the time knob, the install table.
 - **Kept verbatim, still tagged `*[2026-11-16 · the language repository]*`:** the read-inside/write-refused
@@ -222,13 +222,13 @@ $ find /tmp/eyg-proof -newermt '2026-11-18' -print
 
 Read as: v0.1.0 reads `run` as a program path, so the checked call never started; the policy
 decision was therefore **not observed** from this workspace on that binary. The claims about what
-each preset does at run time were **UNVERIFIED** here at the time and said so wherever they
+each policy does at run time were **UNVERIFIED** here at the time and said so wherever they
 appear (`docs/world/entities/cli.prebuilt-binary.md`, `docs/world/entities/pi.codemode-tool.md`,
 `AGENTS.md`, `guides/pi_codemode_agent.md`, this note); on 2026-11-20 a refusal was
 observed through a development build that is gone (`cli.checked-runner-on-this-host`, superseded),
 and this machine names no runner today. What *is* proven here
 is that both
-presets parse, carry all 18 policy fields, and type-check; that the package's extension
+policies parse, carry all 18 policy fields, and type-check; that the package's extension
 resolves its own policy, library and render helpers from inside itself; and that the
 language repository keeps its own copy of everything.
 
@@ -241,7 +241,7 @@ commit that carries the audit).
 | --- | --- | --- |
 | workspace root is the package | `ls` | `package.json` (name `pi-eyg-codemode`, `pi` manifest `extensions`/`skills`/`changelogPath`, host `peerDependencies` at `"*"`, plus this workspace's `scripts`) beside `extensions/ lib/ libraries/ policies/ skills/ test/ README.md CHANGELOG.md PURPOSE` |
 | relative imports resolve inside the tree | `grep -rn '\.\./' extensions lib libraries policies package.json test` | exactly `../lib/render-helpers.mjs` in `extensions/eyg-codemode.ts:67` and in `test/render-helpers.test.mjs:14`; `policies/*.eyg` and `libraries/*.eyg` carry no import at all |
-| no out-of-workspace import in the presets | `grep -n 'let .* = import' policies/*.eyg` | no output |
+| no out-of-workspace import in the policies | `grep -n 'let .* = import' policies/*.eyg` | no output |
 | the sweeps | one sweep for the other checkout's path, one for `eyg_packages`, each `grep -rn` over the tree with `.git` and `.pi` excluded | 69 and 47 lines, 18 files, every one a labelled historical record or a sentence naming the language repository (the classification, file by file, is above in this note) |
 | the test | `node --test test/render-helpers.test.mjs` | exit 0, `pass 1 fail 0` |
 | registration | `pi list` | `..` → `this workspace`, `../pi-simple-world-model` → the vendored copy, `npm:@woksin/pi-context-budget` → `.pi/npm/...`, the language-skill declaration → outside this tree |
@@ -249,10 +249,10 @@ commit that carries the audit).
 | local commit only | `git status --porcelain` / `git remote -v` | 0 lines / 0 lines; `git log` shows the local commits, no remote exists on that date - on 2026-11-20 `git remote -v` answers a remote named `chexxor`, and `AGENTS.md` carries the current rule |
 | that checkout is untouched | `cd <the language repository> && git diff \| wc -l` | `0` tracked diffs; `git status --porcelain` prints only the pre-existing `?? .ai-work/` |
 
-Still **UNVERIFIED** on 2026-11-18, and named as such wherever it appeared: that a preset
+Still **UNVERIFIED** on 2026-11-18, and named as such wherever it appeared: that a policy
 actually refuses or allows an effect at run time on that binary. The CLI on PATH
 (`$HOME/.local/bin/eyg`, `eyg v0.1.0`) has no `--policy` (`grep -c -- '--policy' <<< "$(eyg --help 2>&1)"` → `0`), so both checked probes
 print `error: no such file: <this workspace>/run` and exit 1 without starting a program. What the
-presets' semantics rest on here is the recorded preset source, `eyg check` on both modules, the
+policies' semantics rest on here is the recorded policy source, `eyg check` on both modules, the
 18-field comparison against `test/fixtures/rule_mapping.gleam`, and the unit test - not an
 observed refusal.

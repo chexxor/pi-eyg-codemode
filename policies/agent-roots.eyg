@@ -4,18 +4,18 @@
 //
 // EYG_ALLOWED_ROOTS is a comma separated list of absolute paths, no spaces.
 // Unset or empty means no roots, so every file effect is refused - name the
-// roots you want, or use the `deny-all.eyg` preset in this directory when you
+// roots you want, or use the `deny-all.eyg` policy in this directory when you
 // mean none. The pi tool (`pi-eyg-codemode`) supplies the session working
 // directory through this variable when nothing is configured, which is why a
 // first pi session can read and write its own workspace and nothing else.
 // Secret files (`.env.eyg` by convention) are never readable, even under a root.
-// Network access is refused; see guides/pi_codemode_agent.md for the presets that
+// Network access is refused; see guides/pi_codemode_agent.md for the policies that
 // open hosts with a `fetch` rule or inject a token with a header rule.
 //
-// This module is self-contained: the preset is written out here rather than
+// This module is self-contained: the policy is written out here rather than
 // imported, so the package carries no code from outside itself and the whole
-// decision is readable where it is used. `notes/pi-codemode-preset-inlining.md`
-// records where the preset came from and how it was checked.
+// decision is readable where it is used. `notes/pi-codemode-policy-inlining.md`
+// records where the policy came from and how it was checked.
 //
 // The decision, one rule for each of the 18 fields the CLI gates (the 23 effects
 // in `rule_mapping` less the 4 that are never gated). `roots` is the list built

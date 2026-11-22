@@ -32,7 +32,7 @@ spawner could not do itself, so delegating work never widens reach.
   inside `CHILD_TOOL_ALLOWLIST`, must include `eyg`, and must be a subset of `pi.getActiveTools()` - a
   tool this session does not have is refused by name (`childTools` → `unknown`, `withoutEyg`,
   `parentMissing`). `effects` is validated by the existing `action: "effects"` probe under the policy
-  *and the roots this session actually has*, and is enforced by a shipped narrowing preset, not by a
+  *and the roots this session actually has*, and is enforced by a shipped narrowing policy, not by a
   promise (`docs/world/entities/pi.spawner-policy.md`). `max_calls` travels as
   `EYG_SUBAGENT_MAX_CALLS` (`MAX_CALLS_ENV`) because pi has no flag that caps tool calls, and is
   enforced inside the child's own copy of the `eyg` tool: `callBudget(process.env, chain.depth)`
@@ -40,7 +40,7 @@ spawner could not do itself, so delegating work never widens reach.
   so a call that never reached a policy spends nothing of the budget.
 - **The three guards, refused before anything starts.** Roots: every one passed must satisfy
   `rootsInside(child, parent)`, the outside ones named back. Policy: `argumentPolicyPath` again,
-  a preset this package ships and nothing else, so "a policy the spawner names" never means a
+  a policy this package ships and nothing else, so "a policy the spawner names" never means a
   module the model wrote. Depth: a session at `EYG_CODEMODE_DEPTH >= 1` is refused a child, so the
   tree is one level deep. Wall time: 120 s default, 300 s cap - wider than a checked call, because
   a whole session answers slower than one program.
@@ -105,7 +105,7 @@ and by the refusal text in `extensions/eyg-codemode.ts`, never asked for live.
 ## Not this
 
 - the grant the operator gives this session: `docs/world/entities/pi.session-grants.md`;
-- the order a call's preset and roots come from: `docs/world/entities/pi.policy-config.md` and
+- the order a call's policy and roots come from: `docs/world/entities/pi.policy-config.md` and
   `guides/how-to-write-a-policy.md`;
 - why the child's boundary is built the way it is: `notes/pi-codemode-subagent-spawn.md`, and for the
   allowlist, budget and tool set: `notes/spawner-effect-allowlist.md`;

@@ -59,9 +59,9 @@ policy module rather than in a program (`guides/pi_codemode_agent.md`).
 `Now`, `Random`, `Sleep`, `Flip`, `StandardOut`, `StandardError` and `Exit`.
 `policies/spawner-effects.eyg` is `agent-roots.eyg` with an allowlist over its fields, installed for a child
 session whose spawner named `effects`; it is the third shipped policy and the only one that is not
-chosen by an operator (`docs/world/entities/pi.spawner-policy.md`). All three are one
-record, one handler per refusable effect, **written out in full and importing nothing**; the
-vocabulary used to be imported from the language repository and was inlined so
+chosen by an operator (`docs/world/entities/pi.spawner-policy.md`). All three are **written out in
+full and import nothing**; the vocabulary used to be imported from the language repository and was
+inlined so
 the package owns its whole decision (`notes/pi-codemode-policy-inlining.md`, and `docs/world/traps.md`
 for the trap inlining prevents). `guides/how-to-write-a-policy.md` is the how-to over
 changing one of them.
@@ -129,7 +129,7 @@ one program is correct in both phases and says which one it is in.
 This is the cheap shape of "think before you touch": the model writes the plan as a program, the
 collapsed row names the effects it may ask before the source appears, the operator reads it, and
 the second call is the one that changes anything. A staged session is also the honest place for a
-`Mock` that *simulates* a working effect: the plan preset may answer, the act preset may not.
+`Mock` that *simulates* a working effect: the plan policy may answer, the act policy may not.
 The language's own docs name the same pattern from inside a program
 (<https://eyg.run/guides/effect-access-policies>, read 2026-11-18: "Mock helpers are available
 for dry runs and tests", `access.write_file.mock_success`); this package dry-runs the whole
@@ -170,10 +170,10 @@ exists here. `docs/world/entities/overlay.policy-rules.md` carries the claim ove
 and what may I ask for. Its first line counts what it prints - `eyg reference: 29 builtins, 23
 effects, nothing performed` - then one line per builtin with its signature and notes, grouped under
 the sections of `guides/builtins_reference.md`, then one line per effect with the policy field that
-decides it (`none` for the four no preset can forbid). It spawns no process and asks the policy
+decides it (`none` for the four no policy can forbid). It spawns no process and asks the policy
 nothing, so it answers on a machine where no runner was found; the builtins come from the shipped
 copy, so the answer says the compiler is the source, and it names `action: "effects"` as the call
-that asks the preset what it decides.
+that asks the policy what it decides.
 
 A program that named a builtin the runtime does not have gets the same pointer in its rows. The
 runner prints `error: builtin undefined: !str_len` with a hint that names no path; the tool adds
@@ -259,7 +259,7 @@ and the date for each remaining claim are beside it.
 
 - Not the language's reference: `guides/syntax.md`, `guides/builtins_reference.md` and
   `guides/cli_effects_reference.md` carry the surface, the builtins and the effects.
-- Not the how-tos: the runner, the preset, the slices and the registry are the `guides/how-to-*.md`
+- Not the how-tos: the runner, the policy, the slices and the registry are the `guides/how-to-*.md`
   set, and `guides/first-session.md` is the tutorial.
 - Not the claims: every re-checkable statement about this tree is in `docs/world/` with the command
   that re-checks it.

@@ -22,7 +22,7 @@ first, a session used 11 calls, 0 `builtin undefined`, 89 s (n=1 each).
 
 **What was done here.** `skills/eyg-codemode/SKILL.md` now says, before writing EYG, to open those
 two files with the harness `read` tool and not to try to reach them through an effect. That is the
-cheapest fix measured: it needs no new effect, no preset change, no second copy of the prose, and
+cheapest fix measured: it needs no new effect, no policy change, no second copy of the prose, and
 the mirrors already live in `guides/` (`docs/world/entities/guides.index.md`).
 
 **Not done, and why.** The tool could answer a builtin question itself - an `action` that prints

@@ -109,5 +109,5 @@ shadowed one is still named so an override is visible.
   CLI takes, belong to the language, and publishing remains the operator's act.
 - `search` already walks for names. Write your own set when the answer differs, not when the
   walk does.
-- A set is not a policy. What its effects may do is the preset's decision, in
+- A set is not a policy. What its effects may do is the policy's decision, in
   `guides/how-to-write-a-policy.md`.

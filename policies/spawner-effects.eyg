@@ -1,4 +1,4 @@
-// A subagent's preset: `agent-roots.eyg` with an allowlist over which of its fields
+// A subagent's policy: `agent-roots.eyg` with an allowlist over which of its fields
 // are performed at all. `eyg_subagent` installs it when a spawner names `effects`, so
 // the spawner can hand a child "read and print, nothing else" without editing a file
 // and without widening anything: every rule below is the agent-roots rule or a refusal,
@@ -7,20 +7,20 @@
 // EYG_SUBAGENT_EFFECTS is a comma separated list of FIELD names (the lower-case names
 // in the record at the bottom of this file), no spaces. Unset or empty names no field,
 // so every gateable field is refused - the narrow reading of a missing list, chosen
-// because a preset nobody configured must not be the wide one.
+// because a policy nobody configured must not be the wide one.
 //
 // EYG_ALLOWED_ROOTS works exactly as it does in `agent-roots.eyg`: a comma separated
 // list of absolute roots, unset meaning none, and `.env.eyg` never readable. A field
 // that IS in the allowlist is still decided by its roots, so the two lists are
 // independent cuts and neither can loosen the other.
 //
-// Self-contained like every preset here: the rules are written out whole rather than
+// Self-contained like every policy here: the rules are written out whole rather than
 // imported, because a policy module may not import anything outside this package
-// (`notes/pi-codemode-preset-inlining.md`), so a narrowing preset carries its base.
+// (`notes/pi-codemode-policy-inlining.md`), so a narrowing policy carries its base.
 // The drift between the two files is a known cost, recorded in
 // `notes/spawner-effect-allowlist.md`.
 //
-// What this preset can and cannot do, one row per field:
+// What this policy can and cannot do, one row per field:
 //
 //   NAMED IN THE ALLOWLIST: THE AGENT-ROOTS RULE
 //     append_file, delete_file, make_directory, read_directory, read_file, write_file
@@ -38,7 +38,7 @@
 //     env                                     - Mock(None({})) is the only answer the
 //                                               effect's own type allows, and it reads
 //                                               nothing, so there is nothing to narrow
-//   NEVER CHECKED BY ANY PRESET
+//   NEVER CHECKED BY ANY POLICY
 //     DecodeJSON, EYGParse, Hash, Sign        - the CLI marks them Unchecked: they
 //                                               compute over values the program already
 //                                               holds. Naming them in the allowlist

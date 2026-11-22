@@ -293,7 +293,7 @@ let metadata = {
   );
   assert.deepEqual(resolvePolicy({}), choice(null, "none"), "and nothing to run at all if none of them names a module");
   assert.deepEqual(resolvePolicy({ grant: "", project: "/p" }), choice("/p", "project settings"), "an empty name names nothing");
-  assert.equal(resolveRoots({ project: ["/p1", "/p2"], env: "/e", cwd: "/c" }), "/p1,/p2", "the project roots win, as a list the preset parses");
+  assert.equal(resolveRoots({ project: ["/p1", "/p2"], env: "/e", cwd: "/c" }), "/p1,/p2", "the project roots win, as a list the policy parses");
   assert.equal(resolveRoots({ project: [], env: "/e", cwd: "/c" }), "/e", "then EYG_ALLOWED_ROOTS");
   assert.equal(resolveRoots({ project: [], env: null, cwd: "/c" }), "/c", "then the working directory");
 
@@ -371,10 +371,10 @@ let metadata = {
   assert.match(flat(refused.filter((row) => row[0].tone === "warning")), /one tool call, N calls/, "with the durations to choose from");
 }
 
-// --- a model may narrow to a shipped preset and may not name a module ---
+// --- a model may narrow to a shipped policy and may not name a module ---
 
 {
-  assert.equal(argumentPolicyPath("deny-all", "/pkg"), join("/pkg", "policies", "deny-all.eyg"), "a bare preset name resolves inside the package");
+  assert.equal(argumentPolicyPath("deny-all", "/pkg"), join("/pkg", "policies", "deny-all.eyg"), "a bare policy name resolves inside the package");
   assert.equal(argumentPolicyPath("/tmp/my-policy.eyg", "/pkg"), null, "an absolute module path is not the model's to choose");
   assert.equal(argumentPolicyPath("../outside.eyg", "/pkg"), null, "nor is a path that walks out of it");
   assert.equal(argumentPolicyPath("deny-all", null), null, "and with no package directory there is nothing to resolve against");
@@ -393,7 +393,7 @@ let metadata = {
     "the tools a spawner named reach argv, comma separated, no shell",
   );
   assert.equal(CHILD_TOOL_ALLOWLIST.join(","), "eyg,read", "the child's tool allowlist is these two names and no more");
-  assert.equal(EFFECT_ALLOWLIST_ENV, "EYG_SUBAGENT_EFFECTS", "the environment name the narrowing preset reads");
+  assert.equal(EFFECT_ALLOWLIST_ENV, "EYG_SUBAGENT_EFFECTS", "the environment name the narrowing policy reads");
   assert.deepEqual(childTools(["read", "eyg"]).tools, ["read", "eyg"], "requested order, deduplicated");
   assert.equal(childTools(["eyg"]).ok, true, "the default is the whole channel and nothing else");
   assert.equal(childTools(["eyg", "bash"]).ok, false, "a shell tool is refused: this package spawns no session that has one");
@@ -409,7 +409,7 @@ let metadata = {
     "effect names map to policy fields, and Search shares read_file with ReadFile, so the field list deduplicates",
   );
   assert.deepEqual(effectFieldsFor(["NoSuchEffect"]).unknown, ["NoSuchEffect"], "an effect the CLI does not have is named back");
-  assert.deepEqual(effectFieldsFor(["Hash"]).unchecked, ["Hash"], "an effect no preset can forbid is reported, not enforced");
+  assert.deepEqual(effectFieldsFor(["Hash"]).unchecked, ["Hash"], "an effect no policy can forbid is reported, not enforced");
   assert.deepEqual(fieldsOutside(["write_file", "read_file"], ["read_file"]), { ok: false, outside: ["write_file"] }, "a field the policy in force refuses is named back");
   assert.equal(fieldsOutside(["read_file"], ["read_file"]).ok, true, "a field it performs is not");
   assert.deepEqual(
@@ -465,7 +465,7 @@ let metadata = {
   assert.equal(sessionDepth({ EYG_CODEMODE_DEPTH: "nonsense" }), 0, "a nonsense marker reads as depth 0, not NaN");
   assert.equal(spawnerPolicy({ EYG_SUBAGENT_POLICY: "/s.eyg" }), null, "a project that sets the variable itself gets nothing");
   assert.equal(spawnerPolicy({ EYG_SUBAGENT_POLICY: "/s.eyg" }, 1), "/s.eyg", "in a session this package started it is the spawner's word");
-  assert.deepEqual(spawnerRoots({ EYG_ALLOWED_ROOTS: "/a, /b" }, 1), ["/a", "/b"], "the roots a spawner gave, split the way the preset parses them");
+  assert.deepEqual(spawnerRoots({ EYG_ALLOWED_ROOTS: "/a, /b" }, 1), ["/a", "/b"], "the roots a spawner gave, split the way the policy parses them");
   assert.deepEqual(spawnerRoots({ EYG_ALLOWED_ROOTS: "/a" }), [], "and not in a session a human started");
   assert.equal(resolveRoots({ spawner: ["/work/sub"], project: ["/p1"], env: "/e", cwd: "/c" }), "/work/sub", "a spawner's roots replace the project's, which is how it hands over a slice");
   assert.equal(resolveRoots({ grant: ["/tmp"], spawner: ["/work/sub"], cwd: "/c" }), "/work/sub,/tmp", "and a grant in that session still adds on top");
@@ -490,7 +490,7 @@ let metadata = {
 
   // The rows the subagent tool renders: the ask, and what came back.
   const asked = subagentCallLines({ task: "l1\nl2\nl3\nl4\nl5", roots: ["/work/sub"], timeout: 90, policy: "deny-all" }, false);
-  assert.match(flat(asked), /eyg_subagent \(timeout: 90s\) ?policy: deny-all/, "the timeout and the named preset in the head");
+  assert.match(flat(asked), /eyg_subagent \(timeout: 90s\) ?policy: deny-all/, "the timeout and the named policy in the head");
   assert.match(flat(asked), /roots: \/work\/sub/, "the roots the child was given");
   assert.ok(!flat(asked).includes("l5"), "collapsed shows the first lines of the task only");
   assert.match(flat(asked), /\.\.\. 1 more lines/, "and says how many it dropped");
@@ -498,7 +498,7 @@ let metadata = {
   assert.match(flat(subagentCallLines({ task: "t" }, false)), /roots: inherited: the roots this session has/, "with no roots named the child inherits them");
   const narrowed = subagentCallLines({ task: "t", tools: ["eyg", "read"], effects: ["ReadFile", "WriteFile"], max_calls: 3 }, false);
   assert.match(flat(narrowed), /tools: eyg, read \(pi's read tool is not policy-gated\)/, "the tools, with the fact that makes them worth narrowing");
-  assert.match(flat(narrowed), /effects: read_file, write_file under the spawner allowlist preset/, "effect names shown as the fields the preset reads");
+  assert.match(flat(narrowed), /effects: read_file, write_file under the spawner allowlist policy/, "effect names shown as the fields the policy reads");
   assert.match(flat(narrowed), /max_calls: 3/, "and the budget");
   assert.match(flat(subagentCallLines({ task: "t" }, false)), /tools: eyg/, "a child left at the default has one tool");
   assert.ok(!flat(subagentCallLines({ task: "t" }, false)).includes("effects:"), "and no effect allowlist line when none was named");
@@ -548,7 +548,7 @@ let metadata = {
     assert.equal(ruleMappingEffects(gleam).join(","), advertised, "the live runtime rule_mapping still matches the recorded snapshot");
   }
   const unchecked = Object.keys(POLICY_FIELDS).filter((name) => POLICY_FIELDS[name] === null).join(",");
-  assert.equal(unchecked, "DecodeJSON,EYGParse,Hash,Sign", "exactly four effects carry no policy field and are available under every preset");
+  assert.equal(unchecked, "DecodeJSON,EYGParse,Hash,Sign", "exactly four effects carry no policy field and are available under every policy");
 }
 
 // --- the reference answer: the builtins the shipped guide lists, and the effect surface ---
@@ -575,8 +575,8 @@ let metadata = {
   for (const name of Object.keys(POLICY_FIELDS)) {
     assert.ok(lines.some((line) => line.startsWith(`  ${name} | `)), `${name} is in the effect surface`);
   }
-  assert.ok(lines.some((line) => line.includes("DecodeJSON | none")), "an unchecked effect says no preset can forbid it");
-  assert.ok(lines.some((line) => line.includes('policy in force: /pkg/policies/agent-roots.eyg (project settings)')), "the preset in force is named");
+  assert.ok(lines.some((line) => line.includes("DecodeJSON | none")), "an unchecked effect says no policy can forbid it");
+  assert.ok(lines.some((line) => line.includes('policy in force: /pkg/policies/agent-roots.eyg (project settings)')), "the policy in force is named");
   assert.ok(lines.some((line) => line.includes('action "effects"')), "and the call that asks it what it decides, effect by effect");
   assert.ok(lines.some((line) => line.includes("read tool is not policy-gated")), "the harness read tool's standing is stated");
   assert.ok(!/\| (allowed|refused|unavailable|unknown)/.test(lines.join("\n")), "it reports no verdict, so it asked the policy nothing");

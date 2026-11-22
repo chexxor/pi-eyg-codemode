@@ -22,6 +22,14 @@ history, not as instructions for this tree. On 2026-11-19 the word "gate" was re
   anything else comes back `refusedArgument` and the refusal names the name it refused. A spawner
   naming a child's policy is held to the same rule
   (`docs/world/entities/pi.policy-config.md`).
+- **One word for one thing.** The older name for a policy is gone from the extension, `lib/`, the
+  shipped policy comments, the guides, the notes, the
+  claims and this file (`shippedPolicyPath`, `argumentPolicyPath`, `SPAWNER_POLICY_NEVER`, claim
+  `pi.spawner-policy`, `guides/how-to-write-a-policy.md`); the README words table defines the term
+  once and `guides/how-to-write-a-policy.md` is the one page with the
+  customize recipe; the ask that recipe cannot cover - extending the policy record the host loaded -
+  is `docs/world/entities/gap.policy-record-extension.md` and
+  `notes/pi-eyg-codemode-policy-record-extension.md`.
 
 - **The runner probe reaches only what you can install.** `runnerCandidates` answers
   `EYG_CODEMODE_RUNNER` when it is set and otherwise the single candidate `eyg`: the two
@@ -49,7 +57,7 @@ history, not as instructions for this tree. On 2026-11-19 the word "gate" was re
   cannot widen itself.
 - **A spawner names the child's surface.** `eyg_subagent` takes `tools` (`eyg`, or `eyg` plus pi's `read`
   tool, never a tool the parent session lacks), `effects` (an allowlist enforced by the third shipped
-  preset, `policies/spawner-effects.eyg`: `agent-roots.eyg` written out whole with an allowlist check
+  policy, `policies/spawner-effects.eyg`: `agent-roots.eyg` written out whole with an allowlist check
   per field, reading `EYG_SUBAGENT_EFFECTS`, unset refusing every gateable effect, never able to grant
   `fetch`, `standard_in` or `create_key`) and `max_calls` (carried as `EYG_SUBAGENT_MAX_CALLS` and
   enforced in the child's own `eyg` tool, counted off the session records). Roots still have to sit
@@ -75,10 +83,10 @@ history, not as instructions for this tree. On 2026-11-19 the word "gate" was re
   this workspace's root, so `pi install . -l` (from the workspace root) declares
   the package as `..`, and no part of the package reaches into the language repository at run
   time.
-- The presets are self-contained: `policies/agent-roots.eyg` and `policies/deny-all.eyg`
+- The policies are self-contained: `policies/agent-roots.eyg` and `policies/deny-all.eyg`
   carry their record inline instead of importing `eyg_packages/overlay/policy.eyg`. `eyg check`
-  answers both with 18 rules, and the printed shapes are the shapes the imported presets produced
-  (compared side by side on 2026-11-18). `notes/pi-codemode-preset-inlining.md` states the
+  answers both with 18 rules, and the printed shapes are the shapes the imported policies produced
+  (compared side by side on 2026-11-18). `notes/pi-codemode-policy-inlining.md` states the
   decision per effect and what is no longer covered: the language repository's
   `codemode_policy` security suite does not run here.
 - The drift guard moved with the isolation: `test/render-helpers.test.mjs` compares
@@ -101,7 +109,7 @@ history, not as instructions for this tree. On 2026-11-19 the word "gate" was re
 - `action: "effects"` answers the capability question in one call instead of one probe
   program per effect: it spawns one probe per name in `POLICY_FIELDS` and prints
   `effect | policy field | decision`, where the decision comes from the runner that will run
-  the real program, never from a copy of the preset in this package. `Env`, `Exit` and
+  the real program, never from a copy of the policy in this package. `Env`, `Exit` and
   `StandardIn` say `unknown` with the reason they are not probed, and the header prints the
   policy, where it came from, the roots and the wall time.
 - `POLICY_FIELDS` is now checked against the source of truth: a new test reads
@@ -142,7 +150,7 @@ history, not as instructions for this tree. On 2026-11-19 the word "gate" was re
   `node --test test/render-helpers.test.mjs`, 41 ms in process, pass 1 fail 0 on 2026-11-16.
   Plain JS, not TS: jiti does not transform a `.mjs`, so an annotation in it is a parse error
   at load.
-- Tried and rejected: availability probes at `/dev/null` (the agent preset refuses every path
+- Tried and rejected: availability probes at `/dev/null` (the agent policy refuses every path
   probe, so a root-relative probe is what makes `ReadDirectory` read as `available` in a session
   that can read); `MAX_TIMEOUT_MS` left in the new constants, which the tool's own output caught
   as `MAX_TIMEOUT_MS is not defined`; testing `code === 0` before `killed` for a timed-out run,
@@ -172,7 +180,7 @@ history, not as instructions for this tree. On 2026-11-19 the word "gate" was re
 - Defaults, so a first session configures nothing: the policy is resolved inside the
   installed package (`packageDir`, `defaultPolicy` in `extensions/eyg-codemode.ts`) rather
   than requiring `EYG_POLICY`, and the roots default to the session working directory,
-  passed to the preset as `EYG_ALLOWED_ROOTS` for one call and restored after it.
+  passed to the policy as `EYG_ALLOWED_ROOTS` for one call and restored after it.
 - The runner is probed, not assumed (`resolveRunner`): a runner is usable only if its help
   text advertises `--policy`, because the check lives in the runner and the prebuilt CLI
   release predates that flag. The old default, `eyg` on `PATH`, used to hand `run` to that
@@ -190,7 +198,7 @@ history, not as instructions for this tree. On 2026-11-19 the word "gate" was re
   (`packages/gleam_cli/src/eyg/cli/policy_runner.gleam`, `eyg run|eval|script --policy <module.eyg>`).
   Every effect of the program is decided by the host policy module before the host
   performs it, so this package has no shell, no file editor and no JavaScript sandbox.
-- `policies/agent-roots.eyg` is a policy preset built from
+- `policies/agent-roots.eyg` is a policy policy built from
   `eyg_packages/overlay/policy.eyg`: `agent(roots)` allows reading and writing inside
   `EYG_ALLOWED_ROOTS` and refuses everything else, including every `.env.eyg`.
 - `skills/eyg-codemode/SKILL.md` carries the EYG forms the model needs (`perform` with

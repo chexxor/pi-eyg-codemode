@@ -55,13 +55,13 @@ reachable only on the command's two error paths (1365, 1383) and inside the conf
 summary (1416), so `revoke` is the only subcommand and asking "what is widened right now" means
 beginning a grant. First step: `/eyg-grant` with no arguments answering the list instead of
 opening the dialogs, or a `status` subcommand, plus the argument grammar
-(`<preset | absolute module path> <one | N | session> [roots=/abs,/abs]`) as a row in
+(`<policy | absolute module path> <one | N | session> [roots=/abs,/abs]`) as a row in
 `guides/tool-reference.md`, where today it is only a mention.
 
 ## Not this
 
 - the mechanism itself, and which parts of it were driven live: `docs/world/entities/pi.session-grants.md`;
 - the four trade-offs behind the loop, including why the store is the session branch: `notes/pi-codemode-session-grants.md`;
-- who may widen a policy: the operator, host-side, through a command a program cannot reach. This page proposes no program-reachable grant, and `argumentPolicyPath` keeps a call's `policy` argument inside the shipped presets;
+- who may widen a policy: the operator, host-side, through a command a program cannot reach. This page proposes no program-reachable grant, and `argumentPolicyPath` keeps a call's `policy` argument inside the shipped policies;
 - a child session's surface (`eyg_subagent`'s `tools`, `effects`, `max_calls`): `docs/world/entities/pi.subagent-spawn.md`. A grant made in the parent does not reach a child;
-- any change to a shipped preset. All three pieces sit in the command and its replay, not in `policies/`.
+- any change to a shipped policy. All three pieces sit in the command and its replay, not in `policies/`.

@@ -36,7 +36,7 @@ reworded at the same time as the paragraphs were cut to say each fact once.
   as paths, never as instructions.
 - `notes/pi_codemode_host_gate.md` keeps its filename; several claim `sources` lists and
   `test -f` checks name it, and a note's file name is not a sentence a reader parses.
-- `gateable` in the spawner preset's prose (`policies/spawner-effects.eyg`,
+- `gateable` in the spawner policy's prose (`policies/spawner-effects.eyg`,
   `notes/spawner-effect-allowlist.md`, `pi.spawner-policy`) names the set of effects that have
   a policy field, as against the four unchecked ones. It is a noun for that set, not the old
   word for the mechanism, and the four unchecked effects are the reason the set needs a name.

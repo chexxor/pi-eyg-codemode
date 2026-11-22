@@ -1,8 +1,8 @@
 # Write a policy of your own
 
 You want a session that works in a different directory, reads without writing, or reaches
-one named host. A policy is one record, one handler per effect the CLI decides, and the tool
-reads it before your program runs.
+one named host. `README.md` defines what a policy is; this page writes one handler, registers
+it, and points the tool at the file.
 
 The steps are:
 
@@ -89,6 +89,13 @@ Copy one to a file of your own and change what you need. The comment above each 
 rule names why it decides what it does, and none of them imports anything, so each is
 readable in full where it is used; `notes/pi-codemode-policy-inlining.md` records why the
 policies are written out rather than imported.
+
+Copying is what the record forces rather than a style chosen here: a policy module cannot extend
+the record the runner loaded, so changing one handler of a policy you did not write means owning
+a copy of it. The one-line shape - `{ WebSearch: my_search } \ existing_policy`, register this
+handler and keep the rest of that policy - is an ask against the language, not a feature of this
+package: `notes/pi-eyg-codemode-policy-record-extension.md` carries what was rejected and why,
+and `docs/world/entities/gap.policy-record-extension.md` carries the trigger that closes it.
 
 ## Change the handlers you need
 

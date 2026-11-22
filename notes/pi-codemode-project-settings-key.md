@@ -1,6 +1,6 @@
 ---
 name: pi-codemode-project-settings-key
-description: Why the preset and the roots are configured through pi's effective settings rather than a file this package reads itself, and why the project key outranks EYG_POLICY
+description: Why the policy and the roots are configured through pi's effective settings rather than a file this package reads itself, and why the project key outranks EYG_POLICY
 date: 2026-11-20
 ---
 Three decisions the config surface forces, argued here rather than in the code.
@@ -18,7 +18,7 @@ Trigger to revisit: a pi release that drops unknown keys, or a user who needs th
 directory rather than per project.
 
 **The project key outranks `EYG_POLICY`.** The order is call argument, session grant, project
-key, environment, package preset. The alternative - environment first - is the usual
+key, environment, package policy. The alternative - environment first - is the usual
 least-specific-last rule and was rejected on purpose: the operator asked for a project to be
 able to say what it allows, and a forgotten exported variable silently changing a project's
 boundary is the failure mode to prevent. The cost is real and named: to narrow one session
@@ -30,5 +30,5 @@ answers from the other side.
 **Names resolve inside the package, paths must be absolute.** `agent-roots` and `deny-all`
 resolve to `policies/<name>.eyg` through `packageDir()`; anything relative is refused by name
 rather than resolved against the working directory, because a policy module chosen by a path
-that moves with the session is how a preset stops being the one the operator read. The same rule
+that moves with the session is how a policy stops being the one the operator read. The same rule
 applies to `eyg.roots`: a relative entry stops the call instead of matching nothing.

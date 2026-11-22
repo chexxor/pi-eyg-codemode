@@ -1,6 +1,6 @@
 ---
 name: pi-codemode-policy-inlining
-description: Why the policy modules carry their preset inline instead of importing eyg_packages/overlay/policy.eyg, and the check that shows the inlined preset is the same decision
+description: Why the policy modules carry their rules inline instead of importing eyg_packages/overlay/policy.eyg, and the check that shows the inlined rules are the same decision
 date: 2026-11-18
 ---
 
@@ -19,25 +19,25 @@ policy.read_write(roots)
 That import reached outside the pi package. Moved into its own workspace the package
 would still depend on the EYG language repository sitting two directories up, and a
 policy - the thing a session's permissions are made of - could not be read where it was
-used. Both modules now carry the preset inline and import nothing.
+used. Both modules now carry their rules inline and import nothing.
 
-**The trade-off made:** the preset (18 rules and the path helpers) is duplicated here
+**The trade-off made:** the policy (18 rules and the path helpers) is duplicated here
 rather than shared. The language repository stays the definition of that vocabulary; this
 package states one decision in one place, and if the runtime's vocabulary changes the fix
 is here, not in an upstream library the package never had. What is lost is a security
 suite the language repository owns: `eyg_packages/codemode_policy/test/security_test.eyg`
-exercises the presets for every effect, and this workspace cannot run it (no `eyg_packages`,
+exercises the policies for every effect, and this workspace cannot run it (no `eyg_packages`,
 and the runner on `PATH` has no `--policy`). The rules are therefore held by the check
 below, not by that suite.
 
-## The check that the inlined preset is the same decision
+## The check that the inlined policy is the same decision
 
 Both forms were type-checked side by side on 2026-11-18 with `eyg check` (`eyg --version`
 printed `eyg v0.1.0`), which prints the policy record with the result type of every rule.
 
 - `eyg check policies/deny-all.eyg` exit 0, 18 fields.
 - `eyg check policies/agent-roots.eyg` exit 0, 18 fields.
-- `/tmp/eyg-preset-compare.eyg` imported the language repository's preset
+- `/tmp/eyg-policy-compare.eyg` imported the language repository's policy
   (`eyg_packages/overlay/policy.eyg` there) and printed
   `{deny_all: policy.deny_all, read_write: policy.read_write(["/abs/root"])}`; `eyg check`
   exit 0.

@@ -5,7 +5,7 @@ date: 2026-11-19
 ---
 
 The README grew to 422 lines whose middle sections were reference: the knobs table, the
-environment table, the preset vocabulary, the probe surface, the row rendering, the two
+environment table, the policy vocabulary, the probe surface, the row rendering, the two
 verbatim captures and the rule that marks them. A reader installing the package pays that
 wall before their first command, while the reader at work (the model, or an agent in this
 repo) pays it every time. The audit's decision (ADR-004) is that the README is an overview

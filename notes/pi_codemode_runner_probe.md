@@ -17,12 +17,12 @@ Assuming either the path or the version is a guess about the host; probing `--he
 once per session costs 0.1-0.6 s wall and fails with a message that names the
 remedy. `EYG_CODEMODE_RUNNER` overrides the probe for a host that wants to say no.
 
-**The preset has no roots of its own.** `policies/agent-roots.eyg` reads
-`EYG_ALLOWED_ROOTS`; unset or empty means no roots, so the preset refuses everything.
-The alternative - the preset picking the process's current directory - was rejected:
+**The policy has no roots of its own.** `policies/agent-roots.eyg` reads
+`EYG_ALLOWED_ROOTS`; unset or empty means no roots, so the policy refuses everything.
+The alternative - the policy picking the process's current directory - was rejected:
 a policy module is host authored and may be reused outside a pi session, where its
-own idea of "here" is not the session's, and a preset that silently widens itself is
-a preset whose permission set cannot be quoted. The extension, which does know the
+own idea of "here" is not the session's, and a policy that silently widens itself is
+a policy whose permission set cannot be quoted. The extension, which does know the
 session's working directory, supplies it, and restores the environment afterwards.
 
 **The context-budget package is declared project-local.** `pi install
@@ -53,7 +53,7 @@ runner the package requires - does see the local tree. `gleam 1.19.2` has `compi
 no `local-packages` subcommand, so the offline route is the CLI build; publishing a new
 version or restating a dependency as a path is still the operator's decision, and is what
 would make a standalone `loam` build agree. Gating reuses the existing `read_file` policy
-field (`packages/gleam_cli/src/eyg/cli/overlay.gleam`), so all four preset shapes already
+field (`packages/gleam_cli/src/eyg/cli/overlay.gleam`), so all four policy shapes already
 rule the effect and no policy field was added. The boundary both search routes share: names
 under an allowed root are reported even for a file a read of that path would be refused for
 (`.env.eyg` listed, its contents refused), so a listed path is not permission to read it;

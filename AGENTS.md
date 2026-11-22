@@ -36,8 +36,8 @@ another workspace at run time.**
 `extensions/` the one pi extension (registers the `eyg` tool, resolves policy/roots/runner,
 spawns the binary that decides every effect through argv) · `lib/` the plain-JavaScript shapes shared by the
 tool and its tests · `libraries/` the EYG modules bound by the tool's `libraries`
-parameter · `policies/` the policies this package ships, one record, one handler per refusable effect, inlined
-· `skills/` the pi skill a model reads before writing EYG · `test/` the unit test and the
+parameter · `policies/` the policies this package ships, each written out in full and importing
+nothing · `skills/` the pi skill a model reads before writing EYG · `test/` the unit test and the
 recorded `rule_mapping` snapshot the drift guard compares against · `guides/` the prose
 reference · `notes/` the trade-offs the code cannot show · `docs/world/` the claims with
 their verify commands · `pi-simple-world-model/` the vendored tool over those claims ·
@@ -152,7 +152,7 @@ never put a workspace fact in a guide - a fact in two places drifts.
 - **EYG reaches the outside world only through effects**, and the checks are host-side: a
   program cannot opt out of it by writing different code. Do not loosen a policy to get
   past a boundary - name the boundary, and if a policy must change, say why in a note and
-  change the whole policy, one handler per effect.
+  change the whole policy rather than one handler inside it.
 - **Bash is not the work.** EYG does not have an effect to run shell commands; bash here is
   for reading this tree and for work EYG cannot express, not for doing the work the operator
   asked for.

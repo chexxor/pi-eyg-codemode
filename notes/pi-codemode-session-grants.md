@@ -58,4 +58,4 @@ widest option, "the rest of the session", otherwise has no end the operator can 
 restarting pi.
 
 See `docs/world/entities/pi.session-grants.md` for what one live sequence did, and
-`docs/world/entities/pi.policy-config.md` for the order a call's preset comes from.
+`docs/world/entities/pi.policy-config.md` for the order a call's policy comes from.

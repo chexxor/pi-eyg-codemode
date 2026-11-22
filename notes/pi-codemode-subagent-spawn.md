@@ -20,14 +20,14 @@ conversation, so `task` has to carry everything.
 **The bound is "nothing the spawner could not do for itself", not a numeric narrowing.** Roots are
 compared for real (`rootsInside`: every child root under a parent root). Policies cannot be
 compared for real - a rule is a function - so the child's policy is limited to the module this
-session's settings name or a preset this package ships, which is exactly the set the spawner could
+session's settings name or a policy this package ships, which is exactly the set the spawner could
 already pass to its own `policy` argument (`argumentPolicyPath`). Cost, stated plainly: a session
 whose project names `deny-all` can hand a child the shipped `agent-roots` over roots it already
 has. That is not a widening of what the spawner could reach; it is a widening relative to the
 policy the operator chose for the parent, and the operator's lever against it is the project key,
 which a model cannot change. The alternative - refusing any child policy but the parent's own
 module - would make the tool useless for the case it exists for: one chunk of work under the
-narrowest shipped preset.
+narrowest shipped policy.
 
 **A grant is not inherited.** The child's policy and roots are computed with the parent's session
 grant excluded from both. A grant is the operator answering a refusal *in this session*, and its

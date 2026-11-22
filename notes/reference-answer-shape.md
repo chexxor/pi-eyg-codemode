@@ -16,7 +16,7 @@ the name, the rest of the row travels with it - because a signature may contain 
 (`(a, a) -> True({}) | False`) and a cell split on `|` would cut a real signature in half.
 
 **Surface, not verdicts.** The answer prints each effect with the policy *field* that decides it, and
-points at `action: "effects"` for what the preset in force decides. Asking the policy 19 questions
+points at `action: "effects"` for what the policy in force decides. Asking the policy 19 questions
 to answer "what is the surface" would make the cheap question cost a probe run, and would make the
 answer depend on a runner being present. As it is, the action spawns nothing, so it answers on a
 machine whose every run ends with the line naming the install - which is exactly

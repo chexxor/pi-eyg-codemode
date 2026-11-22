@@ -13,7 +13,7 @@ superseded_by: null
 
 # Gap: the Windows route is named by the install guide and answered by no page
 
-`guides/install_prebuilt.md` offers `eyg-windows-x64.exe` as a release asset, and `README.md` mentions Windows nowhere. What the package does on that platform is untested and undocumented: the runner candidates are `eyg` and `<cwd>/packages/gleam_cli/dist/eyg`, resolved through pi's `exec`, and the shipped preset reads `EYG_ALLOWED_ROOTS`, which is set and restored around the call. Nothing here proves either half works without a POSIX shell.
+`guides/install_prebuilt.md` offers `eyg-windows-x64.exe` as a release asset, and `README.md` mentions Windows nowhere. What the package does on that platform is untested and undocumented: the runner candidates are `eyg` and `<cwd>/packages/gleam_cli/dist/eyg`, resolved through pi's `exec`, and the shipped policy reads `EYG_ALLOWED_ROOTS`, which is set and restored around the call. Nothing here proves either half works without a POSIX shell.
 
 ## What to do about it
 

@@ -18,7 +18,7 @@ intersection of three files. Read them in this order, and the answer costs one l
 
 1. `guides/cli_effects_reference.md`, section `Every effect at a glance` - one row per effect,
    with the policy field it sits under and what that field allows. That is the capability question.
-2. The preset in force - `policies/agent-roots.eyg` decides each policy field for the roots
+2. The policy in force - `policies/agent-roots.eyg` decides each policy field for the roots
    named in `EYG_ALLOWED_ROOTS`; the vocabulary is written out inline, one rule per field.
 3. The roots themselves, for a path question. The tool reports the policy it used and its
    roots in the call, so a refusal names the path it was denied.
@@ -26,9 +26,9 @@ intersection of three files. Read them in this order, and the answer costs one l
 `test/fixtures/rule_mapping.gleam` is the recorded snapshot of the language repository's
 `rule_mapping` (captured 2026-11-18, md5 `9cb5e8ace42e1df79083bab255ee9bb1` of the source
 file): 23 effects, 19 of them named by a `PolicyField`, 4 (`DecodeJSON`, `EYGParse`,
-`Hash`, `Sign`) marked unchecked and deterministic, so available under every preset
+`Hash`, `Sign`) marked unchecked and deterministic, so available under every policy
 including `deny_all`. `Search` shares the `read_file` field, which is why the walk is
-decided once rather than per directory. A missing field in a preset is a configuration
+decided once rather than per directory. A missing field in a policy is a configuration
 error, not a silent allow: `lib/render-helpers.mjs` carries `POLICY_FIELDS` and the test
 compares it against the fixture, so a surface that moved fails the suite rather than
 silently allowing.
@@ -39,7 +39,7 @@ carry a bare path string, `read_file`, `write_file` and `append_file` carry a re
 
 ## Not this
 
-The table is not the policy: it says what a CLI can name and how a preset decides, not what
-was allowed on any given day. Which preset ran, and its roots, is reported by the tool per
+The table is not the policy: it says what a CLI can name and how a policy decides, not what
+was allowed on any given day. Which policy ran, and its roots, is reported by the tool per
 call (`README.md`). Effects are not added to answer a feature request: that is an escalation,
 and the file that answers "can this effect exist at all" lives in the language repository.

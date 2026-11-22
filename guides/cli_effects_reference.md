@@ -20,14 +20,14 @@ One row per effect the CLI can name, in the order they appear in `rule_mapping`
 policy module decides about it. Read this table for a capability question, the sections
 below for an argument shape.
 
-Gate classes, against the preset a codemode agent uses (`policy.read_write(roots)` in
+Gate classes, against the policy a codemode agent uses (`policy.read_write(roots)` in
 `eyg_packages/overlay/policy.eyg`):
 
 - `path-checked` - the policy allows it only for paths under the roots; a refusal comes back
   as `Error("<field> denied by policy: <path>")` and nothing touched the host.
-- `constant` - the preset decides without looking at the value; "allowed" or "refused" below.
+- `constant` - the policy decides without looking at the value; "allowed" or "refused" below.
 - `unchecked` - `DecodeJSON`, `EYGParse`, `Hash` and `Sign` are deterministic host helpers
-  and have no policy field at all, so they are available in every preset, including
+  and have no policy field at all, so they are available in every policy, including
   `policy.deny_all`.
 
 | Effect | Policy field | Gate class | Returns |
@@ -176,7 +176,7 @@ after it a suffix), a whole `**` segment spans depths, anything else compares eq
 there are no character classes or alternation. The walk is capped at 32 directories deep
 (`search_max_depth`).
 
-The policy decides the walk once, under the `read_file` field: a root the preset does not
+The policy decides the walk once, under the `read_file` field: a root the policy does not
 cover answers `Error("read_file denied by policy: <path>")`, and a directory the walk cannot
 read contributes nothing, so a search reports what the policy let it see rather than failing.
 For a walk on a runtime without this effect, see `search_lib` in `pi-eyg-codemode/README.md`.

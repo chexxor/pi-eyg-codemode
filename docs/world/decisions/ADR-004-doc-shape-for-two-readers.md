@@ -71,10 +71,10 @@ Reader 1 (a person installing the package):
 - **No tutorial.** Nothing walks "I have the package" to "one effect performed". The README's
   first-session block stops at `pi list`. Diátaxis: this tree has reference (`guides/cli_effects_reference.md`,
   `guides/syntax.md`, the README tables) and explanation, and no tutorial and no how-to.
-- **Reference before action.** The knobs table, the env table, the preset vocabulary and the
+- **Reference before action.** The knobs table, the env table, the policy vocabulary and the
   registry are all in the file the new reader opens first. Reference serves a reader at work;
   a new reader is at study.
-- **Words used before they are defined.** *runner*, *preset*, *roots*, *the checks*,
+- **Words used before they are defined.** *runner*, *policy*, *roots*, *the checks*,
   *refused*, *unchecked*, *registry scope*, *one-shot* are used in the README and never defined
   on the page that uses them. The 2026-11-19 rewording replaced "gate" with "the checks" and
   left the new phrase undefined - the same trap the last audit found, one word later.
@@ -101,9 +101,9 @@ Reader 2 (the model that writes EYG):
   the reference and the world model. Reference tables that are this package's contract (the tool's
   knobs, the environment variables) move to the page they belong to or stay behind the link list.
 - **New pages, named by what the reader does with them** (`guides/first-session.md` as the tutorial;
-  `guides/how-to-*.md` for point-the-tool-at-your-runner, write-another-preset,
+  `guides/how-to-*.md` for point-the-tool-at-your-runner, write-a-policy,
   read-in-slices, share-functions). A page title states the goal, not the file it touches.
-- **A words block in the README** defines *runner*, *preset*, *roots*, *the checks*, *refused*,
+- **A words block in the README** defines *runner*, *policy*, *roots*, *the checks*, *refused*,
   *unchecked* and *registry scope* once, in the order a new reader meets them. It is the
   glossary the Fuchsia guide calls a "glossary term" and Diátaxis calls minimal explanation.
 - **The published-release fact moves from a footnote to the overview**, grounded by the fetched

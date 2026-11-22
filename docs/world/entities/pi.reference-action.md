@@ -16,9 +16,9 @@ superseded_by: null
 `action: "reference"` (`code: ""`) prints the language surface the session is writing against:
 `eyg reference: 29 builtins, 23 effects, nothing performed`, then one line per builtin with its
 signature and notes grouped under the guide's own `##` sections, then one line per effect with the
-policy field that decides it (`none` for the four no preset can forbid). It performs no effect,
+policy field that decides it (`none` for the four no policy can forbid). It performs no effect,
 spawns no process and asks the policy no question, so it answers on a machine where no runner was
-found as well as one where one was; `action: "effects"` stays the call that asks the preset what
+found as well as one where one was; `action: "effects"` stays the call that asks the policy what
 it decides for each effect, and the answer says so.
 
 The builtins come from `guides/builtins_reference.md`, the offline mirror this package ships, and

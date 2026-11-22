@@ -24,7 +24,7 @@ What "first draft" covers, precisely:
   `eyg check` on the shipped modules, `node --test 'test/*.mjs'`, the world-model commands — with
   costs in `AGENTS.md`'s table. Nothing here is a long session, and no comparison against the
   built-in JavaScript codemode has been measured.
-- **The checks have been seen working; the package has not been used.** The presets type-check,
+- **The checks have been seen working; the package has not been used.** The policies type-check,
   the drift guard passes against its snapshot, and under a checked run made on 2026-11-20 through
   a development build of the language CLI this tree no longer has, a write inside the roots
   performed and a write outside them came back
@@ -42,7 +42,7 @@ met once, on 2026-11-20, and is superseded: no build this package reaches carrie
 ## Not this
 
 Not a claim that the tool is broken - a runner that accepts the flag and is named by
-`EYG_CODEMODE_RUNNER` runs the presets as written, and what
+`EYG_CODEMODE_RUNNER` runs the policies as written, and what
 happened when one did is recorded in `cli.checked-runner-on-this-host` (superseded). Not the gap records
 themselves: they say which hole is open, this one says how much of this package's own prose is
 provisional.

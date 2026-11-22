@@ -19,7 +19,7 @@ The restriction therefore lives on the runner side:
 `packages/gleam_cli/src/eyg/cli/policy_runner.gleam` evaluates the program through
 the Pass/Mock loop that `packages/gleam_cli/src/eyg/cli/overlay.gleam` already binds
 (`rule_mapping`, `overlay.setup`, `decide`), reached from `eyg run --policy <module.eyg>`.
-`eyg_packages/codemode_policy/` states which presets of that vocabulary are safe for
+`eyg_packages/codemode_policy/` states which policies of that vocabulary are safe for
 an agent, and `pi-eyg-codemode/` puts a pi agent in front of that runner.
 
 # Why not an EYG mediated runner

@@ -20,13 +20,13 @@ operator chooses - one tool call, N calls, or the rest of the session - and can 
   `suggestGrant` in `lib/render-helpers.mjs`). They render collapsed as well as expanded, and the
   row that no root would fix says so instead of guessing one. The last line of the row tells the
   model it cannot grant it itself.
-- **The durations, and who chooses.** `/eyg-grant` bare asks through `ctx.ui.select`: the preset
+- **The durations, and who chooses.** `/eyg-grant` bare asks through `ctx.ui.select`: the policy
   (or an absolute module path via `ctx.ui.input`), then "one tool call (recommended: retry exactly
   the refused program)", "a number of tool calls", or "the rest of the session (widest: every
   later call)", then roots, then `ctx.ui.confirm`. Typed with its arguments
   (`/eyg-grant agent-roots 3 roots=/tmp`) it asks only for the confirmation; `/eyg-grant revoke`
   picks among the grants in force. The tool's parameters carry no grant field, and
-  `argumentPolicyPath` limits the call's `policy` argument to a preset this package ships, so a
+  `argumentPolicyPath` limits the call's `policy` argument to a policy this package ships, so a
   program cannot reach the widening (`notes/pi-codemode-session-grants.md`).
 - **The store is the branch.** A grant is a custom session entry
   (`pi.appendEntry("eyg-grant", ...)`), which does not reach the model; a call that ran under one
@@ -44,7 +44,7 @@ has, `docs/world/entities/cli.runner-official-install-only.md`): the program tha
 `write_file denied by policy: /tmp/eyg-grant-probe.txt` with
 `policySource: project settings`, roots = the project only, `refusals: [{write_file,
 /tmp/eyg-grant-probe.txt}]` and the rows naming `/eyg-grant ... roots + /tmp`; `/eyg-grant` then
-answered four dialogs (preset, duration, roots, confirm) and notified
+answered four dialogs (policy, duration, roots, confirm) and notified
 `grant gmwos5ksd: <package>/policies/agent-roots.eyg for 1 tool call (roots + /tmp)`; the same
 program next ran under `policySource: session grant` with roots `<project>,/tmp` and printed
 `wrote /tmp/eyg-grant-probe.txt`, and the file existed; the same program again was refused,
@@ -62,7 +62,7 @@ work, carried as `docs/world/entities/gap.grant-polish-undecided.md` with a row 
 
 ## Not this
 
-- the order a call's preset and roots come from: `docs/world/entities/pi.policy-config.md` and
+- the order a call's policy and roots come from: `docs/world/entities/pi.policy-config.md` and
   `guides/how-to-write-a-policy.md`;
 - why a rule lives in the policy module at all: `docs/world/decisions/ADR-002-handler-seam.md`;
 - the four trade-offs behind the loop: `notes/pi-codemode-session-grants.md`.

@@ -10,9 +10,9 @@ sources: [policies/spawner-effects.eyg, extensions/eyg-codemode.ts, lib/render-h
 supersedes: null
 superseded_by: null
 ---
-# A spawner names the effects its child may perform, and a shipped preset enforces it
+# A spawner names the effects its child may perform, and a shipped policy enforces it
 
-`policies/spawner-effects.eyg` is the third preset this package ships: `agent-roots.eyg` with an
+`policies/spawner-effects.eyg` is the third policy this package ships: `agent-roots.eyg` with an
 allowlist check over each of its fields. `eyg_subagent` installs it for a child session when the spawner names
 `effects`, so "read and print, nothing else" needs no file edited and nothing widened - every rule
 in it is the agent-roots rule or a refusal, never a rule agent-roots does not have.
@@ -20,7 +20,7 @@ in it is the agent-roots rule or a refusal, never a rule agent-roots does not ha
 - **How the allowlist is read.** `EYG_SUBAGENT_EFFECTS` is a comma-separated list of *field* names (the
   lower-case names in the record at the bottom of the module), set by the spawner for the one spawn
   (`EFFECT_ALLOWLIST_ENV` in `lib/render-helpers.mjs`). Unset or empty names no field, so every
-  gateable field is refused - the narrow reading of a missing list, because a preset nobody
+  gateable field is refused - the narrow reading of a missing list, because a policy nobody
   configured must not be the wide one.
 - **A refusal names the whole boundary.** `Error("<field> denied by policy:
   EYG_SUBAGENT_EFFECTS=<the list the child was given>")`, so a child that asks for a field it does
@@ -29,25 +29,25 @@ in it is the agent-roots rule or a refusal, never a rule agent-roots does not ha
   path under a root is still refused when its field is not named - neither list can loosen the
   other, and `read_file` keeps hiding `.env.eyg` through the narrowing.
 - **What an allowlist cannot grant.** `fetch`, `standard_in` and `create_key` stay refused allowlist
-  or not, because the base preset refuses them and an allowlist removes reach rather than adding it;
+  or not, because the base policy refuses them and an allowlist removes reach rather than adding it;
   `env` is answered `Mock(None({}))` in both, which is the only answer `Env`'s own type allows; the
   four unchecked effects (`DecodeJSON`, `EYGParse`, `Hash`, `Sign`) carry no field, so naming them
   changes nothing. The tool refuses the first group where it is asked and reports the other two as
   no-ops, instead of spending a child's calls on a refusal it could not act on
-  (`SPAWNER_PRESET_NEVER`, `SPAWNER_PRESET_NOOP`).
-- **It combines with `agent-roots` only.** The narrowing preset is a copy of that preset with an allowlist,
+  (`SPAWNER_POLICY_NEVER`, `SPAWNER_POLICY_NOOP`).
+- **It combines with `agent-roots` only.** The narrowing policy is a copy of that policy with an allowlist,
   so replacing a project policy that is narrower (`deny-all`) with it would widen the child; the
   tool refuses that combination and names both paths in the reason (`docs/world/entities/pi.subagent-spawn.md`).
 - **`Search` is the `read_file` field**, so naming `ReadFile` also lets a child search and naming
   only `Search` also lets it read a file - one field, stated in the parameter description rather
   than pretended away.
 
-## What the preset answered, probe and live
+## What the policy answered, probe and live
 
 Probes: `"$EYG_CODEMODE_RUNNER" run --policy $PWD/policies/spawner-effects.eyg <program>` in a scratch
 directory, with `EYG_ALLOWED_ROOTS` set to it, `@measured 2026-11-20` - through a development build
 of the language CLI this tree no longer has, so the table is a dated record and the command runs
-only when the operator names a runner. The preset itself still type-checks on the CLI on `PATH`.
+only when the operator names a runner. The policy itself still type-checks on the CLI on `PATH`.
 
 | `EYG_SUBAGENT_EFFECTS` | effect asked for | answer |
 | --- | --- | --- |
@@ -61,7 +61,7 @@ only when the operator names a runner. The preset itself still type-checks on th
 | *(same program under `agent-roots.eyg`, no allowlist set)* | `DeleteFile`, `MakeDirectory`, `CWD` | performed - the strict narrowing, side by side |
 
 Live, the same scratch project as `docs/world/entities/pi.subagent-spawn.md`, one parent
-`pi --print` session, child under this preset with `effects: ["ReadFile", "StandardOut"]` and roots
+`pi --print` session, child under this policy with `effects: ["ReadFile", "StandardOut"]` and roots
 one directory below the parent's: the child's read inside its slice printed the file's line, its
 `WriteFile` inside the same slice came back `write_file denied by policy:
 EYG_SUBAGENT_EFFECTS=read_file,standard_out`, and its read of a file **inside the parent's root but
@@ -78,7 +78,7 @@ TUI rendering of the refusal rows - the proofs ran `--print`, and only the row s
 
 - the spawn itself, its tools and its call budget: `docs/world/entities/pi.subagent-spawn.md`;
 - the effect surface and which effects carry no field: `docs/world/entities/codemode.effect-surface.md`;
-- why a preset is written out whole rather than importing its base: `notes/spawner-effect-allowlist.md`,
+- why a policy is written out whole rather than importing its base: `notes/spawner-effect-allowlist.md`,
   `notes/pi-codemode-policy-inlining.md`;
 - how to use the parameter: `guides/how-to-spawn-a-subagent.md`.
 

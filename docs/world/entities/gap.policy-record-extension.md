@@ -1,0 +1,48 @@
+---
+id: gap.policy-record-extension
+type: entity
+owner: delegate
+status: current
+verified_at: 2026-11-22
+verify: "test $(grep -v '^//' policies/agent-roots.eyg | sed '/^ *$/d' | grep -Fxc -f policies/spawner-effects.eyg) -ge 40 && grep -q 'record extension' notes/pi-eyg-codemode-policy-record-extension.md && grep -q 'gap.policy-record-extension' guides/how-to-write-a-policy.md && grep -q 'gap.policy-record-extension' docs/world/runbooks/runbook.next-milestone.md"
+confidence: high
+sources: [policies/agent-roots.eyg, policies/spawner-effects.eyg, notes/pi-eyg-codemode-policy-record-extension.md, notes/spawner-effect-allowlist.md, guides/how-to-write-a-policy.md, docs/world/runbooks/runbook.next-milestone.md]
+supersedes: null
+superseded_by: null
+---
+
+# Gap: customizing a policy means copying it, because a loaded policy record cannot be extended
+
+`guides/how-to-write-a-policy.md` tells an operator to copy the shipped policy nearest what
+they need and change the handlers, and `policies/spawner-effects.eyg` does exactly that inside
+the package: it is `agent-roots.eyg` with an allowlist over its fields, written out whole. The
+hole is the copying itself. 75 non-comment lines of `policies/agent-roots.eyg` appear verbatim
+in `policies/spawner-effects.eyg` - `verify` counts them - so every rule change is two edits,
+and the drift between the copies is a cost already named in
+`notes/spawner-effect-allowlist.md`.
+
+What is missing is a way to extend or override **the record the host loaded**: in the operator's
+spelling, `{ WebSearch: my_search } \ existing_policy`, register a handler for a field the
+loaded policy does not carry, or replace one it does, without owning its file. EYG has record
+update for a record the program holds as a value, and it only overwrites fields already present;
+a policy module is not such a value, and importing one asks its top-level effects of the running
+program. `notes/pi-eyg-codemode-policy-record-extension.md` carries the measurement, what was
+rejected and why, and the trigger that closes this record: a language release in which a
+`--policy` module can extend or override the record another module returned.
+
+This package cannot close it. The compiler and the runner are the language repository's, and
+this tree builds neither (`AGENTS.md`); nothing here adds a language feature, and no shipped
+policy is loosened to imitate one.
+
+## Not this
+
+- Not about whether the shipped policies decide correctly at run time: that is
+  `docs/world/entities/codemode.effect-surface.md` and `docs/world/entities/overlay.policy-rules.md`.
+- Not the allowlist design - why the child's policy is a copied file reading one environment
+  variable, and why an unset list refuses everything, is `notes/spawner-effect-allowlist.md`
+  and `docs/world/entities/pi.spawner-policy.md`.
+- Not the reason the policies import nothing (`invariant.policy-self-contained`,
+  `notes/pi-codemode-policy-inlining.md`): self-containment is chosen, the copying is the
+  consequence this record counts.
+- Not a request for a new effect or a wider policy: the surface and the policies' reach are
+  unchanged by this gap.

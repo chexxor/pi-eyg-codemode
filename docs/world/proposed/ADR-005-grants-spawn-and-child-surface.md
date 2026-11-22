@@ -23,7 +23,7 @@ answer for itself:
 2. **`eyg_subagent`** - a session delegates a chunk of work to a second pi session whose boundary is
    built from the spawner's own reach (`docs/world/entities/pi.subagent-spawn.md`).
 3. **the child's surface** - the spawner names the child's tools, the effects its policy allows, and a
-   call budget, enforced by a third shipped preset and by the child's own tool
+   call budget, enforced by a third shipped policy and by the child's own tool
    (`docs/world/entities/pi.spawner-policy.md`).
 
 Read together they answer one question an operator asks before trusting an agent with tools: *who may
@@ -43,17 +43,17 @@ closed by hand, one at a time, and a reader who changes one without the other re
 ## Decision
 
 - **A widening is given by the operator, in a session, with a duration.** A call cannot widen itself:
-  its `policy` argument may only name a preset this package ships. A wider module arrives through
+  its `policy` argument may only name a policy this package ships. A wider module arrives through
   `/eyg-grant` (this session only, and its record is read back off the session branch), `eyg.policy` in
   the project settings, or `EYG_POLICY`. A program has no effect that changes any of that, and no new
   effect was added to make this work.
 - **A grant does not travel.** It is not inherited by a child session, and it is not re-spent by a child
   that has no call limit. A session running under a grant does the granted work itself.
 - **A narrowing is the spawner's to make, and it is checked against what the spawner already has.**
-  Roots must sit inside the spawner's roots (`rootsInside`); the policy may only be a shipped preset;
+  Roots must sit inside the spawner's roots (`rootsInside`); the policy may only be a shipped policy;
   `effects` is probed against the reach this session actually has; `tools` must be a subset of
   `pi.getActiveTools()` and of `[eyg, read]`; a session at depth 1 gets no children.
-- **A child's effect allowlist is enforced by a preset, not by the child's good behaviour.**
+- **A child's effect allowlist is enforced by a policy, not by the child's good behaviour.**
   `policies/spawner-effects.eyg` is `agent-roots.eyg` written out whole with an allowlist check per
   field, reading `EYG_SUBAGENT_EFFECTS`; unset names nothing and
   refuses every gateable effect; it cannot grant `fetch`, `standard_in` or `create_key`; and it
@@ -74,9 +74,9 @@ closed by hand, one at a time, and a reader who changes one without the other re
   and environment, so a "subagent" would be this session with a longer prompt.
 - **Inheriting a grant into a child.** One yes would buy unlimited calls in a session with no operator
   in front of it.
-- **One preset per set of effects.** 512 subsets over nine gateable fields; the copied preset plus one
+- **One policy per set of effects.** 512 subsets over nine gateable fields; the copied policy plus one
   environment variable keeps the decision in the policy module and the file count at one.
-- **Treating an unset allowlist as "no opinion" (allow everything the base preset allows).** That makes
+- **Treating an unset allowlist as "no opinion" (allow everything the base policy allows).** That makes
   the wide behaviour the default and the narrowing the thing you have to remember.
 - **A budget enforced by a policy rule or by a new "how many calls have I made" effect.** A policy module
   has no per-session counter, and a new effect is a change to the language, not to this package.
@@ -86,7 +86,7 @@ closed by hand, one at a time, and a reader who changes one without the other re
 
 ## What it costs
 
-The narrowing preset is a copy of `agent-roots.eyg` and can drift from it (recorded in
+The narrowing policy is a copy of `agent-roots.eyg` and can drift from it (recorded in
 `notes/spawner-effect-allowlist.md` with its trigger). A session under a grant cannot delegate granted
 work. The budget binds a session this package started, not a `pi` a human starts by hand. A child given
 `read` reads with the parent's `read` reach, which is wider than the roots - stated in the guide rather
@@ -109,7 +109,7 @@ dated record, and the same commands now need `EYG_CODEMODE_RUNNER` naming a runn
   test/fixtures/refusal-probe.eyg 2>&1 | grep -q 'write_file denied by policy: EYG_SUBAGENT_EFFECTS=read_file,standard_out'
   && env -u EYG_SUBAGENT_EFFECTS EYG_ALLOWED_ROOTS=$PWD .local/eyg-checked run --policy $PWD/policies/spawner-effects.eyg
   test/fixtures/refusal-probe.eyg 2>&1 | grep -q 'standard_out denied by policy: EYG_SUBAGENT_EFFECTS=$'`
-  - the preset type-checks with 18 fields, an allowlist refusal names the whole list, and an unset list
+  - the policy type-checks with 18 fields, an allowlist refusal names the whole list, and an unset list
     refuses the first gateable effect the program asks for. Exit 0 (0.33 s).
 - One live parent session with `tools`, `effects`, `max_calls: 6` and roots narrowed to a slice:
   154 s wall, exit 0, child answered in 53.61 s with 3 `eyg` calls, budget unspent; a read inside the

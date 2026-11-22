@@ -46,7 +46,7 @@ scratch directory), with no `EYG_CODEMODE_RUNNER` in its environment:
 | `WriteFile` inside the root | `performed`, 0.09 s | file written |
 | `WriteFile` in `/tmp` | `refused: write_file denied by policy: /tmp/task2-outside-pi.txt`, 0.08 s | nothing written |
 
-The probe rows are what the default preset in fact does: `AppendFile`, `CWD`, `DeleteFile`,
+The probe rows are what the default policy in fact does: `AppendFile`, `CWD`, `DeleteFile`,
 `MakeDirectory`, `ReadDirectory`, `ReadFile`, `Search`, `WriteFile`, `Flip`, `Now`, `Random`,
 `Sleep`, `StandardError`, `StandardOut` allowed for the probe value; `CreateKey` and `Fetch`
 refused; `Env`, `Exit`, `StandardIn` unknown because probing them would read the environment,
@@ -65,7 +65,7 @@ printed nothing after both the direct calls and the pi session.
 - whether a *release* carries the flag: `gap.runner-release-lacks-policy`; and whether `main`
   has the runner: `gap.policy-runner-not-on-main`;
 - how much of the package is still unproven in use: `pi.first-draft`;
-- what the presets decide, effect by effect: `overlay.policy-rules` and
+- what the policies decide, effect by effect: `overlay.policy-rules` and
   `guides/cli_effects_reference.md`;
 - how to point the tool at a runner of your own: `guides/how-to-point-the-tool-at-your-runner.md`.
 

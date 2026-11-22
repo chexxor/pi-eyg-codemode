@@ -76,7 +76,7 @@ outside this tree.
 
 ## Not this
 
-- what a preset allows and where the roots come from: `docs/world/entities/pi.policy-config.md`
+- what a policy allows and where the roots come from: `docs/world/entities/pi.policy-config.md`
 - the grant loop the sessions above asked for: `docs/world/entities/pi.session-grants.md`
 - where the `guides/` prose comes from: `docs/world/entities/guides.index.md`
 - whether the language-skill package stays a separate package:

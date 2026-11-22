@@ -66,6 +66,6 @@ supersedes: null
 superseded_by: null
 ---
 
-A policy module in this package imports nothing outside the package. The preset is written
+A policy module in this package imports nothing outside the package. The policy is written
 out where it is used, so a session's permissions cannot change because some other
 workspace moved, and the whole decision is readable in one file.

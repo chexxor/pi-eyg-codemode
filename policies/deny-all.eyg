@@ -3,10 +3,10 @@
 // reason naming the effect; time, randomness and process output are passed
 // because they cannot change anything the agent did not already have.
 //
-// This module is self-contained: the preset is written out here rather than
+// This module is self-contained: the policy is written out here rather than
 // imported, so the package carries no code from outside itself and a policy can
-// be read in full where it is used. `notes/pi-codemode-preset-inlining.md`
-// records where the preset came from and how it was checked.
+// be read in full where it is used. `notes/pi-codemode-policy-inlining.md`
+// records where the policy came from and how it was checked.
 //
 // Decision, one row per effect the CLI can name (the 23 in `rule_mapping`; 18 of
 // them are policy fields, 4 are never gated). The names below are the effect
@@ -29,13 +29,13 @@
 //     Env                             - Mock(None({})): Env returns Option, so an
 //                                       unset variable is the honest answer
 //     CWD                             - Mock(Error({})): CWD returns a Result
-//   NEVER GATED (not policy fields, available under every preset)
+//   NEVER GATED (not policy fields, available under every policy)
 //     DecodeJSON, EYGParse, Hash, Sign - deterministic over values they were given
 //
 // `Search` is not in this record: the CLI gates it as the `read_file` field, so
 // whatever decides `ReadFile` decides a search.
 //
-// See guides/pi_codemode_agent.md for the presets that open hosts, and
+// See guides/pi_codemode_agent.md for the policies that open hosts, and
 // policies/agent-roots.eyg for the default that lets a session work in one
 // directory.
 

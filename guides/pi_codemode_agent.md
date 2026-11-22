@@ -88,7 +88,7 @@ export EYG_POLICY=<absolute path to this package>/policies/agent-roots.eyg
 export EYG_ALLOWED_ROOTS=<absolute path to this package>,/tmp/agent-workspace
 ```
 
-The `EYG_POLICY` path is this workspace's shipped preset; the default is the same
+The `EYG_POLICY` path is this workspace's shipped policy; the default is the same
 file resolved from the package, so setting nothing works. The prebuilt `eyg` on
 `PATH` here is v0.1.0 and predates `--policy` (re-measured 2026-11-21: its help has no
 `--policy`), so that candidate is never chosen and the probe finds no runner: the tool refuses
@@ -161,14 +161,14 @@ A program that keeps going after a refusal must check its evidence with a later
 `skills/eyg-codemode/SKILL.md` carries the forms the model needs (`perform` with one
 argument record, `let _ =` binding before a following expression, no infix operators).
 `guides/syntax.md` and `guides/cli_effects_reference.md` are the language and effect
-reference; the policy vocabulary is written out inside this package's presets
+reference; the policy vocabulary is written out inside this package's policies
 (`policies/agent-roots.eyg`, `policies/deny-all.eyg`) rather than imported - see
 `notes/pi-codemode-policy-inlining.md` for why, and for the fact that the language
-workspace's preset library and its security suite are no longer reachable from here.
+workspace's policy library and its security suite are no longer reachable from here.
 
-The presets this package ships are those two. The language repository's richer set
+The policies this package ships are those two. The language repository's richer set
 (`agent(roots)`, `reader(roots)`, `fetching(roots, hosts)`, `service(...)`, `nothing`)
-lives in `eyg_packages/codemode_policy/index.eyg` there; to get a preset with that
+lives in `eyg_packages/codemode_policy/index.eyg` there; to get a policy with that
 shape here, write it in a policy module of your own, one rule per effect, and point
 `EYG_POLICY` at it. A token belongs in the policy module - the policy is host authored
 and may read the environment, the program may not.
@@ -190,7 +190,7 @@ What a checked call proves is the decision, not its coverage. The rows recorded
 write performed inside the roots and one refused outside them. What stays UNVERIFIED is that
 **every** rule decides as recorded: that proof is the language repository's - a runner built
 there (`bin/agent/gate.sh gleam_cli`), the suite in `eyg_packages/codemode_policy/`, and
-`scripts/mutation-check.mjs`, which loosens one rule of the preset library at a time
+`scripts/mutation-check.mjs`, which loosens one rule of the policy library at a time
 and requires the security suite to fail. This tree carries the *record* of those results
 (`test/fixtures/rule_mapping.gleam` plus `notes/pi-codemode-policy-inlining.md`), not the
 test. Point the tool at a runner of your own, re-run the probes, and let the claims move with
@@ -203,6 +203,6 @@ the output.
   is the transcript above.
 - `DecodeJSON`, `EYGParse`, `Hash` and `Sign` are `Unchecked` in the language
   workspace's `rule_mapping`, recorded here at `test/fixtures/rule_mapping.gleam`: they
-  are performed without asking the policy, so no preset - this package's included - can
+  are performed without asking the policy, so no policy - this package's included - can
   forbid them (`docs/world/traps.md`).
 - Publishing a package, cutting a release or pushing remains the operator's act.

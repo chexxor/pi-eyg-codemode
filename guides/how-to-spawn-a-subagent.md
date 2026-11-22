@@ -39,8 +39,8 @@ Two environment variables are set for that one spawn and restored afterwards
 | variable | what it does in the child |
 | --- | --- |
 | `EYG_POLICY` and `EYG_SUBAGENT_POLICY` | the module the child's calls are checked against |
-| `EYG_ALLOWED_ROOTS` | the roots the preset reads, which must be inside the spawner's |
-| `EYG_SUBAGENT_EFFECTS` | the fields the child's preset may perform, when you name `effects` |
+| `EYG_ALLOWED_ROOTS` | the roots the policy reads, which must be inside the spawner's |
+| `EYG_SUBAGENT_EFFECTS` | the fields the child's policy may perform, when you name `effects` |
 | `EYG_SUBAGENT_MAX_CALLS` | how many `eyg` calls the child may make, when you name `max_calls` |
 | `EYG_CODEMODE_DEPTH` | `1` in a child, and `0` (unset) in a session a human started |
 
@@ -53,7 +53,7 @@ carry it.
 ## Narrow it to a slice
 
 The child's policy is the one this session's settings name, or one you name with `policy` - and
-only a preset this package ships, because a module of your own writing is a module you could
+only a policy this package ships, because a module of your own writing is a module you could
 make permissive. Its roots are the roots this session has unless you pass `roots`, and every one
 you pass must already be under a root you have (`rootsInside`). Name one outside and the call is
 refused before anything starts, naming the root that is outside.
@@ -71,18 +71,18 @@ boundary work - give the child a slice and a task that names a path one level up
 
 `effects` names the effects the child may perform, as effect names (`["ReadFile", "StandardOut"]`).
 It is not a request you make and hope the child obeys: it is enforced by `policies/spawner-effects.eyg`,
-the narrowing preset the tool installs for that child in place of `agent-roots.eyg`, and the child runs
+the narrowing policy the tool installs for that child in place of `agent-roots.eyg`, and the child runs
 under it whether or not it behaves (`docs/world/entities/pi.spawner-policy.md`). Three facts about it,
 each of which the tool will tell you rather than let you discover:
 
 - **it removes reach, it never adds it.** `Fetch`, `StandardIn` and `CreateKey` stay refused allowlist
-  or not, and `DecodeJSON`, `EYGParse`, `Hash`, `Sign` carry no field for any preset to refuse, so
+  or not, and `DecodeJSON`, `EYGParse`, `Hash`, `Sign` carry no field for any policy to refuse, so
   naming them changes nothing.
 - **the two cuts are independent.** A named field is still decided by the roots, so a `ReadFile` child
   still cannot read above its slice; a path inside your slice still cannot be written by a field you
   did not name.
 - **it combines with `agent-roots` only.** If this session's policy is a narrower module, swapping it
-  for the narrowing preset would widen the child, and the call is refused with both paths in the reason.
+  for the narrowing policy would widen the child, and the call is refused with both paths in the reason.
 
 `max_calls` caps how many `eyg` calls the child makes. The child is told, in a refusal it can read:
 the budget is not its to widen, so report what it has. A call refused before it reached a policy does
@@ -117,7 +117,7 @@ the record that the module came from whoever started it rather than from the pro
   with no call limit. When the refused work needs a grant, do it yourself under one.
 - **a child of its own.** A session at depth 1 is refused before a second pi process starts: the
   tree is one level deep, and the child does not even see the tool.
-- **a policy you wrote.** `policy` names a shipped preset only. Narrowest shipped preset first:
+- **a policy you wrote.** `policy` names a shipped policy only. Narrowest shipped policy first:
   `deny-all` proves a child can be stopped at every effect.
 - **an effect your own policy refuses, or a tool you do not have.** The allowlist is validated against
   the reach this session actually has, probed with `action: "effects"` under this session's policy and

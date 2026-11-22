@@ -38,7 +38,7 @@ Three readers, and each needs one thing from this tree:
 | word | what it means here |
 | --- | --- |
 | runner | the EYG CLI this package starts; the checks live in it, so a build that does not know `--policy` cannot run a program with checks in it |
-| policy | the EYG program the runner loads before the program: one effect-handler per effect it decides, with `Pass` registered wherever an effect is left at its default. This package ships `policies/agent-roots.eyg`, `policies/deny-all.eyg`, and `policies/spawner-effects.eyg` for a child session whose spawner named an effect allowlist |
+| policy | a record of effect-handlers, one per effect the CLI decides: `Pass` is the handler an effect keeps when the policy leaves it at its default. The runner loads it before the program runs. This package ships `policies/agent-roots.eyg`, `policies/deny-all.eyg`, and `policies/spawner-effects.eyg` for a child session whose spawner named an effect allowlist |
 | roots | the directories a session may reach; the shipped policy reads them from `EYG_ALLOWED_ROOTS` |
 | the checks | a policy's decision for one effect, made before the host performs it |
 | checked, unchecked | an effect a policy decides, and an effect no policy can forbid |

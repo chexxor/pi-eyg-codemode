@@ -40,12 +40,12 @@ to act.
   second answer to "what may this reach", which would disagree with the runner's decision. Same
   reasoning as the registry listing's advisory availability
   (`notes/pi_codemode_registry_probe.md`) - a second check would be a second answer.
-- **`Mock` as the boundary of an act preset**: mocking `write_file` reports a successful run
+- **`Mock` as the boundary of an act policy**: mocking `write_file` reports a successful run
   with nothing on disk, which is the failure mode an operator least wants. `Mock` belongs in a
-  plan preset, where "nothing lands" is the point.
+  plan policy, where "nothing lands" is the point.
 - **A new domain effect in the language** (`QueryKB`, `Snapshot`) to get the tool: an effect is
   an escalation in the language repository's rules, the 19 policy fields already decide the paths
-  such a tool needs, and a new effect would need a rule in every preset anyway.
+  such a tool needs, and a new effect would need a rule in every policy anyway.
 - **`handle EffectName` in the program** as the seam: it is the one route where the program
   supplies a handler, the language documents it in two lines for "advanced embedding
   scenarios", and whether it can shadow the host's rule is UNVERIFIED from this workspace
