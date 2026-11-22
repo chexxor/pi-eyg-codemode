@@ -90,11 +90,16 @@ import {
   GRANT_ENTRY,
   LANGUAGE_DOCS,
   MAX_CALLS_ENV,
+  bindingOrder,
+  externBindings,
+  libraryAliases,
   prepareCallArguments,
   probeProgram,
   referenceLines,
   refusalHints,
   replayGrants,
+  replayVariables,
+  referencedNames,
   resultLines,
   resolvePolicy,
   resolveRoots,
@@ -109,6 +114,17 @@ import {
   suggestGrant,
   surfaceRows,
   SURFACE_FILE,
+  topLevelBindings,
+  variableDir,
+  variableEvents,
+  variableImportProblems,
+  variableModule,
+  variableName,
+  variablePrelude,
+  VARIABLE_ENTRY,
+  VARIABLE_SCOPES,
+  variableWriteOutcomes,
+  variableWriteProgram,
   eygSettings,
   shippedPolicyPath,
   POLICY_FIELDS,
@@ -298,6 +314,99 @@ function functionSource(name: string, cwd: string, dir: string | null): string |
   return byFile.length > 0 ? byFile[0].path : null;
 }
 
+/// What a call sees of one kept binding: its name, the scope it came from, the module a
+/// file scope keeps it in (null for a session binding, whose source goes into the
+/// program inline), and the source text where this call has it.
+interface VariableBinding {
+  name: string;
+  scope: string;
+  path: string | null;
+  source: string;
+  references?: string[];
+}
+
+/// The shape the result reports for one binding an `extern` call was asked to keep:
+/// whether it was written, and what stopped it if it was not.
+interface VariableOutcome {
+  name: string;
+  scope: string;
+  path: string | null;
+  written: boolean;
+  problem: string | null;
+}
+
+/// The directories a kept binding may live in, furthest first: the operator's home
+/// directory, then this workspace's. `session` is absent here because its bindings are
+/// entries on this session's branch rather than files. Like the registry scopes, these
+/// are read here, in the host; the only effect is the write of a new one.
+function variableScopeDirs(cwd: string): { scope: string; dir: string }[] {
+  const home = process.env.HOME;
+  const scopes = [
+    { scope: "user", dir: variableDir("user", { cwd, home: home === undefined ? null : home }) },
+    { scope: "workspace", dir: variableDir("workspace", { cwd }) },
+  ];
+  return scopes
+    .filter((entry) => entry.dir !== null)
+    .map((entry) => ({ scope: entry.scope, dir: String(entry.dir) }))
+    .filter((entry) => existsSync(entry.dir));
+}
+
+/// The bindings the file scopes keep: the file's stem is its name, and its path is what
+/// a call's prelude imports. A file whose name EYG could not bind is reported rather
+/// than imported, because the program it would produce is one the model cannot fix.
+function fileVariableBindings(cwd: string): { bindings: VariableBinding[]; problems: string[] } {
+  const bindings: VariableBinding[] = [];
+  const problems: string[] = [];
+  for (const scope of variableScopeDirs(cwd)) {
+    for (const file of listModules(scope.dir)) {
+      const name = file.replace(/\.eyg$/, "");
+      const checked = variableName(name);
+      if (!checked.ok) {
+        problems.push(`${join(scope.dir, file)}: ${checked.problem}`);
+        continue;
+      }
+      bindings.push({ name, scope: scope.scope, path: join(scope.dir, file), source: "" });
+    }
+  }
+  return { bindings, problems };
+}
+
+/// Every binding this call can see, in the order the prelude defines them: the file
+/// scopes furthest first, then this session's own in the order their sources refer to
+/// each other. A nearer scope wins a name and the further one is reported as shadowed,
+/// which is the same rule the registry scopes follow.
+function keptBindings(ctx: { sessionManager?: { getBranch?: () => unknown[] } }, cwd: string) {
+  const files = fileVariableBindings(cwd);
+  const session = replayVariables(variableEvents(sessionBranch(ctx)));
+  const ordered: VariableBinding[] = [];
+  const shadows: string[] = [];
+  const byName = new Map<string, VariableBinding>();
+  for (const binding of files.bindings) {
+    if (byName.has(binding.name)) {
+      shadows.push(`${binding.name} in ${binding.scope} is shadowed by ${String(byName.get(binding.name)?.path)}`);
+      continue;
+    }
+    byName.set(binding.name, binding);
+    ordered.push(binding);
+  }
+  const inSession = bindingOrder(session.map((binding) => ({ ...binding, scope: "session", path: null, references: [] })));
+  for (const binding of inSession.ordered) {
+    const seen = byName.get(binding.name);
+    if (seen !== undefined) shadows.push(`${binding.name} in ${seen.scope} is shadowed by this session's definition`);
+    byName.set(binding.name, binding);
+    ordered.push(binding);
+  }
+  for (const cycle of inSession.cyclic) {
+    shadows.push(`this session's bindings refer to each other (${cycle}), so none of them is defined`);
+  }
+  return {
+    bindings: ordered.filter((binding) => byName.get(binding.name) === binding),
+    shadows,
+    problems: files.problems,
+    modulePaths: files.bindings.map((binding) => String(binding.path)),
+  };
+}
+
 /// The tones `callLines` and `resultLines` name, painted with the theme. Only
 /// this map belongs to the renderer: the text shapes live in
 /// `lib/render-helpers.mjs`, where the tests read them without a theme.
@@ -345,6 +454,7 @@ export default function (pi: ExtensionAPI) {
       "To find files, pass libraries: [\"search\"] and call `search_lib.search({root, pattern, limit})`: it walks the roots with the effects the policy decides, so it cannot see outside them.",
       "`perform Search({path: \"/abs/dir\", pattern: \"**/*.eyg\", limit: 20})` is one host action that lists matching paths under a root; the policy decides it once for the whole walk.",
       "EYG has no infix operators - add integers with `!int_add(a, b)`; a bare `WriteFile(...)` is a function call and fails to parse.",
+      "`extern` keeps the top-level `let` bindings of this call under a name: `session`, `workspace` (<cwd>/.pi/eyg-variables/) or `user` ($HOME/.pi/eyg-variables/). Only the source text is kept, and it is evaluated again on the call that names it; a file scope is written by a program that performs WriteFile, so the policy decides that write like any other.",
       "action selects what the call does: `run` (default) performs effects, `eval` is pure,",
       "`effects` answers what the policy in force decides for every effect the CLI can name,",
       "`reference` prints every builtin the package's reference guide lists and the effect",
@@ -382,6 +492,8 @@ export default function (pi: ExtensionAPI) {
       "Pass `timeout` in seconds when a run is longer than 30 s; the result says how long it took in wall time, so a timeout is visible rather than guessed.",
       "The effects listed for a registry function are advisory: availability is re-probed at each listing and the policy can change mid-session, and a run whose effect is refused simply gets the ordinary Error value.",
       "When an effect is refused, report what was refused and ask the operator for the grant the result names (/eyg-grant: one call, N calls, or the rest of the session), recommending the narrowest one that retries the refused program; then retry it. Never write a policy module of your own and never look for another channel.",
+      "Keep a binding you will need in a later call with `extern` rather than pasting its source into every program: `extern: \"session\"` for this session only, `extern: \"workspace\"` for a file this project tracks. Names are lower snake_case, the case EYG binds.",
+      "A kept binding is source, not a stored value: it is re-evaluated on the call that uses it, so one that reads the clock or a file answers fresh, and it cannot use a `<name>_lib` alias, which only a `libraries` argument binds.",
     ],
 
     parameters: Type.Object({
@@ -415,6 +527,12 @@ export default function (pi: ExtensionAPI) {
               "Names of modules to bind as `<name>_lib` before the program runs: library modules shipped in this package (`search`), or registry functions in the workspace, home or package scope.",
           }),
         ),
+      ),
+      extern: Type.Optional(
+        Type.String({
+          description:
+            "Keep the top-level `let` bindings this program defines, in one scope: `session` (this session's own records, which a fork or a /tree jump replays), `workspace` (<cwd>/.pi/eyg-variables/, tracked by this workspace), or `user` ($HOME/.pi/eyg-variables/). A file scope is kept by running a second program that performs MakeDirectory and WriteFile, so the policy in force decides the write and a refusal is an ordinary refused effect. Only the source text of each binding is kept, so a binding whose source reads the clock, a file or the environment answers fresh on the call that uses it; a later call sees the name with no `libraries` argument. A binding name is lower snake_case (`my_web_search`, not `myWebSearch`).",
+        }),
       ),
     }),
 
@@ -457,6 +575,17 @@ export default function (pi: ExtensionAPI) {
       const action = params.action ?? "run";
       if (!ACTIONS.includes(action)) {
         return refuseToRun(`action must be one of ${ACTIONS.join(", ")}, got ${action}`);
+      }
+
+      // `extern` keeps what this call defines. It is checked before anything runs, so a
+      // wrong scope name costs the session nothing, and it belongs only on an action
+      // that runs a program: there is nothing to keep from a probe or a listing.
+      const extern = params.extern === undefined || String(params.extern).trim() === "" ? null : String(params.extern).trim();
+      if (extern !== null && !VARIABLE_SCOPES.includes(extern)) {
+        return refuseToRun(`extern must name one of ${VARIABLE_SCOPES.join(", ")}, got ${params.extern}`);
+      }
+      if (extern !== null && action !== "run" && action !== "eval") {
+        return refuseToRun(`extern keeps the bindings a program defines, so it belongs on action run or eval, not ${action}`);
       }
 
       // The policy: the argument of this call, a grant the operator made this
@@ -831,6 +960,16 @@ export default function (pi: ExtensionAPI) {
         }
         prelude.push(`let ${name}_lib = import ${JSON.stringify(file)}\n`);
       }
+      // The bindings this session's branch and the two variable directories keep. Each
+      // is aliased into the program by name, so a call sees it without asking: a file
+      // scope's binding is its module imported and the name taken from it, a session
+      // binding is its source text inline. Either way this call evaluates it, which is
+      // what makes a kept binding answer with what its source computes now rather than
+      // with what it computed when it was written.
+      const kept = keptBindings(ctx, cwd);
+      for (const binding of kept.bindings) {
+        prelude.push(`${variablePrelude(binding)}\n`);
+      }
       const code = `${prelude.join("")}${params.code}`;
 
       const spawnResult = await spawn(mode, code, timeout);
@@ -857,7 +996,84 @@ export default function (pi: ExtensionAPI) {
       // A run that failed because the binary does not know the command this tool built is
       // not a program error, and the fix is an install, not a rewrite of the program.
       const cannotRun = result.code === 0 ? null : runnerFailureLine({ runner, mode, output: out });
-      const text = [`eyg ${mode}: ${status}`, out, cannotRun === null ? "" : cannotRun, asks.join("\n"), hints.join("\n")].filter((part) => part !== "").join("\n");
+
+      // A kept binding whose module cannot be read aborts every later call that names
+      // it, and the runner's abort names the file but not the fix.
+      const broken = variableImportProblems(out, kept.modulePaths);
+
+      // `extern`: keep this program's own bindings. Only their source text is kept, so a
+      // binding that reads the clock, a file or the environment answers fresh on the call
+      // that uses it. A session scope is a record on this session's branch, which is what
+      // a fork or a `/tree` jump replays. A file scope is kept by a second program that
+      // performs `MakeDirectory` and `WriteFile`, so the policy in force decides that
+      // write exactly as it decides any other, and a refusal is reported as the refused
+      // effect it is, with the grant that would have allowed it.
+      const outcomes: VariableOutcome[] = [];
+      const externRows: string[] = [];
+      let externProgram: string | null = null;
+      let externAnswer = "";
+      if (extern !== null) {
+        if (result.code !== 0 || result.killed) {
+          externRows.push(`nothing kept: the program exited ${result.code}${result.killed ? " (timed out)" : ""}, so its bindings were not written`);
+        } else {
+          const existing = fileVariableBindings(cwd).bindings.filter((binding) => binding.scope === extern).map((binding) => binding.name);
+          const wanted = externBindings({ source: params.code, existing });
+          for (const refusal of wanted.refused) {
+            externRows.push(`not kept: ${refusal.name} - ${refusal.problem}`);
+          }
+          for (const problem of wanted.problems) {
+            externRows.push(`not kept: ${problem}`);
+          }
+          if (wanted.keep.length > 0 && extern === "session") {
+            for (const binding of wanted.keep) {
+              pi.appendEntry(VARIABLE_ENTRY, { op: "define", name: binding.name, source: binding.source });
+              outcomes.push({ name: binding.name, scope: extern, path: null, written: true, problem: null });
+            }
+          } else if (wanted.keep.length > 0) {
+            const target = variableDir(extern, { cwd, home: process.env.HOME === undefined ? null : process.env.HOME });
+            if (target === null) {
+              externRows.push(`not kept: no home directory is set, so ${extern} scope has no directory to write in`);
+            } else {
+              const files = wanted.keep.map((binding) => ({ path: join(target, `${binding.name}.eyg`), contents: variableModule(binding) }));
+              externProgram = variableWriteProgram({ dir: target, files });
+              const wrote = await spawn("run", externProgram, timeout);
+              externAnswer = wrote.out;
+              const denied = refusalHints(wrote.out);
+              for (const hint of denied) {
+                for (const line of suggestGrant(hint, { roots, policy })) {
+                  if (!asks.includes(line)) asks.push(line);
+                }
+              }
+              // Read the scope back the way every other call reads it - in the host, with
+              // no effect - because the printed rows only show what the program said, and
+              // a policy that refuses the printing hides a refused write.
+              const present = files.filter((file) => existsSync(file.path)).map((file) => file.path);
+              outcomes.push(
+                ...variableWriteOutcomes({
+                  scope: extern,
+                  keep: wanted.keep,
+                  files,
+                  output: wrote.out,
+                  present,
+                  code: wrote.result.code,
+                  killed: wrote.result.killed,
+                }),
+              );
+            }
+          }
+        }
+      }
+      const text = [
+        `eyg ${mode}: ${status}`,
+        out,
+        cannotRun === null ? "" : cannotRun,
+        broken.join("\n"),
+        kept.problems.concat(kept.shadows).join("\n"),
+        asks.join("\n"),
+        hints.join("\n"),
+        externRows.join("\n"),
+        externAnswer === "" ? "" : [`keeping ${extern} bindings answered:`, externAnswer].join("\n"),
+      ].filter((part) => part !== "").join("\n");
       return {
         content: [{ type: "text", text }],
         details: {
@@ -879,6 +1095,10 @@ export default function (pi: ExtensionAPI) {
           refusals,
           builtins: invented,
           prelude: prelude.map((line) => line.trim()),
+          kept: kept.bindings.map((binding) => `${binding.name} (${binding.scope})`),
+          extern,
+          externProgram,
+          variables: outcomes,
         },
       };
     },

@@ -16,7 +16,7 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
 import { surfaceDriftProblems } from "../bin/agent/gen-surface.mjs";
-import { argumentPolicyPath, budgetRefusal, builtinErrors, builtinHintRows, builtinRows, callBudget, callLines, checkDeclaredEffects, CHILD_TOOL_ALLOWLIST, classifyProbeOutput, COLLAPSED_SOURCE_LINES, childAnswer, childArgv, childCalls, childEnvOverrides, childRefusalRows, childTools, describeGrant, EFFECT_ALLOWLIST_ENV, effectFieldsFor, effectLine, effectsUsed, eygCallCount, eygSettings, findMetadata, fieldsOutside, formatDuration, grantEvents, GRANT_ENTRY, GENERATED_MARK, isUnder, LANGUAGE_DOCS, MAX_CALLS_ENV, outsideRoot, prepareCallArguments, shippedPolicyPath, probeArguments, probeProgram, POLICY_FIELDS, referenceLines, refusalHints, replayGrants, resolvePolicy, resolveRoots, resultLines, ruleMappingEffects, rootsInside, runnerCandidates, runnerFailureLine, sessionDepth, spawnerPolicy, spawnerRoots, subagentCallLines, subagentResultRows, suggestGrant, surfaceFileLines, surfaceRows, SURFACE_FILE } from "../lib/render-helpers.mjs";
+import { argumentPolicyPath, bindingOrder, budgetRefusal, externBindings, builtinErrors, builtinHintRows, builtinRows, callBudget, callLines, checkDeclaredEffects, CHILD_TOOL_ALLOWLIST, classifyProbeOutput, COLLAPSED_SOURCE_LINES, childAnswer, childArgv, childCalls, childEnvOverrides, childRefusalRows, childTools, describeGrant, EFFECT_ALLOWLIST_ENV, effectFieldsFor, effectLine, effectsUsed, eygCallCount, eygSettings, findMetadata, fieldsOutside, formatDuration, grantEvents, GRANT_ENTRY, GENERATED_MARK, VARIABLE_ENTRY, isUnder, LANGUAGE_DOCS, libraryAliases, MAX_CALLS_ENV, outsideRoot, prepareCallArguments, shippedPolicyPath, probeArguments, probeProgram, POLICY_FIELDS, referenceLines, refusalHints, replayGrants, replayVariables, resolvePolicy, resolveRoots, resultLines, ruleMappingEffects, rootsInside, runnerCandidates, runnerFailureLine, sessionDepth, spawnerPolicy, spawnerRoots, subagentCallLines, subagentResultRows, suggestGrant, surfaceFileLines, surfaceRows, SURFACE_FILE, eygStringLiteral, topLevelBindings, variableDir, variableEvents, variableImportProblems, variableModule, variableName, variablePrelude, VARIABLE_SCOPES, variableRows, variableWriteOutcomes, variableWriteProgram } from "../lib/render-helpers.mjs";
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
 
@@ -637,4 +637,192 @@ test("the rows a failed run adds when it named a builtin the runtime does not ha
   assert.match(collapsed, /no such builtin: !str_len/, "the hint shows collapsed, where the model reads it");
   const clean = flat(resultLines({ content: [{ type: "text", text: "eyg run: ran in 0.10 s wall\n2" }], details: { ran: true, exit: 0 } }, false, 100));
   assert.ok(!clean.includes("no such builtin"), "a run that named no invented builtin gets no hint row");
+});
+
+// The kept bindings: what an `extern` call stores, and what the next call sees.
+// The scan, the module text, the write program and the replay are all pure, so all of
+// this is checkable here; that a policy decides the write is not, and
+// `docs/world/entities/pi.variable-scopes.md` says what was seen how.
+
+const keptProgram = `let signature = "a\\"b\\\\c\\td\\ne"
+let greet = (who) -> {
+  // the ( bracket in this comment is not a bracket
+  let inner = !string_append(signature, who)
+  inner
+}
+let {unused_left, unused_right} = {unused_left: 1, unused_right: 2}
+let greeting = greet("!")
+greeting`;
+
+test("kept bindings: the scan keeps a program's top-level lets and nothing else", () => {
+  const scanned = topLevelBindings(keptProgram);
+  assert.deepEqual(
+    scanned.bindings.map((binding) => binding.name),
+    ["signature", "greet", "greeting"],
+    "a `let` inside a function body is not a binding of the program",
+  );
+  const greet = scanned.bindings.find((binding) => binding.name === "greet");
+  assert.equal(
+    greet.source,
+    "(who) -> {\n  // the ( bracket in this comment is not a bracket\n  let inner = !string_append(signature, who)\n  inner\n}",
+    "the value of a multi-line let is its text, bracket to bracket, comment kept",
+  );
+  assert.deepEqual(scanned.skipped, ["unused_left, unused_right"], "a destructuring let is named, not guessed at");
+  assert.deepEqual(scanned.problems, [], "every other top-level line was a plain binding");
+  assert.equal(scanned.unbalanced, false, "and nothing was left open");
+
+  const broken = topLevelBindings("let open = (a) -> {\n  a");
+  assert.equal(broken.unbalanced, true, "a value that never closes is reported");
+  assert.deepEqual(topLevelBindings("greeting").bindings, [], "a program with no let keeps nothing");
+});
+
+test("kept bindings: the names EYG can bind, and the snake_case name it suggests", () => {
+  assert.equal(variableName("my_web_search").ok, true, "lower snake_case is what the parser binds");
+  assert.equal(variableName("a1").ok, true, "a digit after the first letter is fine");
+  const camel = variableName("myWebSearch");
+  assert.equal(camel.ok, false, "camelCase is not a name EYG can bind");
+  assert.match(camel.problem, /name it my_web_search/, "the answer says what to call it instead");
+  for (const rejected of ["9lives", "two words", "Dashed", "", "handle", "perform", "match", "import", "let"]) {
+    assert.equal(variableName(rejected).ok, false, `${rejected || "(empty)"} is not bindable`);
+  }
+  assert.match(variableName("search_lib").problem, /_lib/, "a name ending in _lib would collide with a libraries alias");
+});
+
+test("kept bindings: the module written for a file scope, and the prelude that reads it back", () => {
+  const module = variableModule({ name: "greet", source: '(who) -> { !string_append("hi", who) }', references: ["signature"] });
+  const lines = module.split("\n");
+  assert.ok(lines[0].startsWith("//"), "the file says what it is, so a person opening it is not guessing");
+  assert.ok(module.includes('let {signature} = import "./signature.eyg"'), "a sibling of the same scope is imported by relative path");
+  assert.ok(!/[A-Za-z]:[\\/]|\/home\/|\/Users\/|\/operator-home\//.test(module), "and the written file carries no machine path");
+  assert.ok(module.includes('let greet = (who) -> { !string_append("hi", who) }'), "the source text is the binding, unchanged");
+  assert.equal(lines[lines.length - 2], "{greet}", "the module exports the name it is named for");
+
+  const fromFile = variablePrelude({ name: "greet", path: "/work/.pi/eyg-variables/greet.eyg" });
+  assert.equal(fromFile, 'let {greet} = import "/work/.pi/eyg-variables/greet.eyg"', "a file scope is aliased by importing its module");
+  const fromSession = variablePrelude({ name: "greet", path: null, source: '(who) -> { who }' });
+  assert.equal(fromSession, "let greet = (who) -> { who }", "a session binding is aliased by its source text");
+});
+
+test("kept bindings: the write is a program of effects, so a policy decides every step", () => {
+  const program = variableWriteProgram({
+    dir: "/operator-home/.pi/eyg-variables",
+    files: [{ path: "/operator-home/.pi/eyg-variables/note.eyg", contents: 'let note = "x"\n{note}\n' }],
+  });
+  assert.ok(program.includes('perform MakeDirectory("/operator-home/.pi/eyg-variables")'), "the directory is made by an effect");
+  assert.ok(program.includes("perform WriteFile({path: \"/operator-home/.pi/eyg-variables/note.eyg\", contents: !string_to_binary("), "and the file is written by an effect");
+  assert.ok(program.trimEnd().endsWith("[made, write_1]"), "the program leaves both results as its value");
+  assert.equal((program.match(/perform StandardOut/g) ?? []).length, 2, "and prints one row per step, since a run prints no value of its own");
+  assert.ok(program.includes('said("write", "/operator-home/.pi/eyg-variables/note.eyg", write_1)'), "each printed row names the path it answered for");
+  assert.equal(variableWriteProgram({ dir: null, files: [] }), null, "nothing to write is not a program");
+
+  const scanned = variableDir("user", { cwd: "/work", home: "/operator-home" });
+  assert.equal(scanned, "/operator-home/.pi/eyg-variables", "user scope is the operator's home directory");
+  assert.equal(variableDir("workspace", { cwd: "/work", home: "/operator-home" }), "/work/.pi/eyg-variables", "workspace scope is this workspace");
+  assert.equal(variableDir("session", { cwd: "/work", home: "/operator-home" }), null, "session scope has no directory: it is this session's records");
+  assert.equal(variableDir("user", { cwd: "/work", home: null }), null, "and with no home there is nothing to write to");
+});
+
+test("kept bindings: a session branch replays its own definitions", () => {
+  const entries = [
+    { type: "custom", customType: "other", data: { op: "define", name: "ignored", source: "1" } },
+    { type: "custom", customType: VARIABLE_ENTRY, data: { op: "define", name: "note", source: '"first"' } },
+    { type: "message", message: { role: "toolResult", toolName: "eyg" } },
+    { type: "custom", customType: VARIABLE_ENTRY, data: { op: "define", name: "note", source: '"second"' } },
+    { type: "custom", customType: VARIABLE_ENTRY, data: { op: "define", name: "other", source: "2" } },
+  ];
+  assert.deepEqual(replayVariables(variableEvents(entries)), [
+    { name: "note", source: '"second"' },
+    { name: "other", source: "2" },
+  ], "the newest definition of a name wins and a foreign entry is not one");
+  assert.deepEqual(
+    replayVariables(variableEvents([...entries, { type: "custom", customType: VARIABLE_ENTRY, data: { op: "revoke", name: "note" } }])),
+    [{ name: "other", source: "2" }],
+    "a revoke drops it",
+  );
+  assert.deepEqual(replayVariables(variableEvents([])), [], "an empty branch keeps nothing");
+});
+
+test("kept bindings: a refused write is reported as the refused effect it is", () => {
+  const output = 'mkdir /operator-home/.pi/eyg-variables: ok\nwrite /operator-home/.pi/eyg-variables/note.eyg: write_file denied by policy: /operator-home/.pi/eyg-variables/note.eyg\n';
+  const hints = refusalHints(output);
+  assert.deepEqual(hints, [{ field: "write_file", path: "/operator-home/.pi/eyg-variables/note.eyg" }], "the refusal is the row the write program printed");
+  const keep = [{ name: "note", source: '"x"', references: [] }];
+  const files = [{ path: "/operator-home/.pi/eyg-variables/note.eyg", contents: 'let note = "x"\n{note}\n' }];
+  const refused = variableWriteOutcomes({ scope: "user", keep, files, output, present: [], code: 0, killed: false });
+  assert.deepEqual(refused, [
+    { name: "note", scope: "user", path: "/operator-home/.pi/eyg-variables/note.eyg", written: false, problem: "write_file denied by the policy in force" },
+  ], "a refused write is not kept, and the row names the field that refused it");
+  const kept = variableWriteOutcomes({
+    scope: "user",
+    keep,
+    files,
+    output: "mkdir /operator-home/.pi/eyg-variables: ok\nwrite /operator-home/.pi/eyg-variables/note.eyg: ok\n",
+    present: ["/operator-home/.pi/eyg-variables/note.eyg"],
+    code: 0,
+    killed: false,
+  });
+  assert.equal(kept[0].written, true, "the refusal absent, the program finished and the file present is a kept binding");
+  const silent = variableWriteOutcomes({ scope: "user", keep, files, output: "", present: [], code: 0, killed: false });
+  assert.match(silent[0].problem, /no file at .* after the write program ran/, "a program that printed nothing and wrote nothing is not a success");
+  const half = variableWriteOutcomes({ scope: "user", keep, files, output: "", present: files.map((file) => file.path), code: 1, killed: false });
+  assert.equal(half[0].written, false, "a file left by a program that did not finish is not kept either");
+  assert.match(half[0].problem, /exited 1/, "and the row says which");
+  const rows = variableRows({
+    variables: [
+      { name: "note", scope: "user", path: "/operator-home/.pi/eyg-variables/note.eyg", written: false, problem: "write_file denied by the policy in force" },
+    ],
+  });
+  const shown = flat(rows);
+  assert.match(shown, /did not keep note/, "the row says what was not kept");
+  assert.equal(rows[0][0].tone, "warning", "and shows it in the colour an ask gets");
+  assert.match(flat(resultLines({
+    content: [{ type: "text", text: "eyg run: ran in 0.10 s wall\n5" }],
+    details: { ran: true, exit: 0, variables: [{ name: "note", scope: "workspace", path: "/work/.pi/eyg-variables/note.eyg", written: true, problem: null }] },
+  }, false, 100)), /kept note in \/work\/\.pi\/eyg-variables\/note\.eyg/, "a kept binding is named in the collapsed row too");
+});
+
+test("kept bindings: a module that does not parse comes back with the fix", () => {
+  const abort = 'eyg run: exit 1 in 0.10 s wall\nerror: Aborted with reason: "failed to parse source from location: /work/.pi/eyg-variables/note.eyg error: unexpected end of input hint: program must end with valid expression"';
+  const rows = variableImportProblems(abort, ["/work/.pi/eyg-variables/note.eyg"]);
+  assert.equal(rows.length, 2, "one line for what is wrong, one for what to do");
+  assert.match(rows[0], /the kept binding in \/work\/\.pi\/eyg-variables\/note\.eyg is not readable EYG: unexpected end of input/, "the file and the runner's reason");
+  assert.match(rows[1], /define note again with an extern call, or delete the file with DeleteFile/, "and the fix, in this tool's own terms");
+  assert.deepEqual(variableImportProblems(abort, ["/elsewhere/module.eyg"]), [], "a parse error in some other file is not blamed on a kept binding");
+  assert.deepEqual(variableImportProblems("eyg run: ran in 0.10 s wall\n5", []), [], "a run that parsed everything says nothing");
+});
+
+test("kept bindings: what an extern call refuses to keep, and why", () => {
+  const wanted = externBindings({ source: keptProgram, existing: ["signature"] });
+  assert.deepEqual(wanted.keep.map((binding) => binding.name), ["signature", "greet", "greeting"], "the order defines each name after the ones it uses");
+  assert.deepEqual(wanted.keep[2].references, ["greet"], "a binding records the names of its scope its own text refers to");
+  assert.deepEqual(wanted.problems, ["the destructuring let (unused_left, unused_right) is not one binding this keeps"], "the destructuring let is reported, not silently dropped");
+
+  const aliased = externBindings({ source: 'let helper = (root) -> { search_lib.search({root, pattern: "*", limit: 5}) }\nhelper("/work")', existing: [] });
+  assert.deepEqual(aliased.refused[0].name, "helper", "a binding that uses a libraries alias is refused");
+  assert.match(aliased.refused[0].problem, /search_lib/, "and named back with the alias it used");
+
+  const self = externBindings({ source: 'let loop = !string_append(loop, "x")\nloop', existing: [] });
+  assert.equal(self.keep.length, 0, "a binding that names itself is not kept");
+  assert.match(self.refused[0].problem, /names itself/, "because a module cannot import itself");
+
+  const circular = externBindings({ source: "let a = b\nlet b = a\nb", existing: [] });
+  assert.match(circular.refused.map((refusal) => refusal.problem).join(" "), /refer to each other/, "two bindings that use each other cannot be modules");
+
+  assert.deepEqual(externBindings({ source: "perform StandardOut(\"hi\\n\")", existing: [] }).problems, ["the program defines no top-level `let` binding to keep"], "a call with nothing to keep says so");
+});
+
+test("kept bindings: one string literal, five escapes, and a round trip", () => {
+  const text = 'a"b\\c\td\ne\rf \u00e9 \u79fb end';
+  const literal = eygStringLiteral(text);
+  assert.equal(JSON.parse(literal), text, "the literal decodes back to the text exactly (the five escapes are JSON escapes too)");
+  assert.equal(literal.replace(/\\"|\\\\|\\n|\\t|\\r/g, ""), `"${text.replace(/["\\\n\r\t]/g, "")}"`, "and only those five escapes were written");
+  assert.equal(eygStringLiteral("a\u000bb"), `"a\u000bb"`, "a character with no escape goes through raw, which is what the CLI reads");
+  assert.deepEqual(libraryAliases('let f = (x) -> { search_lib.go(x) } // note: other_lib here\nlet s = "no_lib in a string"'), ["search_lib"], "the alias scan reads what the program runs, not its comments or strings");
+});
+
+test("kept bindings: the argument and the rows", () => {
+  assert.match(flat(callLines({ code: "let note = 1\nnote", extern: "workspace" }, false)), /extern: workspace/, "the ask is visible in the collapsed call row");
+  assert.ok(!flat(callLines({ code: "note" }, false)).includes("extern"), "a call that keeps nothing says nothing about it");
+  assert.deepEqual(prepareCallArguments({ code: "let note = 1", extern: "session" }).extern, "session", "the argument survives the argument mapping");
+  assert.deepEqual(VARIABLE_SCOPES, ["user", "workspace", "session"], "furthest to nearest, the order a nearer scope shadows in");
 });

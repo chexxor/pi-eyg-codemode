@@ -42,7 +42,8 @@ recorded `rule_mapping` snapshot the drift guard compares against, and `guides/e
 reference · `notes/` the trade-offs the code cannot show · `docs/world/` the claims with
 their verify commands · `pi-simple-world-model/` the vendored tool over those claims ·
 `bin/agent/` the scripts a human runs: `audit.sh` the rows below, `gen-surface.mjs` the surface
-file's generator and drift check, `doc-checks.mjs` the five prose checks ·
+file's generator and drift check, `doc-checks.mjs` the five prose checks, `check-variable-shapes.mjs`
+the generated text of a kept binding, run through the CLI ·
 `.agents/skills/` the skills the coding agent loads. Every one carries a `PURPOSE` file.
 
 ## What the checks are, in facts
@@ -59,7 +60,7 @@ shell commands; a policy module decides each effect before the host performs it.
   call's `policy` argument sits outside that chain: it is
   honoured only when it names the policy the chain already chose or `NARROWEST_POLICY_FILE`
   (`narrows` in `lib/render-helpers.mjs:323`, used at `:361`), and anything else comes back
-  `refusedArgument` (`extensions/eyg-codemode.ts:516`, and `:1024` for a child's policy).
+  `refusedArgument` (`extensions/eyg-codemode.ts:645`, and `:1244` for a child's policy).
 - The binary is chosen by name, not by asking it what it can do: `EYG_CODEMODE_RUNNER` (an
   absolute path), else `eyg` on PATH - two places, no third (`runnerCandidates` in
   `lib/render-helpers.mjs`, used at `extensions/eyg-codemode.ts:563` and `:1135`). Every argv
@@ -102,10 +103,11 @@ shell commands; a policy module decides each effect before the host performs it.
 
 | Do this | cost | measured |
 | --- | --- | --- |
-| `bin/agent/audit.sh` (a human or a cron runs it; thirteen rows, each cost printed) | see its own last line | 2026-11-22 |
+| `bin/agent/audit.sh` (a human or a cron runs it; fourteen rows, each cost printed) | see its own last line | 2026-11-22 |
 | `node bin/agent/doc-checks.mjs --all` (the five prose checks: one term, citations, headings, mirrors, dated prose) | 0.07 s wall | 2026-11-22 |
 | `node bin/agent/gen-surface.mjs --check` (the surface file against its four inputs) | 0.04 s wall | 2026-11-22 |
-| `node --test 'test/*.mjs'` (or the single file; one named test per group) | 0.09 s wall, 29 tests, 0 fail | 2026-11-22 |
+| `node --test 'test/*.mjs'` (or the single file; one named test per group) | 0.10 s wall, 39 tests, 0 fail | 2026-11-22 |
+| `node bin/agent/check-variable-shapes.mjs` (generates a kept binding's text and runs it through the CLI on PATH, with no policy module loaded) | 0.40 s wall, eleven rows | 2026-11-22 |
 | `pi --print --mode json --tools eyg <prompt>` (one fresh session, one tool call) | 20-40 s wall; needs `--model`, the default model hangs | 2026-11-20 |
 | `for f in policies/*.eyg libraries/*.eyg; do eyg check "$f"; done` (the audit's `shipped EYG modules check` row) | 0.48 s wall | 2026-11-22 |
 | `node pi-simple-world-model/bin/world_lint.mjs` | 0.06 s wall | 2026-11-18 |
@@ -199,7 +201,7 @@ never put a workspace fact in a guide - a fact in two places drifts.
   language repository's; nothing here carries a queue. Trigger to port one: a task from the
   operator that spans several steps of its own.
 - **No CI.** There is no `.github/workflows` and no `entry.eyg` here. `bin/agent/audit.sh` is the
-  one command that runs the thirteen rows in the table above and prints what each cost (added
+  one command that runs the fourteen rows in the table above and prints what each cost (added
   2026-11-20, 5.70 s, 6/6); nothing in this tree runs it, so a failing check is still
   something a person notices. Trigger for CI: the first commit that lands with a failing
   check nobody saw.

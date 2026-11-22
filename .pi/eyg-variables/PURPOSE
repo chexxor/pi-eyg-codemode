@@ -1,0 +1,6 @@
+Named bindings an `eyg` call kept with its `extern` argument, one `.eyg` module per binding,
+each named after the binding. The tool reads this directory and never writes it by itself: the
+write of a kept binding is a program that performs `MakeDirectory` and `WriteFile`, so the
+policy in force decides it. A module holds the binding's source text, so the call that names
+the binding evaluates it again rather than reading a stored value; drop a binding by deleting
+its file. `guides/how-to-keep-bindings.md` is the how-to.

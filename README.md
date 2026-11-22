@@ -43,6 +43,7 @@ Three readers, and each needs one thing from this tree:
 | the checks | a policy's decision for one effect, made before the host performs it |
 | checked, unchecked | an effect a policy decides, and an effect no policy can forbid |
 | registry scope | a directory of function-sets the tool reads: the workspace, the home, this package's `libraries/` |
+| kept binding | a top-level `let` a call keeps by name under `extern` - in `session`, `workspace` or `user` scope; the store holds its source text, so the call that names it evaluates it |
 
 ## Read next
 
@@ -53,6 +54,7 @@ Three readers, and each needs one thing from this tree:
 | to change what a session may reach: roots, one host, secrets | `guides/how-to-write-a-policy.md` |
 | to read a file bigger than one result | `guides/how-to-read-in-slices.md` |
 | to reuse a function rather than write a helper | `guides/how-to-share-functions.md` |
+| to keep a name between calls instead of pasting its source again | `guides/how-to-keep-bindings.md` |
 | to hand a chunk of work to a second session that cannot reach more than you can | `guides/how-to-spawn-a-subagent.md` |
 | the tool's knobs, rows, probes, limits and the seam it cannot check | `guides/tool-reference.md` |
 | the language itself: surface syntax, builtins, every effect | <https://eyg.run/guides>; the machine-readable surface this package ships is `guides/eyg-surface.tsv` |

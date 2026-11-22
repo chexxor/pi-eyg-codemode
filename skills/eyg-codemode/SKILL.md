@@ -94,6 +94,18 @@ The required effects are **advisory**: re-probed at every listing against the po
 whose effect is refused is not blocked - the refusal surfaces as the ordinary `Error("<field> denied by
 policy: ...")` value inside the program, so `available` is never permission to read a path.
 
+## Keeping a binding between calls
+
+A name this call defines is not in scope on the next one. `extern: "session"`, `"workspace"` or
+`"user"` keeps this call's top-level `let` bindings, and the next call sees each name with no
+`libraries` argument. What is kept is the binding's **source text**, so the call that uses the name
+evaluates it again rather than reading a stored value. A binding name is lower snake_case
+(`my_web_search`, not `myWebSearch`), and a file scope is kept by a program this tool runs, which
+performs `MakeDirectory` and `WriteFile` under the policy in force - so that write is refused like
+any other, and the refusal comes with the grant rows. Kept bindings live in `.pi/eyg-variables/`,
+never in a registry scope; `guides/how-to-keep-bindings.md` is the how-to, including the shapes this
+package refuses to keep rather than writing a module that would not work.
+
 ## Finding files
 
 `perform Search({path: "/abs/root", pattern: "**/*.eyg", limit: 20})` is one host action that answers absolute

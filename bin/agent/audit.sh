@@ -95,6 +95,7 @@ echo "audit in $pkg"
 run_check "surface file current" node bin/agent/gen-surface.mjs --check
 run_check "unit test and drift guard" node --test 'test/*.mjs'
 run_check "shipped EYG modules check" eyg_modules
+run_check "kept binding shapes" node bin/agent/check-variable-shapes.mjs
 run_check "world lint" node pi-simple-world-model/bin/world_lint.mjs
 run_check "world verify $verify_args" node pi-simple-world-model/bin/world_verify.mjs $verify_args
 run_check "world map current" node pi-simple-world-model/bin/world_map.mjs --check

@@ -1,6 +1,7 @@
 The shell scripts a human runs outside this package: `agent/audit.sh`, which runs the checks in
 `AGENTS.md`'s table and prints what each cost; `agent/gen-surface.mjs`, which generates and
 drift-checks `guides/eyg-surface.tsv`; `agent/doc-checks.mjs`, the five prose checks over this
-package's documentation, one row each in the audit. Nothing in this tree runs them - the package
-has no effect that starts a shell command, so a check is run by a person or a cron, never by the
-tool.
+package's documentation, one row each in the audit; `agent/check-variable-shapes.mjs`, which runs
+the text a kept binding generates through the CLI on `PATH`. Nothing in this tree runs them - the
+package has no effect that starts a shell command, so a check is run by a person or a cron, never
+by the tool.

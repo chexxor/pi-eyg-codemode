@@ -67,7 +67,9 @@ nothing here reads it at run time, and this tree never writes outside itself.
 | pi.session-grants | A refused effect is an ask the model makes in chat and the operator answers with `/eyg-grant`, registered by ... | delegate | 2026-11-22 |
 | pi.spawner-policy | `policies/spawner-effects.eyg` is the third policy this package ships: `agent-roots.eyg` with an allowlist check over ... | delegate | 2026-11-22 |
 | pi.subagent-spawn | `eyg_subagent`, registered by `extensions/eyg-codemode.ts`, starts a second pi session in the same working directory ... | delegate | 2026-11-22 |
+| pi.variable-scopes | An `eyg` call keeps the top-level `let` bindings it defines by naming a scope with `extern`: `session`, `workspace` ... | delegate | 2026-11-22 |
 | usability.without-language-skill | One task, run in fresh one-shot sessions over two scratch projects whose `.pi/settings.json` differ only in whether the ... | delegate | 2026-11-22 |
+| variables.generated-shapes | `bin/agent/check-variable-shapes.mjs` builds the text an `extern` call builds and runs it through the CLI on `PATH`: ... | delegate | 2026-11-22 |
 | world-model.package | `pi-simple-world-model/` is a pi package carried in this workspace as a copy, declared per project in ... | delegate | 2026-11-22 |
 | invariant.eyg-over-bash | EYG is the language this package runs its agent in, and it does not have an effect to run shell commands. | human | 2026-11-22 |
 | invariant.notes-frontmatter | Every note carries `name:` front-matter. | human | 2026-11-22 |
@@ -84,7 +86,7 @@ nothing here reads it at run time, and this tree never writes outside itself.
 
 ## Where to look for a claim
 
-- entities: 31 · invariants: 4 · decisions: 6 · runbooks: 2 · traps: 54
+- entities: 33 · invariants: 4 · decisions: 6 · runbooks: 2 · traps: 60
 - suspect right now: none
 - re-check everything: `npm run world` · checks: `npm run world:lint` · regenerate this index: `npm run world:map`
 <!-- END GENERATED -->
