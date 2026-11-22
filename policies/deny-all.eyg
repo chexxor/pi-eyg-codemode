@@ -1,73 +1,92 @@
 // A session that may compute and print, but may not touch the outside world.
-// Every file, directory, network and environment effect is refused with an EYG
-// reason naming the effect; time, randomness and process output are passed
-// because they cannot change anything the agent did not already have.
+// Every file, directory, network and environment effect is refused with a reason
+// naming the effect; time, randomness and process output are passed because they
+// cannot change anything the agent did not already have.
+//
+// This module exports one function, `rules(ctx)`, and performs nothing itself: the
+// guard (`host/guard.eyg`) applies what it returns to every effect the program
+// performs. `ctx` - the roots, the working directory and the spawner's field list
+// the tool writes into the entry - is not used here, because nothing this policy
+// allows depends on where the program is.
 //
 // This module is self-contained: the policy is written out here rather than
-// imported, so the package carries no code from outside itself and a policy can
-// be read in full where it is used. `notes/pi-codemode-policy-inlining.md`
-// records where the policy came from and how it was checked.
+// imported, so the package carries no code from outside itself and a policy can be
+// read in full where it is used. `notes/pi-codemode-policy-inlining.md` records
+// where the policy came from and how it was checked.
 //
-// Decision, one row per effect the CLI can name (the 23 in `rule_mapping`; 18 of
-// them are policy fields, 4 have no policy field). The names below are the effect
-// names; the field name is the lower-cased one used in this record.
+// Decision, one row per effect the guard names (the 23 in `guides/eyg-surface.tsv`;
+// 19 have a rule, 4 have none). The names below are the effect names; the field
+// name is the lower-cased one used in the record this function returns. A rule
+// answers `Pass(value)` to let the guard perform the effect, or `Mock(reason)` to
+// have it answer the program instead; `host/guard.eyg` says what each effect's
+// refusal looks like to the program, since the reply type decides that.
 //
 //   PERFORMED (passed through unchanged)
 //     Now, Random, Sleep              - observe or wait, they change nothing the
 //                                       agent did not already have
 //     StandardOut, StandardError      - output of the program itself
 //     Flip                            - a coin flip: a value, no outside world
-//     Exit                            - ends the program; its policy may rewrite
-//                                       the status with Pass, it cannot Mock it
-//                                       (Exit has no return value)
-//   REFUSED, with an Error naming the effect
-//     ReadFile, ReadDirectory, WriteFile, AppendFile, MakeDirectory, DeleteFile
+//     Exit                            - ends the program; its rule may rewrite the
+//                                       status with Pass, it cannot refuse (Exit has
+//                                       no reply to answer)
+//   REFUSED, with the effect's name in the reason the program sees
+//     ReadFile, ReadDirectory, WriteFile, AppendFile, MakeDirectory, DeleteFile,
+//     Search                          - the file system, and the walk over it
 //     Fetch                           - the network
 //     StandardIn                      - the input meant for the chat
 //     CreateKey                       - a fresh opaque key
-//   REFUSED, with a shape the effect's own type requires
-//     Env                             - Mock(None({})): Env returns Option, so an
-//                                       unset variable is the honest answer
-//     CWD                             - Mock(Error({})): CWD returns a Result
-//   NO POLICY FIELD (available under every policy)
+//   REFUSED, in the shape the effect's own reply type allows
+//     Env                             - None({}): Env returns Option, so an unset
+//                                       variable is the honest answer
+//     CWD                             - Error({}): this host's CWD reply carries no
+//                                       text in its Error
+//   NO RULE (available under every policy)
 //     DecodeJSON, EYGParse, Hash, Sign - deterministic over values they were given
-//
-// `Search` is not in this record: the CLI decides it through the `read_file` field, so
-// whatever decides `ReadFile` decides a search.
 //
 // <https://eyg.run/guides/cli-effects-reference> says what each effect does;
 // policies/agent-roots.eyg is the default that lets a session work in one directory.
 
+// Refuse, with the text the program receives.
 let deny = (reason) -> {
-  (_) -> { Mock(Error(reason)) }
+  (_) -> { Mock(reason) }
 }
 
 let append = (a, b) -> {
   !string_append(a, b)
 }
 
-// Deny an effect, naming it in the error the program receives.
+// Refuse an effect, naming it in the reason the program receives.
 let refuse = (effect) -> {
   deny(append(effect, " denied by policy"))
 }
 
-{
-  append_file: refuse("append_file"),
-  create_key: refuse("create_key"),
-  cwd: (_) -> { Mock(Error({})) },
-  delete_file: refuse("delete_file"),
-  env: (_) -> { Mock(None({})) },
-  exit: (value) -> { Pass(value) },
-  fetch: refuse("fetch"),
-  flip: (value) -> { Pass(value) },
-  make_directory: refuse("make_directory"),
-  now: (value) -> { Pass(value) },
-  random: (value) -> { Pass(value) },
-  read_directory: refuse("read_directory"),
-  read_file: refuse("read_file"),
-  sleep: (value) -> { Pass(value) },
-  standard_error: (value) -> { Pass(value) },
-  standard_in: refuse("standard_in"),
-  standard_out: (value) -> { Pass(value) },
-  write_file: refuse("write_file")
+// Perform the effect with the value the program asked for, unchanged.
+let pass = (value) -> {
+  Pass(value)
 }
+
+let rules = (ctx) -> {
+  {
+    append_file: refuse("append_file"),
+    create_key: refuse("create_key"),
+    cwd: refuse("cwd"),
+    delete_file: refuse("delete_file"),
+    env: refuse("env"),
+    exit: pass,
+    fetch: refuse("fetch"),
+    flip: pass,
+    make_directory: refuse("make_directory"),
+    now: pass,
+    random: pass,
+    read_directory: refuse("read_directory"),
+    read_file: refuse("read_file"),
+    search: refuse("search"),
+    sleep: pass,
+    standard_error: pass,
+    standard_in: refuse("standard_in"),
+    standard_out: pass,
+    write_file: refuse("write_file")
+  }
+}
+
+{rules}

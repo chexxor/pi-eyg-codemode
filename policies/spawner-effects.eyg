@@ -4,15 +4,19 @@
 // and without widening anything: every rule below is the agent-roots rule or a refusal,
 // never a rule agent-roots does not have.
 //
-// EYG_SUBAGENT_EFFECTS is a comma separated list of FIELD names (the lower-case names
-// in the record at the bottom of this file), no spaces. Unset or empty names no field,
-// so every gateable field is refused - the narrow reading of a missing list, chosen
-// because a policy nobody configured must not be the wide one.
+// Like every policy here this module exports `rules(ctx)` and performs nothing itself;
+// the guard (`host/guard.eyg`) applies the record to the child's effects.
 //
-// EYG_ALLOWED_ROOTS works exactly as it does in `agent-roots.eyg`: a comma separated
-// list of absolute roots, unset meaning none, and `.env.eyg` never readable. A field
-// that IS in the allowlist is still decided by its roots, so the two lists are
-// independent cuts and neither can loosen the other.
+// ctx.fields is the allowlist the spawner named: the FIELD names (the lower-case names
+// in the record at the bottom of this file) as a list of strings. An empty list names
+// no field, so every field with a rule here is refused - the narrow reading of a
+// missing list,
+// chosen because a policy nobody configured must not be the wide one.
+//
+// ctx.roots works exactly as it does in `agent-roots.eyg`: a list of absolute roots,
+// empty meaning none, and `.env.eyg` never readable. A field that IS in the allowlist
+// is still decided by its roots, so the two lists are independent cuts and neither can
+// loosen the other.
 //
 // Self-contained like every policy here: the rules are written out whole rather than
 // imported, because a policy module may not import anything outside this package
@@ -23,33 +27,34 @@
 // What this policy can and cannot do, one row per field:
 //
 //   NAMED IN THE ALLOWLIST: THE AGENT-ROOTS RULE
-//     append_file, delete_file, make_directory, read_directory, read_file, write_file
-//                                             - named: the roots rule (read_file keeps
-//                                               hiding `.env.eyg`); not named: refused
+//     append_file, delete_file, make_directory, read_directory, read_file, search,
+//     write_file                      - named: the roots rule (read_file keeps hiding
+//                                       `.env.eyg`); not named: refused
 //     cwd, exit, flip, now, random, sleep, standard_error, standard_out
-//                                             - named: passed as agent-roots passes it;
-//                                               not named: refused
+//                                     - named: passed as agent-roots passes it;
+//                                       not named: refused
 //   NEVER PERFORMED, allowlist or not
-//     fetch, standard_in, create_key          - agent-roots refuses them, and an
-//                                               allowlist removes reach, it does not
-//                                               add it. A child cannot be given the
-//                                               network this way.
+//     fetch, standard_in, create_key  - agent-roots refuses them, and an allowlist
+//                                       removes reach, it does not add it. A child
+//                                       cannot be given the network this way.
 //   ANSWERED AS UNSET, allowlist or not
-//     env                                     - Mock(None({})) is the only answer the
-//                                               effect's own type allows, and it reads
-//                                               nothing, so there is nothing to narrow
-//   NEVER CHECKED BY ANY POLICY
-//     DecodeJSON, EYGParse, Hash, Sign        - the CLI marks them Unchecked: they
-//                                               compute over values the program already
-//                                               holds. Naming them in the allowlist
-//                                               changes nothing and the tool says so.
+//     env                             - None({}) is the only answer the effect's own
+//                                       type allows, and it reads nothing, so there
+//                                       is nothing to narrow
+//   NO RULE (available under every policy)
+//     DecodeJSON, EYGParse, Hash, Sign - the language marks them unchecked: they
+//                                       compute over values the program already
+//                                       holds. Naming them in the allowlist changes
+//                                       nothing and the tool says so.
 //
-// `Search` is decided by `read_file`, so naming `ReadFile` also lets a child search,
-// and naming only `Search` also lets it read a file. The pair is one field and the
-// tool's description says so rather than pretending otherwise.
+// `search` is its own field here, so naming `read_file` lets a child read files and
+// not search trees; a spawner that wants both names both. The CLI used to decide a
+// search through the `read_file` field, which made the pair one field; `host/guard.eyg`
+// explains why one field per effect is what the guard's own types allow. Naming one
+// can never reach what the other decides.
 //
-// A refusal is a value, not a crash: `Error("<field> denied by policy:
-// EYG_SUBAGENT_EFFECTS=<the list the child was given>")`, which is what makes the
+// A refusal is a value, not a crash: `<field> denied by policy:
+// EYG_SUBAGENT_EFFECTS=<the list the child was given>`, which is what makes the
 // refusal readable to the child and to the parent that reads its records.
 
 // Perform the effect with the value the program asked for, unchanged.
@@ -57,9 +62,9 @@ let pass = (value) -> {
   Pass(value)
 }
 
-// Refuse with an Error, naming the effect.
+// Refuse, with the text the program receives.
 let deny = (reason) -> {
-  (_) -> { Mock(Error(reason)) }
+  (_) -> { Mock(reason) }
 }
 
 let append = (a, b) -> {
@@ -70,8 +75,7 @@ let refuse = (effect) -> {
   deny(append(effect, " denied by policy"))
 }
 
-// Is the absolute path equal to or inside the absolute root. Paths given to
-// policies are already resolved, so they contain no `.` or `..` segments.
+// Is the absolute path equal to or inside the absolute root.
 let is_under = (root, path) -> {
   let root = match !string_ends_with(root, "/") {
     True(_) -> { root }
@@ -105,7 +109,7 @@ let under = (effect, roots, path_of) -> {
     let path = path_of(value)
     match any_under(roots, path) {
       True(_) -> { Pass(value) }
-      False(_) -> { Mock(Error(denied(effect, path))) }
+      False(_) -> { Mock(denied(effect, path)) }
     }
   }
 }
@@ -115,7 +119,7 @@ let path_of_value = (path) -> {
   path
 }
 
-// ReadFile, WriteFile and AppendFile are given a record with a `path` field.
+// ReadFile, WriteFile, AppendFile and Search are given a record with a `path` row.
 let request_path = (request) -> {
   request.path
 }
@@ -129,17 +133,10 @@ let is_secret = (path) -> {
 let hide_secrets = (read_file) -> {
   (request) -> {
     match is_secret(request.path) {
-      True(_) -> { Mock(Error(denied("read_file", request.path))) }
+      True(_) -> { Mock(denied("read_file", request.path)) }
       False(_) -> { read_file(request) }
     }
   }
-}
-
-// Split a comma separated string into a list; `!string_split` returns one head
-// and a flat tail, and the empty string would give one empty element.
-let split_list = (text) -> {
-  let {head, tail} = !string_split(text, ",")
-  [head, ..tail]
 }
 
 // Join a list back into one string, for the refusal that names the list the
@@ -151,31 +148,6 @@ let join_list = (items, separator) -> {
       False(_) -> { append(joined, append(separator, item)) }
     }
   })
-}
-
-// The roots the session is allowed to work in, read here at the top of the policy
-// module, which the runner evaluates before the program is checked - the child's own program still
-// cannot read the environment, see the `env` rule below.
-let raw_roots = match perform Env("EYG_ALLOWED_ROOTS") {
-  Some(text) -> { text }
-  None({}) -> { "" }
-}
-
-let roots = match !equal(raw_roots, "") {
-  True(_) -> { [] }
-  False(_) -> { split_list(raw_roots) }
-}
-
-// The fields the spawner named, read the same way. Unset or empty is the empty list,
-// which refuses every gateable field.
-let raw_fields = match perform Env("EYG_SUBAGENT_EFFECTS") {
-  Some(text) -> { text }
-  None({}) -> { "" }
-}
-
-let fields = match !equal(raw_fields, "") {
-  True(_) -> { [] }
-  False(_) -> { split_list(raw_fields) }
 }
 
 let named = (fields, field) -> {
@@ -194,7 +166,7 @@ let not_named = (field, fields) -> {
   deny(append(field, append(" denied by policy: EYG_SUBAGENT_EFFECTS=", join_list(fields, ","))))
 }
 
-// A path rule, or a refusal, decided by the allowlist at the top of the module.
+// A path rule, or a refusal, decided by the allowlist.
 let gated_under = (field, fields, roots, path_of) -> {
   match named(fields, field) {
     True(_) -> { under(field, roots, path_of) }
@@ -210,15 +182,6 @@ let gated_pass = (field, fields) -> {
   }
 }
 
-// CWD answers a Result whose Error carries no reason, so its refusal has the shape
-// the effect's own type allows rather than the text the other refusals can carry.
-let gated_cwd = (fields) -> {
-  match named(fields, "cwd") {
-    True(_) -> { pass }
-    False(_) -> { (_) -> { Mock(Error({})) } }
-  }
-}
-
 // read_file keeps hiding `.env.eyg` when it is named at all.
 let gated_read_file = (fields, roots) -> {
   match named(fields, "read_file") {
@@ -227,23 +190,30 @@ let gated_read_file = (fields, roots) -> {
   }
 }
 
-{
-  append_file: gated_under("append_file", fields, roots, request_path),
-  create_key: refuse("create_key"),
-  cwd: gated_cwd(fields),
-  delete_file: gated_under("delete_file", fields, roots, path_of_value),
-  env: (_) -> { Mock(None({})) },
-  exit: gated_pass("exit", fields),
-  fetch: refuse("fetch"),
-  flip: gated_pass("flip", fields),
-  make_directory: gated_under("make_directory", fields, roots, path_of_value),
-  now: gated_pass("now", fields),
-  random: gated_pass("random", fields),
-  read_directory: gated_under("read_directory", fields, roots, path_of_value),
-  read_file: gated_read_file(fields, roots),
-  sleep: gated_pass("sleep", fields),
-  standard_error: gated_pass("standard_error", fields),
-  standard_in: refuse("standard_in"),
-  standard_out: gated_pass("standard_out", fields),
-  write_file: gated_under("write_file", fields, roots, request_path)
+let rules = (ctx) -> {
+  let roots = ctx.roots
+  let fields = ctx.fields
+  {
+    append_file: gated_under("append_file", fields, roots, request_path),
+    create_key: refuse("create_key"),
+    cwd: gated_pass("cwd", fields),
+    delete_file: gated_under("delete_file", fields, roots, path_of_value),
+    env: refuse("env"),
+    exit: gated_pass("exit", fields),
+    fetch: refuse("fetch"),
+    flip: gated_pass("flip", fields),
+    make_directory: gated_under("make_directory", fields, roots, path_of_value),
+    now: gated_pass("now", fields),
+    random: gated_pass("random", fields),
+    read_directory: gated_under("read_directory", fields, roots, path_of_value),
+    read_file: gated_read_file(fields, roots),
+    search: gated_under("search", fields, roots, request_path),
+    sleep: gated_pass("sleep", fields),
+    standard_error: gated_pass("standard_error", fields),
+    standard_in: refuse("standard_in"),
+    standard_out: gated_pass("standard_out", fields),
+    write_file: gated_under("write_file", fields, roots, request_path)
+  }
 }
+
+{rules}

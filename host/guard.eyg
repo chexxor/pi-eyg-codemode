@@ -1,0 +1,618 @@
+// The host this package ships: the guard that decides every effect a program
+// performs, written in EYG and run by the plain installed `eyg` binary. Nothing
+// in the CLI knows about this file. The tool writes a per-call entry that imports
+// it, the policy and the program, and calls `build`:
+//
+//   let g = import "<this file>"
+//   let policy = import "<policy module>"
+//   g.build(policy.rules({roots: [...], cwd: "..."}), (_) -> {
+//     let m = import "<program file written for this call>"
+//     m.run({})
+//   })
+//
+// # Why a handler per effect
+//
+// `handle Name(handler, body)` runs `body` with `handler` installed: an effect
+// the program performs inside it reaches the handler, and the host performs
+// nothing for that label. So the guard names every effect the CLI offers - one
+// clause per row of `guides/eyg-surface.tsv` - and anything it does not name is
+// left to the host, which has no such label and answers `unhandled effect`.
+// Naming everything is what makes the default a refusal.
+//
+// # The contract a policy rule keeps
+//
+// A rule is a function of the value the program asked for. It answers
+//
+//   Pass(value)   the guard performs the effect for real, with the value the
+//                 rule handed back, and answers the program with the host's own
+//                 reply. The rule may rewrite that value; it may not skip it.
+//   Mock(reason)  the guard performs nothing and answers the program itself.
+//                 `reason` is the text the program sees, and it is what makes a
+//                 denial readable.
+//
+// There is no `Pass` in the language: inside a handler the way to perform is to
+// `perform` again, which the handler's own clause does not catch, and the way to
+// refuse is to answer with a value yourself. Each effect answers a refusal in the
+// shape its own reply type allows:
+//
+//   ReadFile, WriteFile, AppendFile, DeleteFile, MakeDirectory, ReadDirectory,
+//   Search, Fetch, StandardIn, CreateKey
+//                        Error(reason)
+//   Env                  None({})  - an unset variable is the honest answer
+//   CWD                  Error({}) - the reply's Error carries no text on this host
+//   Sleep, StandardOut, StandardError
+//                        the unit value: the effect did not happen
+//   Now, Random, Flip    the program stops with `Aborted with reason: <reason>`.
+//                        A reply of Integer or True|False cannot carry a refusal,
+//                        and inventing a number would be a lie, so the reason ends
+//                        the program instead.
+//   Exit                  Pass(code) ends the program with that status; a refusal
+//                        cannot be answered (Exit has no reply) so it aborts too.
+//
+// # Paths
+//
+// A path reaches a handler exactly as the program wrote it, which may be relative
+// to a working directory the roots do not include. The guard turns it into an
+// absolute path with no `.` or `..` segment before the rule sees it, and performs
+// the effect with that path, so a rule compares whole paths and a refusal names
+// one the program can act on.
+//
+// # Search
+//
+// The installed binary has no `Search` effect - the label exists in the language
+// and the CLI does not perform it - so the guard is the host for it, and a policy
+// decides it in its own `search` field. (The CLI folded `Search` into the
+// `read_file` field; one field per effect here is what the checker accepts, and a
+// policy that wants the old pairing writes the same rule into both fields.) Then
+// the guard walks the tree itself with `ReadDirectory`, which is a guarded effect,
+// so every directory it lists is decided by the `read_directory` rule before the
+// host reads it. Matching
+// is over the path relative to the searched directory: `*` in a segment matches
+// any run of characters in that segment, `**` as a whole segment matches any
+// number of segments, anything else compares equal, and at most one `*` per
+// segment is honoured. Returned paths are absolute, up to `limit` of them.
+//
+// # What the guard does not do
+//
+// It never reads the program's text: the model's code is imported inside the
+// guarded body, in its own file, so nothing it writes can reach this module. The
+// four effects the CLI marks unchecked (DecodeJSON, EYGParse, Hash, Sign) are
+// recomputation over values the program already holds, so no rule decides them and
+// the guard re-performs them. `Search` is a walk, not a host effect, so a search
+// costs one decision for the root and one per directory it lists.
+
+// ---------------------------------------------------------------- strings, paths
+
+let append = (a, b) -> {
+  !string_append(a, b)
+}
+
+// Split on `/` into a flat list; `!string_split` returns one head and a tail.
+let parts = (text) -> {
+  let {head, tail} = !string_split(text, "/")
+  [head, ..tail]
+}
+
+let reverse = (items) -> {
+  !list_fold(items, [], (item, acc) -> {
+    [item, ..acc]
+  })
+}
+
+let join_parts = (segments) -> {
+  !list_fold(segments, "", (segment, acc) -> {
+    match !equal(acc, "") {
+      True(_) -> { segment }
+      False(_) -> { append(acc, append("/", segment)) }
+    }
+  })
+}
+
+// Drop empty and `.` segments and apply `..` lexically. The stack is reversed
+// while walking, so `..` removes the last real segment.
+let collapse = (segments) -> {
+  reverse(!list_fold(segments, [], (segment, stack) -> {
+    match !equal(segment, "") {
+      True(_) -> { stack }
+      False(_) -> {
+        match !equal(segment, ".") {
+          True(_) -> { stack }
+          False(_) -> {
+            match !equal(segment, "..") {
+              True(_) -> {
+                match !list_pop(stack) {
+                  Error(_) -> { [] }
+                  Ok({tail}) -> { tail }
+                }
+              }
+              False(_) -> { [segment, ..stack] }
+            }
+          }
+        }
+      }
+    }
+  }))
+}
+
+// The absolute, lexically normalized form of a path written by the program.
+let absolute = (cwd, path) -> {
+  let raw = match !string_starts_with(path, "/") {
+    True(_) -> { path }
+    False(_) -> { append(cwd, append("/", path)) }
+  }
+  append("/", join_parts(collapse(parts(raw))))
+}
+
+// ------------------------------------------------------------ the Search walk
+
+// One segment of a glob against one path segment. No `*` compares equal; one `*`
+// fixes the prefix and the suffix around it.
+let match_segment = (pattern, name) -> {
+  match !string_split_once(pattern, "*") {
+    Error(_) -> { !equal(pattern, name) }
+    Ok({pre, post}) -> {
+      let prefix_ok = match !equal(pre, "") {
+        True(_) -> { True({}) }
+        False(_) -> { !string_starts_with(name, pre) }
+      }
+      match prefix_ok {
+        True(_) -> {
+          match !equal(post, "") {
+            True(_) -> { True({}) }
+            False(_) -> { !string_ends_with(name, post) }
+          }
+        }
+        False(_) -> { False({}) }
+      }
+    }
+  }
+}
+
+// Pattern segments against path segments, where `**` swallows any number of them.
+// `!fix` builds the self-recursive function; the argument is one record because
+// a fixed function takes one value.
+let match_segments = !fix((self) -> {
+  (state) -> {
+    match !list_pop(state.patterns) {
+      Error(_) -> {
+        match !list_pop(state.names) {
+          Error(_) -> { True({}) }
+          Ok(_) -> { False({}) }
+        }
+      }
+      Ok({head, tail}) -> {
+        match !equal(head, "**") {
+          True(_) -> {
+            match self({patterns: tail, names: state.names}) {
+              True(_) -> { True({}) }
+              False(_) -> {
+                match !list_pop(state.names) {
+                  Error(_) -> { False({}) }
+                  Ok({tail: rest}) -> {
+                    self({patterns: state.patterns, names: rest})
+                  }
+                }
+              }
+            }
+          }
+          False(_) -> {
+            match !list_pop(state.names) {
+              Error(_) -> { False({}) }
+              Ok({head: name, tail: rest}) -> {
+                match match_segment(head, name) {
+                  True(_) -> { self({patterns: tail, names: rest}) }
+                  False(_) -> { False({}) }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+})
+
+let glob_matches = (pattern, path) -> {
+  match_segments({patterns: parts(pattern), names: parts(path)})
+}
+
+// One entry of one listed directory into the walk's state: `found` is reversed,
+// `queue` holds directories still to list, `count` is how many were reported.
+let walk_entry = (from, entry, pattern, limit, acc) -> {
+  let child = append(from.dir, append("/", entry.name))
+  let rel = match !equal(from.rel, "") {
+    True(_) -> { entry.name }
+    False(_) -> { append(from.rel, append("/", entry.name)) }
+  }
+  let matched = glob_matches(pattern, rel)
+  let with_match = match matched {
+    True(_) -> {
+      match !int_compare(acc.count, limit) {
+        Lt({}) -> { {found: [child, ..acc.found], queue: acc.queue, count: !int_add(acc.count, 1)} }
+        Eq({}) -> { acc }
+        Gt({}) -> { acc }
+      }
+    }
+    False(_) -> { acc }
+  }
+  match entry.type {
+    Directory(_) -> { {found: with_match.found, queue: [{dir: child, rel: rel}, ..with_match.queue], count: with_match.count} }
+    File(_) -> { with_match }
+  }
+}
+
+// Breadth-first over the directory tree, stopping at `limit` paths. Each
+// `ReadDirectory` is performed for real, so the `read_directory` rule decides it
+// first; a directory it refuses is skipped, never listed.
+let walk = (root, pattern, limit) -> {
+  let step = !fix((self) -> {
+    (state) -> {
+      match !int_compare(state.count, limit) {
+        Lt({}) -> {
+          match !list_pop(state.queue) {
+            Error(_) -> { state }
+            Ok({head, tail}) -> {
+              let listing = perform ReadDirectory(head.dir)
+              match listing {
+                Error(_) -> { self({found: state.found, queue: tail, count: state.count}) }
+                Ok(entries) -> {
+                  self(!list_fold(entries, {found: state.found, queue: tail, count: state.count}, (entry, acc) -> {
+                    walk_entry(head, entry, pattern, limit, acc)
+                  }))
+                }
+              }
+            }
+          }
+        }
+        Eq({}) -> { state }
+        Gt({}) -> { state }
+      }
+    }
+  })
+  reverse(step({found: [], queue: [{dir: root, rel: ""}], count: 0}).found)
+}
+
+// ---------------------------------------------------------------- the handlers
+//
+// Each handler reads its field out of the policy record, then either performs the
+// effect for real or answers the refusal. `read_directory` sits outside `search`
+// in `build` below, because the search walk performs `ReadDirectory` and must be
+// inside the rule that decides it.
+
+let with_read_file = (policy, ctx, cont) -> {
+  handle ReadFile((request, resume) -> {
+    let path = absolute(ctx.cwd, request.path)
+    let decision = policy.read_file({path: path, offset: request.offset, limit: request.limit})
+    match decision {
+      Pass(request2) -> {
+        let reply = perform ReadFile({path: request2.path, offset: request2.offset, limit: request2.limit})
+        resume(reply)
+      }
+      Mock(reason) -> { resume(Error(reason)) }
+    }
+  }, cont)
+}
+
+let with_read_directory = (policy, ctx, cont) -> {
+  handle ReadDirectory((path, resume) -> {
+    let decision = policy.read_directory(absolute(ctx.cwd, path))
+    match decision {
+      Pass(path2) -> {
+        let reply = perform ReadDirectory(path2)
+        resume(reply)
+      }
+      Mock(reason) -> { resume(Error(reason)) }
+    }
+  }, cont)
+}
+
+let with_search = (policy, ctx, cont) -> {
+  handle Search((request, resume) -> {
+    let path = absolute(ctx.cwd, request.path)
+    let decision = policy.search({path: path, pattern: request.pattern, limit: request.limit})
+    match decision {
+      Pass(request2) -> {
+        let found = walk(request2.path, request2.pattern, request2.limit)
+        resume(Ok(found))
+      }
+      Mock(reason) -> { resume(Error(reason)) }
+    }
+  }, cont)
+}
+
+let with_write_file = (policy, ctx, cont) -> {
+  handle WriteFile((request, resume) -> {
+    let path = absolute(ctx.cwd, request.path)
+    let decision = policy.write_file({path: path, contents: request.contents})
+    match decision {
+      Pass(request2) -> {
+        let reply = perform WriteFile({path: request2.path, contents: request2.contents})
+        resume(reply)
+      }
+      Mock(reason) -> { resume(Error(reason)) }
+    }
+  }, cont)
+}
+
+let with_append_file = (policy, ctx, cont) -> {
+  handle AppendFile((request, resume) -> {
+    let path = absolute(ctx.cwd, request.path)
+    let decision = policy.append_file({path: path, contents: request.contents})
+    match decision {
+      Pass(request2) -> {
+        let reply = perform AppendFile({path: request2.path, contents: request2.contents})
+        resume(reply)
+      }
+      Mock(reason) -> { resume(Error(reason)) }
+    }
+  }, cont)
+}
+
+let with_delete_file = (policy, ctx, cont) -> {
+  handle DeleteFile((path, resume) -> {
+    let decision = policy.delete_file(absolute(ctx.cwd, path))
+    match decision {
+      Pass(path2) -> {
+        let reply = perform DeleteFile(path2)
+        resume(reply)
+      }
+      Mock(reason) -> { resume(Error(reason)) }
+    }
+  }, cont)
+}
+
+let with_make_directory = (policy, ctx, cont) -> {
+  handle MakeDirectory((path, resume) -> {
+    let decision = policy.make_directory(absolute(ctx.cwd, path))
+    match decision {
+      Pass(path2) -> {
+        let reply = perform MakeDirectory(path2)
+        resume(reply)
+      }
+      Mock(reason) -> { resume(Error(reason)) }
+    }
+  }, cont)
+}
+
+let with_cwd = (policy, ctx, cont) -> {
+  handle CWD((request, resume) -> {
+    let decision = policy.cwd(request)
+    match decision {
+      Pass(value) -> {
+        let reply = perform CWD(value)
+        resume(reply)
+      }
+      Mock(_) -> { resume(Error({})) }
+    }
+  }, cont)
+}
+
+let with_env = (policy, ctx, cont) -> {
+  handle Env((name, resume) -> {
+    let decision = policy.env(name)
+    match decision {
+      Pass(name2) -> {
+        let reply = perform Env(name2)
+        resume(reply)
+      }
+      Mock(_) -> { resume(None({})) }
+    }
+  }, cont)
+}
+
+let with_fetch = (policy, ctx, cont) -> {
+  handle Fetch((request, resume) -> {
+    let decision = policy.fetch(request)
+    match decision {
+      Pass(request2) -> {
+        let reply = perform Fetch(request2)
+        resume(reply)
+      }
+      Mock(reason) -> { resume(Error(reason)) }
+    }
+  }, cont)
+}
+
+let with_standard_in = (policy, ctx, cont) -> {
+  handle StandardIn((request, resume) -> {
+    let decision = policy.standard_in(request)
+    match decision {
+      Pass(value) -> {
+        let reply = perform StandardIn(value)
+        resume(reply)
+      }
+      Mock(reason) -> { resume(Error(reason)) }
+    }
+  }, cont)
+}
+
+let with_create_key = (policy, ctx, cont) -> {
+  handle CreateKey((request, resume) -> {
+    let decision = policy.create_key(request)
+    match decision {
+      Pass(value) -> {
+        let reply = perform CreateKey(value)
+        resume(reply)
+      }
+      Mock(reason) -> { resume(Error(reason)) }
+    }
+  }, cont)
+}
+
+// A reply of Integer or True|False cannot carry a refusal, so the reason ends the
+// program instead of being replaced by an invented value.
+let with_now = (policy, ctx, cont) -> {
+  handle Now((request, resume) -> {
+    let decision = policy.now(request)
+    match decision {
+      Pass(value) -> {
+        let reply = perform Now(value)
+        resume(reply)
+      }
+      Mock(reason) -> { resume(!never(perform Abort(reason))) }
+    }
+  }, cont)
+}
+
+let with_random = (policy, ctx, cont) -> {
+  handle Random((request, resume) -> {
+    let decision = policy.random(request)
+    match decision {
+      Pass(value) -> {
+        let reply = perform Random(value)
+        resume(reply)
+      }
+      Mock(reason) -> { resume(!never(perform Abort(reason))) }
+    }
+  }, cont)
+}
+
+let with_flip = (policy, ctx, cont) -> {
+  handle Flip((request, resume) -> {
+    let decision = policy.flip(request)
+    match decision {
+      Pass(value) -> {
+        let reply = perform Flip(value)
+        resume(reply)
+      }
+      Mock(reason) -> { resume(!never(perform Abort(reason))) }
+    }
+  }, cont)
+}
+
+// The unit reply is the honest answer for an effect that changes nothing the
+// program can see: the effect did not happen.
+let with_sleep = (policy, ctx, cont) -> {
+  handle Sleep((request, resume) -> {
+    let decision = policy.sleep(request)
+    match decision {
+      Pass(value) -> {
+        let reply = perform Sleep(value)
+        resume(reply)
+      }
+      Mock(_) -> { resume({}) }
+    }
+  }, cont)
+}
+
+let with_standard_out = (policy, ctx, cont) -> {
+  handle StandardOut((text, resume) -> {
+    let decision = policy.standard_out(text)
+    match decision {
+      Pass(text2) -> {
+        let reply = perform StandardOut(text2)
+        resume(reply)
+      }
+      Mock(_) -> { resume({}) }
+    }
+  }, cont)
+}
+
+let with_standard_error = (policy, ctx, cont) -> {
+  handle StandardError((text, resume) -> {
+    let decision = policy.standard_error(text)
+    match decision {
+      Pass(text2) -> {
+        let reply = perform StandardError(text2)
+        resume(reply)
+      }
+      Mock(_) -> { resume({}) }
+    }
+  }, cont)
+}
+
+// Exit ends the program; a rule may rewrite the status with Pass, and a refusal
+// cannot be answered because Exit has no reply, so it aborts with the reason.
+let with_exit = (policy, ctx, cont) -> {
+  handle Exit((status, resume) -> {
+    let decision = policy.exit(status)
+    match decision {
+      Pass(code) -> { !never(perform Exit(code)) }
+      Mock(reason) -> { !never(perform Abort(reason)) }
+    }
+  }, cont)
+}
+
+// The four effects no policy field decides: recomputation over values the program
+// already holds. The guard performs them unchanged.
+let with_decode_json = (cont) -> {
+  handle DecodeJSON((value, resume) -> {
+    let reply = perform DecodeJSON(value)
+    resume(reply)
+  }, cont)
+}
+
+let with_eyg_parse = (cont) -> {
+  handle EYGParse((value, resume) -> {
+    let reply = perform EYGParse(value)
+    resume(reply)
+  }, cont)
+}
+
+let with_hash = (cont) -> {
+  handle Hash((value, resume) -> {
+    let reply = perform Hash(value)
+    resume(reply)
+  }, cont)
+}
+
+let with_sign = (cont) -> {
+  handle Sign((value, resume) -> {
+    let reply = perform Sign(value)
+    resume(reply)
+  }, cont)
+}
+
+// The guarded run: every label named, the effect-performing handlers wrapped
+// around the body in the order that keeps a handler's own re-perform inside the
+// rule that decides it - `read_directory` outside `search` - and the model's code
+// last, in the body the entry hands in.
+let build = (policy, ctx, body) -> {
+  with_read_directory(policy, ctx, (_) -> {
+    with_read_file(policy, ctx, (_) -> {
+      with_search(policy, ctx, (_) -> {
+        with_write_file(policy, ctx, (_) -> {
+          with_append_file(policy, ctx, (_) -> {
+            with_delete_file(policy, ctx, (_) -> {
+              with_make_directory(policy, ctx, (_) -> {
+                with_cwd(policy, ctx, (_) -> {
+                  with_env(policy, ctx, (_) -> {
+                    with_fetch(policy, ctx, (_) -> {
+                      with_standard_in(policy, ctx, (_) -> {
+                        with_create_key(policy, ctx, (_) -> {
+                          with_now(policy, ctx, (_) -> {
+                            with_random(policy, ctx, (_) -> {
+                              with_flip(policy, ctx, (_) -> {
+                                with_sleep(policy, ctx, (_) -> {
+                                  with_standard_out(policy, ctx, (_) -> {
+                                    with_standard_error(policy, ctx, (_) -> {
+                                      with_exit(policy, ctx, (_) -> {
+                                        with_decode_json((_) -> {
+                                          with_eyg_parse((_) -> {
+                                            with_hash((_) -> {
+                                              with_sign(body)
+                                            })
+                                          })
+                                        })
+                                      })
+                                    })
+                                  })
+                                })
+                              })
+                            })
+                          })
+                        })
+                      })
+                    })
+                  })
+                })
+              })
+            })
+          })
+        })
+      })
+    })
+  })
+}
+
+{build}

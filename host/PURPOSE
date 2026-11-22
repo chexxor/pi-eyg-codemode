@@ -1,0 +1,5 @@
+The EYG host this package ships: the guard module that wraps a model's program in
+one `handle` clause per computer effect, so the plain installed `eyg` binary
+performs nothing the resolved policy has not decided. `guard.eyg` exports `build`;
+the tool writes a per-call entry that imports the guard, the policy and the
+program, and the guard never sees the model's source text, only its effects.
