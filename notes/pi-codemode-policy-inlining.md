@@ -1,7 +1,7 @@
 ---
 name: pi-codemode-policy-inlining
 description: Why the policy modules carry their rules inline instead of importing eyg_packages/overlay/policy.eyg, and the check that shows the inlined rules are the same decision
-date: 2026-11-18
+date: 2026-11-23
 ---
 
 The snippet below is what the modules looked like before this port, while the package sat
@@ -62,12 +62,16 @@ The 18 fields are exactly the values of `POLICY_FIELDS` in `lib/render-helpers.m
 record against the recorded `rule_mapping` in `test/fixtures/rule_mapping.gleam`.
 
 What the check does **not** cover: the decisions at run time. A denial is a value, so
-`policy.read_write(["/x"])` refusing a path can only be observed by running a program
-through a runner that has the `--policy` flag. `which eyg` is `$HOME/.local/bin/eyg`,
-`eyg --version` prints `eyg v0.1.0`, and `eyg --help` advertises no `--policy`, so this host
-has no runner that checks effects. That was measured 2026-11-18 and is still true today. What
-moved and then moved back: on 2026-11-20 a checked call was seen through a development build this
-tree no longer has (`docs/world/entities/cli.checked-runner-on-this-host.md`, superseded), and on
-2026-11-21 the candidate that reached it was deleted, so the probe now reaches `PATH` and
-`EYG_CODEMODE_RUNNER` and nothing else (`docs/world/entities/cli.runner-official-install-only.md`).
-On a machine holding only the release nothing runs at all, and this package builds nothing.
+a rule refusing a path can only be observed by running a program under a host that installs the
+rules. Until 2026-11-22 that meant a runner with a `--policy` flag, and the installed release has
+none: `which eyg` is `$HOME/.local/bin/eyg`, `eyg --version` prints `eyg v0.1.0`, and `eyg --help`
+advertises no `--policy` (measured 2026-11-18, again 2026-11-23). Since then the host is this
+package's own guard, so the observation is one command on a release install:
+`node bin/agent/refusal-probe.mjs` answers `write_file denied by policy: /tmp/...` in a fifth of a
+second (`docs/world/entities/cli.runner-official-install-only.md`,
+`docs/world/entities/host.guard-boundary.md`). What moved and then moved back: on 2026-11-20 a
+checked call was seen through a development build this tree no longer has
+(`docs/world/entities/cli.checked-runner-on-this-host.md`, superseded), and on 2026-11-21 the
+candidate that reached it was deleted, so the tool reaches `PATH` and `EYG_CODEMODE_RUNNER` and
+nothing else (`docs/world/entities/cli.runner-official-install-only.md`). What the release still does
+not carry is a host of its own (`gap.runner-release-lacks-policy`).

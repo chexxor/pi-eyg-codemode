@@ -1,7 +1,7 @@
 ---
 name: registry availability is a re-probed advisory, not a block
 description: Why the eyg-codemode registry probes each effect at every listing, why the probe arguments are root-relative rather than fixed, and why availability is advisory rather than a second check that blocks a run.
-date: 2026-11-16
+date: 2026-11-23
 ---
 *(Carried from the language repository, 2026-11-16: the registry probes and their output were measured there, against the language repository's policy library. This tree re-states the shapes it depends on in `policies/` and `lib/`; the probe itself is UNVERIFIED here.)*
 
@@ -75,8 +75,8 @@ trusted is the answer given by the process that runs the program, and everything
 # Why `action: effects` spawns probes instead of importing a policy module
 
 The capability action asks the same question the registry probes ask, once per effect the CLI can
-name, and it got its answer the same way: one whole spawned `run --policy <module.eyg>` program per
-effect (`POLICY_FIELDS` x `probeProgram` x `classifyProbeOutput`), not a program that imports a
+name, and it gets its answer the same way: one whole guarded run per effect - the probe program goes
+through the same entry the real program does (`POLICY_FIELDS` x `probeProgram` x `classifyProbeOutput`), not a program that imports a
 policy and calls its field. That alternative was tried on 2026-11-16 and rejected on evidence.
 
 `eyg eval -c` importing `eyg_packages/overlay/policy.eyg` and calling one field, run unchecked, showed

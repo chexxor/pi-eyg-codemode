@@ -1,7 +1,7 @@
 ---
 name: the codemode checks are host-side, and a pure-EYG mediated runner cannot exist
 description: Why the agent's restriction is installed on the runner that starts the interpreter rather than in the program or in a mediated EYG helper; the decision and the material that rules the alternatives out.
-date: 2026-11-15
+date: 2026-11-23
 ---
 *(This note's subject was worked out in the language repository on 2026-11-15; it is carried here as the package's decision record, measured there, not re-run here. The paths it names are that workspace's.)*
 
@@ -21,6 +21,12 @@ the Pass/Mock loop that `packages/gleam_cli/src/eyg/cli/overlay.gleam` already b
 (`rule_mapping`, `overlay.setup`, `decide`), reached from `eyg run --policy <module.eyg>`.
 `eyg_packages/codemode_policy/` states which policies of that vocabulary are safe for
 an agent, and `pi-eyg-codemode/` puts a pi agent in front of that runner.
+
+*(What changed here on 2026-11-22 is which process that runner is, not the rule: the package now puts
+the agent in front of a host of its own, `host/guard.eyg`, an EYG program the installed CLI runs with
+no flag. The deciding code is still outside the model's program - the tool generates the entry that
+imports the guard around it - so the argument of this note is what made that move possible, and
+`docs/world/decisions/ADR-006-guard-in-package.md` carries the choice.)*
 
 # Why not an EYG mediated runner
 

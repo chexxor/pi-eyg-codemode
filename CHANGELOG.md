@@ -8,6 +8,14 @@ history, not as instructions for this tree. On 2026-11-19 the word "gate" was re
 
 ## Unreleased
 
+- **The notes caught up with the guard.** Seven notes still described the host this package replaced
+  on 2026-11-22 - a spawn that named `--policy`, a capability probe, "a fresh clone of this package
+  refuses every call", "nothing runs on a machine holding only the release" - and every gate stayed
+  green, because the only automated check over `notes/` is the front-matter invariant. Each was
+  rewritten against what a call does now, the `handle` question the oldest of them left UNVERIFIED was
+  closed by boundary facts 1, 5 and 7 of `host.guard-boundary`, and `docs/world/traps.md` carries the
+  grep that finds such a sentence next time.
+
 - **A call cannot change the files that decide it.** A session run inside this package has
   `host/guard.eyg` and `policies/*.eyg` inside its own roots, and the per-call entry imports both by
   absolute path, so a program could rewrite the rules of its next call; building the tool's three
