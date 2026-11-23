@@ -8,7 +8,7 @@ history, not as instructions for this tree. On 2026-11-19 the word "gate" was re
 
 ## Unreleased
 
-- **The notes caught up with the guard.** Seven notes still described the host this package replaced
+- **The notes caught up with the guard.** The notes still described the host this package replaced
   on 2026-11-22 - a spawn that named `--policy`, a capability probe, "a fresh clone of this package
   refuses every call", "nothing runs on a machine holding only the release" - and every gate stayed
   green, because the only automated check over `notes/` is the front-matter invariant. Each was
