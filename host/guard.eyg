@@ -17,8 +17,11 @@
 // the program performs inside it reaches the handler, and the host performs
 // nothing for that label. So the guard names every effect the CLI offers - one
 // clause per row of `guides/eyg-surface.tsv` - and anything it does not name is
-// left to the host, which has no such label and answers `unhandled effect`.
-// Naming everything is what makes the default a refusal.
+// outside the policy: a label the CLI's own host implements is performed by that
+// host (the four unchecked effects, and its internal `Abort`, which a program can
+// perform and which only stops the program), and any other label has no host and
+// answers `unhandled effect`. Naming every surface row is what makes the default
+// a refusal: there is no label with reach that the guard leaves unnamed.
 //
 // # The contract a policy rule keeps
 //

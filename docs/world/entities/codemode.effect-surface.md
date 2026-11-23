@@ -4,9 +4,9 @@ type: entity
 owner: delegate
 status: current
 verified_at: 2026-11-22
-verify: "test $(grep -c 'PolicyField(' test/fixtures/rule_mapping.gleam) -eq 19 && test $(grep -c '^effect' guides/eyg-surface.tsv) -eq 23 && node bin/agent/gen-surface.mjs --check && node --test test/host-coverage.test.mjs > /dev/null"
+verify: "test $(grep -c 'PolicyField(' test/fixtures/rule_mapping.gleam) -eq 19 && test $(grep -c '^effect' guides/eyg-surface.tsv) -eq 23 && node bin/agent/gen-surface.mjs --check && node --test test/host-coverage.test.mjs > /dev/null && node bin/agent/refusal-probe.mjs --program test/fixtures/search-walk.eyg 2>&1 | grep -q 'search listed: 5' && node bin/agent/refusal-probe.mjs --with-policy spawner-effects --fields search,standard_out --program test/fixtures/search-walk.eyg 2>&1 | grep -q 'search listed: 0'"
 confidence: high
-sources: [guides/eyg-surface.tsv, bin/agent/gen-surface.mjs, test/fixtures/rule_mapping.gleam, policies/agent-roots.eyg, policies/deny-all.eyg, README.md, host/guard.eyg, test/host-coverage.test.mjs]
+sources: [guides/eyg-surface.tsv, bin/agent/gen-surface.mjs, test/fixtures/rule_mapping.gleam, policies/agent-roots.eyg, policies/deny-all.eyg, README.md, host/guard.eyg, test/host-coverage.test.mjs, test/fixtures/search-walk.eyg, guides/tool-reference.md]
 supersedes: null
 superseded_by: null
 ---
@@ -41,6 +41,15 @@ list, so a surface that moved fails the suite rather than silently allowing.
 Three shapes matter when a rule decides by path: `read_directory`, `delete_file` and `make_directory`
 carry a bare path string, `read_file`, `write_file` and `append_file` carry a record with a
 `path` field, and `env` refuses with `None({})` instead of an error.
+
+`search` is one field and one clause, and it is not the whole walk. The guard re-performs the
+search and then answers the `read_directory` of every directory the walk reaches, so two fields
+together decide a search and a refusal in the middle of it is a listing that comes back empty,
+not an error. Re-runnable (`@measured 2026-11-22`, 0.2 s each): `node bin/agent/refusal-probe.mjs
+--program test/fixtures/search-walk.eyg` prints `search listed: 5` under `policies/agent-roots.eyg`;
+the same program under `policies/spawner-effects.eyg` with `--fields search,standard_out` prints
+`search listed: 0`, because the search is named and the listings are not, and adding
+`read_directory` to that list makes it list five again.
 
 ## Not this
 

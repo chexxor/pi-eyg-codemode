@@ -17,3 +17,7 @@
 # Scratch for a runner this machine names with EYG_CODEMODE_RUNNER. A build of the
 # language CLI is around 105 MB, so a binary parked here stays untracked.
 .local/
+
+# A probe whose write is allowed lands here when it is run with its working directory in the
+# tree; it is evidence of a run, never something to commit.
+eyg-probe-refused.txt

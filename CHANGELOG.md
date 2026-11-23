@@ -8,6 +8,21 @@ history, not as instructions for this tree. On 2026-11-19 the word "gate" was re
 
 ## Unreleased
 
+- **The per-effect checks moved into this package.** The tool no longer asks the CLI to load a
+  policy module: `host/guard.eyg` is an EYG program that installs one `handle` clause per effect row
+  of `guides/eyg-surface.tsv`, applies the resolved policy around the model's code, and is imported
+  by the entry the tool writes for every call, so the argv is `<binary> <mode> <entry.eyg>` and
+  nothing is asked of the binary but the mode word and a file. Consequences: `runnerCandidates` is
+  two names with no capability probe, a missing or unsuitable binary is one refusal line naming the
+  command that was run, `Search` gained a policy field of its own (`search`) because the guard is the
+  host of that walk, and a policy rule answers `Pass(value)` or `Mock(reason)` with the guard shaping
+  the answer to the effect's own reply type. `test/fixtures/rule_mapping.gleam` now decides the
+  effect labels and the unchecked set only; the field names are this package's and
+  `test/host-coverage.test.mjs` proves them against the guard. The records that described the flag
+  moved with it: two gap records closed as superseded, `ADR-002-handler-seam` superseded by
+  `ADR-006-guard-in-package`, and `host.guard-boundary` carries the five boundary facts the guard
+  rests on, each re-runnable through `node bin/agent/refusal-probe.mjs`.
+
 - **The doc rules became checks.** `bin/agent/doc-checks.mjs` answers five questions over this
   package's own prose and code - one word per concept, a `path:NNN` citation whose file is in this
   tree and whose line holds the names it anchors, a section heading whose subject is named in its

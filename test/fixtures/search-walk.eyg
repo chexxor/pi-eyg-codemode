@@ -1,0 +1,13 @@
+// One Search, printed as a count. Under `policies/agent-roots.eyg` the walk is allowed and lists
+// files. Under `policies/spawner-effects.eyg` with only `search` named, the search itself is allowed
+// and every directory listing inside it is refused, so the answer is `Ok([])`: the walk is decided
+// one directory at a time, not once.
+// Run: node bin/agent/refusal-probe.mjs --program test/fixtures/search-walk.eyg
+let found = perform Search({ path: "{{root}}", pattern: "**/*.eyg", limit: 5 })
+match found {
+  Ok(items) -> {
+    let n = !list_fold(items, 0, (item, acc) -> { !int_add(acc, 1) })
+    perform StandardOut(!string_append("search listed: ", !int_to_string(n)))
+  }
+  | (o) -> { perform StandardOut("search refused outright") }
+}

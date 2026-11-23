@@ -170,9 +170,14 @@ the reason and the answer appears: `node bin/agent/refusal-probe.mjs --with-poli
 --program test/fixtures/refusal-abort.eyg`.
 
 Two search routes and one boundary. The `Search` effect lives in the CLI runtime and the guard is
-its host: one clause, one decision for the whole walk, under the policy's own `search` field - so
-a spawner that names `read_file` does not hand a child the walk, and one that names `search` does
-not hand it a read. `libraries/search.eyg`, bound
+its host: one clause under the policy's own `search` field, and then **one decision per directory
+the walk lists**, under `read_directory` - so a spawner that names `read_file` does not hand a child
+the walk, and one that names `search` does not hand it a read. The two decisions are visible apart:
+allow `search` and refuse `read_directory` and the search is allowed and answers no paths
+(`Ok([])`), because every listing it needed was refused. Re-run both halves:
+`node bin/agent/refusal-probe.mjs --program test/fixtures/search-walk.eyg` lists five paths under
+`policies/agent-roots.eyg`; the same program with `--with-policy spawner-effects --fields
+search,standard_out` prints zero, and adding `read_directory` to that list makes it list again. `libraries/search.eyg`, bound
 as `search_lib` by the `libraries` parameter, walks with `ReadDirectory` and is therefore checked
 one directory at a time. Both report **names** under an allowed root, including the name of a file
 a read of that path would be refused for, and contents never come through. So a secret is not

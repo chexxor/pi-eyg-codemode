@@ -1,0 +1,5 @@
+// `Abort` is the CLI's own label, not a row of `guides/eyg-surface.tsv`, so the guard names no
+// clause for it and the host performs it: the run stops, naming the reason. It reaches nothing
+// outside the program.
+// Run: node bin/agent/refusal-probe.mjs --program test/fixtures/abort-probe.eyg
+perform Abort("the program asked to stop")
