@@ -49,4 +49,5 @@ list either: nothing in the guarded chain imports them, so a change there reache
 session through pi's package load rather than through the guard - package integrity is pi's
 question, not this guard's. Trigger to widen the list to the whole package directory: a
 deployment where an EYG program is the only channel a session has into a tree that contains
-an installed copy of this package.
+an installed copy of this package. The sibling rule of the same boundary - a program may not
+handle an effect for itself - is in `notes/one-host-per-call.md`.

@@ -4,9 +4,9 @@ type: entity
 owner: delegate
 status: current
 verified_at: 2026-11-23
-verify: "test -f guides/first-session.md && test -f guides/tool-reference.md && test -f guides/how-to-share-functions.md && test -f guides/how-to-write-a-policy.md && test -f guides/how-to-spawn-a-subagent.md && test -f guides/how-to-point-the-tool-at-your-runner.md && test -f guides/how-to-read-in-slices.md && test -f guides/eyg-surface.tsv && ! ls guides | grep -qE '^(syntax|builtins_reference|cli_effects_reference|install_prebuilt|install_from_source|pi_codemode_agent)\.md$' && grep -q 'eyg-surface.tsv' README.md"
+verify: "test -f guides/first-session.md && test -f guides/tool-reference.md && test -f guides/what-a-call-does.md && test -f guides/how-to-share-functions.md && test -f guides/how-to-write-a-policy.md && test -f guides/how-to-spawn-a-subagent.md && test -f guides/how-to-point-the-tool-at-your-runner.md && test -f guides/how-to-read-in-slices.md && test -f guides/eyg-surface.tsv && ! ls guides | grep -qE '^(syntax|builtins_reference|cli_effects_reference|install_prebuilt|install_from_source|pi_codemode_agent)\.md$' && grep -q 'eyg-surface.tsv' README.md"
 confidence: high
-sources: [guides/PURPOSE, guides/first-session.md, guides/tool-reference.md, guides/how-to-write-a-policy.md, guides/eyg-surface.tsv, README.md, bin/agent/gen-surface.mjs]
+sources: [guides/PURPOSE, guides/first-session.md, guides/tool-reference.md, guides/what-a-call-does.md, guides/how-to-write-a-policy.md, guides/eyg-surface.tsv, README.md, bin/agent/gen-surface.mjs]
 supersedes: null
 superseded_by: null
 ---
@@ -18,8 +18,9 @@ package wrote, plus `eyg-surface.tsv`, the machine-readable surface. `first-sess
 tutorial a new user follows to one call; the `how-to-*.md` pages carry the five things the
 surface implies (point the tool at your binary, write a policy, read in slices, share
 functions, spawn a subagent); `tool-reference.md` is this package's own reference - the knobs,
-the rows, the probes and the seam it cannot check. The README links all of them and carries
-none of their content.
+the rows, the probes and the seam it cannot check; `what-a-call-does.md` is the explanation, one
+call walked in the order the tool does it, each step with the command that shows it from a shell.
+The README links all of them and carries none of their content.
 
 `eyg-surface.tsv` is generated, not written: `bin/agent/gen-surface.mjs` builds it and
 `--check` re-derives it from `test/fixtures/rule_mapping.gleam`, from `POLICY_FIELDS` in

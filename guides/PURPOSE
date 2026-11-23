@@ -1,5 +1,5 @@
 Prose this package writes for its own users - the tour (`first-session.md`), the how-tos
-(`how-to-*.md`), the tool's reference (`tool-reference.md`) - and the one machine-readable
-surface: `eyg-surface.tsv`, one builtin row per name and one effect row per name with the
+(`how-to-*.md`), the tool's reference (`tool-reference.md`) and the explanation of one call
+(`what-a-call-does.md`) - and the one machine-readable surface: `eyg-surface.tsv`, one builtin row per name and one effect row per name with the
 policy field that decides it, generated and drift-checked by `bin/agent/gen-surface.mjs`.
 The language's prose is not copied here; it is at <https://eyg.run/guides>.

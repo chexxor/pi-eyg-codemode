@@ -83,6 +83,9 @@ outside the program, where the program cannot reach them.
   the two apart and knows a grant will not help. Reads of those paths are allowed: reading the
   guard and the policies is how a program learns what it may ask for.
 
+`guides/what-a-call-does.md` walks one call from the argument to the printed row, with the
+commands to run each step yourself in a terminal.
+
 ## What a policy rule answers with
 
 `policies/agent-roots.eyg` is the default (files under the roots, nothing else).

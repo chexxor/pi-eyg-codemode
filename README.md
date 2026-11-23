@@ -57,6 +57,7 @@ Three readers, and each needs one thing from this tree:
 | to keep a name between calls instead of pasting its source again | `guides/how-to-keep-bindings.md` |
 | to hand a chunk of work to a second session that cannot reach more than you can | `guides/how-to-spawn-a-subagent.md` |
 | the tool's knobs, rows, probes, limits and the seam it cannot check | `guides/tool-reference.md` |
+| what happens inside one call, in order, with the commands to see each step | `guides/what-a-call-does.md` - the explanation |
 | the language itself: surface syntax, builtins, every effect | <https://eyg.run/guides>; the machine-readable surface this package ships is `guides/eyg-surface.tsv` |
 | to run a whole pi agent in EYG rather than one call | `skills/eyg-codemode/SKILL.md` loaded for the model, and the `policies/` records written out in full |
 | to compare this package with the language's own agent harness (Overlay) and choose between them | `docs/world/entities/overlay.agent-harness.md` for what each owns, `notes/pi-eyg-codemode-vs-overlay.md` for the trade-off |

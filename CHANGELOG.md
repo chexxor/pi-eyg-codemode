@@ -8,6 +8,36 @@ history, not as instructions for this tree. On 2026-11-19 the word "gate" was re
 
 ## Unreleased
 
+- **A call cannot change the files that decide it.** A session run inside this package has
+  `host/guard.eyg` and `policies/*.eyg` inside its own roots, and the per-call entry imports both by
+  absolute path, so a program could rewrite the rules of its next call; building the tool's three
+  files by hand performed a new policy module, a rewrite of `policies/deny-all.eyg` and a rewrite of
+  the guard. The guard now refuses `write_file`, `append_file`, `delete_file` and `make_directory` for
+  any path under `ctx.protected` before the policy rule is consulted (`shield` in `host/guard.eyg`),
+  and the tool writes that list as the package's `host/` and `policies/` plus the resolved policy
+  module wherever it lives (`hostProtectedPaths` in `lib/render-helpers.mjs`, `contextLiteral` now
+  emitting `protected`). The refusal says `denied by the host`, so a program knows a grant will not
+  open the path; reads stay open. `test/fixtures/self-write-probe.eyg` re-runs the attempt, boundary
+  fact 6 of `docs/world/entities/host.guard-boundary.md` carries the command, and
+  `notes/guard-self-protection.md` why the check sits in the guard.
+
+- **One host per call.** A program that installs its own `handle` clause is refused before anything
+  runs: the tool asks the binary to parse the program (`parseArguments` in `lib/render-helpers.mjs`),
+  walks the tree for handler nodes (`handledEffectLabels`) and answers with the labels it found and
+  the change to make (`handledEffectRefusal`); a parse that fails or answers non-JSON stops the call
+  too, so a program whose effects were never listed is not run. A clause could never widen what the
+  policy allows - the guard sits outside it - but it answers the program instead of asking the host,
+  and that is what the rule protects. `bin/agent/handler-scan.mjs <file.eyg>` runs the same two steps
+  from a shell, `bin/agent/audit.sh` keeps a row that proves the refused fixture is still named,
+  boundary fact 7 carries the commands, `notes/one-host-per-call.md` the trade-offs, and the tool's
+  own description states the expectation.
+
+- **One more kind of page.** `guides/what-a-call-does.md` is the explanation of one call: the argument
+  check, the four resolutions, the prelude, the parse, the three files in the scratch directory, the
+  guard's decision, the printed rows, and the shell command that shows each step - including the one
+  that shows why the entry matters, a program run on its own performing a write with nothing deciding
+  it. `guides/PURPOSE`, the README link list and `guides.index` name it.
+
 - **The per-effect checks moved into this package.** The tool no longer asks the CLI to load a
   policy module: `host/guard.eyg` is an EYG program that installs one `handle` clause per effect row
   of `guides/eyg-surface.tsv`, applies the resolved policy around the model's code, and is imported
