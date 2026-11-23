@@ -68,8 +68,7 @@ later call carried `let {note} = import "<scratch>/.pi/eyg-variables/note.eyg"` 
 `details.prelude` and `note (workspace)` in `details.kept`, so the binding on disk was aliased by
 name with no `libraries` argument.
 
-The same session closed the hole this record used to carry as UNVERIFIED: a call through this
-package's tool performed the write a kept binding needs, and the policy in force decided it. Call 5
+The same session closed the store half of the hole this record used to carry as UNVERIFIED. Call 5
 asked for `extern: "session"` on a binding `let probe_live = !int_multiply(7, 6)` and answered
 `variables: [{name: probe_live, scope: session, written: true}]`; call 6, with no `libraries`
 argument, printed `42` and carried `prelude: ["let probe_live = !int_multiply(7, 6)"]` and
@@ -78,11 +77,36 @@ argument, printed `42` and carried `prelude: ["let probe_live = !int_multiply(7,
 keep writes no file at all, so what that round trip proves is the store and the replay, not the
 policy's hand on the write.
 
-UNVERIFIED from here: a **file** scope (`workspace` or `user`) kept through the tool under a policy
-that refuses its path - the rows that would show the refusal are pinned by the unit test
-(`variableWriteOutcomes`), and the generated write program was run outside the tool by
-`bin/agent/check-variable-shapes.mjs`, which loads no policy. The feature stays unproved in use
-under a refusal, as the package does (`docs/world/entities/pi.first-draft.md`).
+The **file** scopes were seen live 2026-11-22 in a second fresh one-shot session over a scratch project
+that declares this package and sets no `eyg` settings key, so the policy in force was
+`policies/agent-roots.eyg` and the roots were that project (`@measured 2026-11-22 by that session,
+5 calls in 22.1 s, transcript and every row quoted in
+`.ai-work/extern-live/PROOF-extern-live-2026-11-22.md`, gitignored):
+
+- `extern: "workspace"` performed the write: `mkdir <scratch>/.pi/eyg-variables: ok`,
+  `write <scratch>/.pi/eyg-variables/kept_probe.eyg: ok`,
+  `variables: [{name: kept_probe, scope: workspace, written: true}]`, and afterwards that directory
+  held exactly that one module - `variableModule`'s three comment lines and
+  `let kept_probe = !int_add(20, 22)`.
+- The same call with `policy: "deny-all"` printed
+  `write <scratch>/.pi/eyg-variables/denied_probe.eyg: write_file denied by policy` and answered
+  `written: false`, and left the directory holding only the first module: the refused keep wrote
+  nothing. Its `problem` row reads `no file at <path> after the write program ran` and
+  `details.refusals` is empty, because the refusal scan wants
+  `<field> denied by policy: <path>` and reads the model program's output, not the write program's,
+  so under `deny-all`'s path-less reason the evidence sits in the answer alone
+  (`docs/world/traps.md`, 2026-11-20).
+- `extern: "user"` aims at `$HOME/.pi/eyg-variables/`, which no root covers, so the default policy
+  refused it with the path in the reason - `write_file denied by policy:
+  $HOME/.pi/eyg-variables/user_probe.eyg`, `written: false`,
+  `problem: "write_file denied by the policy in force"`, and the `/eyg-grant` ask - and no such
+  directory existed afterwards.
+- The module the first call wrote came back on the next call with no `libraries` argument:
+  `prelude: ["let {kept_probe} = import \"<scratch>/.pi/eyg-variables/kept_probe.eyg\""]`,
+  `kept: ["kept_probe (workspace)"]`, and `42` printed. A call naming the refused `denied_probe`
+  answered `variable undefined: denied_probe` with a stack through `program.eyg:3` ->
+  `entry.eyg:6` -> `host/guard.eyg:597..575`: a refused keep leaves no name, and the guard stays
+  the outer frame over a prelude import.
 
 ## Not this
 
@@ -92,6 +116,7 @@ under a refusal, as the package does (`docs/world/entities/pi.first-draft.md`).
 - why source text rather than a value, why the branch rather than a file, and why a host-side read
   paired with an effect-side write: `notes/pi-codemode-kept-bindings.md`.
 
-@measured 2026-11-22 by `node bin/agent/check-variable-shapes.mjs`, by
-`node --test 'test/*.mjs'`, and by that one-shot session (`out.jsonl` under `.ai-work/`, the four
-rows quoted above read off its `details`); all offline.
+@measured 2026-11-22 by `node bin/agent/check-variable-shapes.mjs`, by `node --test 'test/*.mjs'`,
+and by two fresh one-shot sessions over scratch projects under `.ai-work/`, whose transcripts and
+quoted rows are in `.ai-work/live-tool/PROOF-live-tool-2026-11-22.md` and
+`.ai-work/extern-live/PROOF-extern-live-2026-11-22.md` (both gitignored); all offline.
