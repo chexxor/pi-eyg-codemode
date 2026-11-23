@@ -59,14 +59,23 @@ The boundary facts this rests on are claimed and probed in
 | **Handler stacks with no policy record** (each effect's decision written inline in the guard) | nothing; they edit the guard | the policy stops being data: a session cannot pick a shipped policy, narrow one, or dry-run with the narrowest one, and `action: "effects"` loses the field it reports. Rejected: it would move the boundary out of reach of configuration. |
 | **The language's own policy-helper shape** (`overlay.access`, applied *inside* a program) | helper calls such as `access.read_file.allow_under(["data"])` | a package the website marks as currently unpublished, covering six of the effects, and an apply-inside-program seam that the model's own code could sit outside. Rejected for reach and availability. |
 
-One contract question is **still the operator's to answer**, and what shipped is a choice, not an
-accident: the rule contract is `Pass(value) | Mock(reason: String)` with the guard turning `reason`
-into the shape the effect's own reply allows. The alternatives were a rule returning the finished
-value (`Mock(Error(...))`, as the old runner contract did - more precise, but every policy author
-would repeat a shape table the guard already knows) or a rule returning `Deny(reason)` separately
-from `Mock(value)` (three cases, and today's refusals never need to fabricate a value). The
-translation lives in one module, so switching is a small edit - see
-`notes/pi-codemode-host-guard-contract.md`.
+The contract question was the operator's to answer, and on 2026-11-23 they answered it: **the shipped
+contract is ratified**. A rule answers `Pass(value) | Mock(reason: String)` and the guard turns
+`reason` into the shape the effect's own reply allows. The alternatives inside that contract were a
+rule returning the finished value (`Mock(Error(...))`, as the old runner contract did - more precise,
+but every policy author would repeat a shape table the guard already knows) or a rule returning
+`Deny(reason)` separately from `Mock(value)` (three cases, and today's refusals never need to
+fabricate a value). The guard-as-wiring row of the table above gained one measured reason to stay
+rejected: a rule that writes its own handler can answer `resume(Ok(...))` without re-performing, and
+the program then believes a write happened that the host never performed.
+
+The operator attached one condition: the contract may be revisited when a use-case turns up. What
+would change then is not the rule vocabulary but where it lives - `policies/agent-roots.eyg` already
+composes its rules from `under(...)`, `hide_secrets(...)` and `refuse(...)`, the names the language's
+own policy library uses, and carries those helpers inline in each policy file. The trigger to revisit:
+the first policy that would write those helpers a third time, or a language release that publishes
+that library. Doing it also means amending `invariant.policy-self-contained`, whose check is that the
+shipped policies contain no `import` at all, so it is the operator's edit as much as this package's.
 
 ## Consequences
 
