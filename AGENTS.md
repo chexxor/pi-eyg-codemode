@@ -113,10 +113,10 @@ host performs it.
 
 | Do this | cost | measured |
 | --- | --- | --- |
-| `bin/agent/audit.sh` (a human or a cron runs it; sixteen rows, each cost printed) | see its own last line | 2026-11-22 |
+| `bin/agent/audit.sh` (a human or a cron runs it; seventeen rows, each cost printed) | see its own last line | 2026-11-23 |
 | `node bin/agent/doc-checks.mjs --all` (the five prose checks: one term, citations, headings, mirrors, dated prose) | 0.07 s wall | 2026-11-22 |
 | `node bin/agent/gen-surface.mjs --check` (the surface file against its four inputs) | 0.04 s wall | 2026-11-22 |
-| `node --test 'test/*.mjs'` (or the single file; one named test per group) | 0.10 s wall, 43 tests, 0 fail | 2026-11-22 |
+| `node --test 'test/*.mjs'` (or the single file; one named test per group) | 0.16 s wall, 46 tests, 0 fail | 2026-11-23 |
 | `node bin/agent/refusal-probe.mjs` (one guarded call from a shell: the entry, the policy import and the program module the tool writes, run as `eyg run <entry>`; `--with-policy`, `--fields`, `--program`, `--inside-roots`) | 0.19 s wall | 2026-11-22 |
 | `node --test test/host-coverage.test.mjs` (the guard names every effect row of the surface file) | 0.09 s wall | 2026-11-22 |
 | `node bin/agent/check-variable-shapes.mjs` (generates a kept binding's text and runs it through the CLI on PATH, with no policy module loaded) | 0.40 s wall, eleven rows | 2026-11-22 |
@@ -124,7 +124,7 @@ host performs it.
 | `for f in policies/*.eyg libraries/*.eyg host/*.eyg; do eyg check "$f"; done` (the audit's `shipped EYG modules check` row) | 0.65 s wall | 2026-11-22 |
 | `node pi-simple-world-model/bin/world_lint.mjs` | 0.06 s wall | 2026-11-18 |
 | `node pi-simple-world-model/bin/world_map.mjs --check` | 0.04 s wall | 2026-11-18 |
-| `node pi-simple-world-model/bin/world_verify.mjs --all` | 1.13 s wall, prints how many claims it checked | 2026-11-19 |
+| `node pi-simple-world-model/bin/world_verify.mjs --all` | 11.3 s wall, 112 claims, 0 failed - the claim chains run CLI probes, so this is no longer the cheap row it was | 2026-11-23 |
 | `pi --world-model-check` | 1.14 s wall | 2026-11-18 |
 | `pi list` | registers the four project packages by absolute path | 2026-11-18 |
 
