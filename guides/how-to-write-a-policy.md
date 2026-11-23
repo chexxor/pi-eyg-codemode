@@ -26,7 +26,9 @@ The steps are:
 
 A grant is the operator answering a refusal, so the widening is a human act: the tool has no
 parameter through which a program could choose a wider module, and the grant's own record is a
-session entry (`pi.appendEntry`) that the branch replays. `/eyg-grant` asks for the policy or
+session entry (`pi.appendEntry`) that the branch replays. The ask a grant answers comes from a
+session that has spent its routes inside the policy, and it names the addition, the reason for it
+and the intended use (`guides/what-a-call-does.md`). `/eyg-grant` asks for the policy or
 module path, the roots to add to the ones the policy reads, and the duration; typed with its
 arguments (`/eyg-grant agent-roots 3 roots=/tmp`) it asks only for the confirmation, and
 `/eyg-grant revoke` ends one early. `docs/world/entities/pi.session-grants.md` carries what one

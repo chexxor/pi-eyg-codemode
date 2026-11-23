@@ -48,7 +48,7 @@ nothing here reads it at run time, and this tree never writes outside itself.
 | doc-checks.headings | Within the prose set (`README.md`, `AGENTS.md`, `guides/`, `skills/`, `.agents/skills/`; the set ... | delegate | 2026-11-23 |
 | doc-checks.mirrors | Two halves, one per failure mode of an offline documentation copy. | delegate | 2026-11-23 |
 | doc-checks.one-term | `bin/agent/doc-checks.mjs` holds this package's five prose checks, one name each: `one-term`, `citations`, `headings`, ... | delegate | 2026-11-23 |
-| gap.grant-polish-undecided | The mechanism is recorded and partly measured in `docs/world/entities/pi.session-grants.md`: a refusal names the ask, ... | delegate | 2026-11-23 |
+| gap.grant-polish-undecided | The mechanism is recorded and partly measured in `docs/world/entities/pi.session-grants.md`: a refusal carries the ask ... | delegate | 2026-11-23 |
 | gap.install-guides-name-no-policy | This page recorded the hole: neither install page at <https://eyg.run/guides> - `install-a-prebuilt-binary` and ... | delegate | 2026-11-23 |
 | gap.language-skill-home-undecided | `.pi/settings.json` declares the EYG language-skill pi package by path, one directory above this one (`@measured ... | delegate | 2026-11-23 |
 | gap.one-host-check-not-transitive | Boundary fact 7 of `docs/world/entities/host.guard-boundary.md` refuses a program whose parse names a `handle` clause. | delegate | 2026-11-23 |
@@ -67,7 +67,7 @@ nothing here reads it at run time, and this tree never writes outside itself.
 | pi.first-draft | `README.md` opens with a status line calling the package a first draft that has not been proved in extended use, and ... | delegate | 2026-11-23 |
 | pi.policy-config | Two questions the operator asked, answered in the tree: which policy the package uses if you set nothing, and where to ... | delegate | 2026-11-23 |
 | pi.reference-action | `action: "reference"` (`code: ""`) prints the language surface the session is writing against: `eyg reference: 29 ... | delegate | 2026-11-23 |
-| pi.session-grants | A refused effect is an ask the model makes in chat and the operator answers with `/eyg-grant`, registered by ... | delegate | 2026-11-23 |
+| pi.session-grants | A refused effect is a value the program gets back, not a report the model owes the operator: the tool description, the ... | delegate | 2026-11-23 |
 | pi.spawner-policy | `policies/spawner-effects.eyg` is the third policy this package ships: `agent-roots.eyg` with an allowlist check over ... | delegate | 2026-11-23 |
 | pi.subagent-spawn | `eyg_subagent`, registered by `extensions/eyg-codemode.ts`, starts a second pi session in the same working directory ... | delegate | 2026-11-23 |
 | pi.variable-scopes | An `eyg` call keeps the top-level `let` bindings it defines by naming a scope with `extern`: `session`, `workspace` ... | delegate | 2026-11-23 |

@@ -49,7 +49,8 @@ The sections:
 The orders - which policy a call gets, and which roots it reads - are stated once, in
 `guides/how-to-write-a-policy.md`. Both are printed in every expanded row, and a refused
 call adds what the collapsed row shows too: the path it was denied, the policy that denied it,
-and the `/eyg-grant` that would have allowed it.
+the `/eyg-grant` that would have allowed it, and the template an ask follows - the addition, the
+reason for it and the intended use (`guides/what-a-call-does.md`).
 
 The policy is imported before the guard is installed, and an effect raised at a module's top
 level is never performed, guard or no guard (`unhandled effect`, `docs/world/entities/host.guard-boundary.md`),
@@ -298,7 +299,7 @@ file is in this tree:
 read_file denied by policy: <this tree>/.env.eyg
 ```
 
-In a tool session the same refusal arrives with two rows more: the path it was denied and the
+In a tool session the same refusal arrives with the ask rows added: the path it was denied and the
 `/eyg-grant` that would have allowed it (`refusalRows` and `grantRows` in
 `lib/render-helpers.mjs`). One exception is worth knowing before you read a session transcript:
 those rows appear when the refusal names a path, and a policy that refuses without one -

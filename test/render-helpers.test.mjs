@@ -352,6 +352,9 @@ test("what a refusal names: the path, and the exact grant that would clear it", 
   assert.match(lines[1], /roots \+ \/tmp/, "naming the root to add");
   assert.match(lines[1], /one tool call, N calls, or the rest of the session/, "and the durations offered");
   assert.match(lines[2], /cannot grant it yourself/, "and who may grant it");
+  assert.match(lines[2], /keep solving inside what the policy allows/, "a refusal is not a reason to stop");
+  assert.match(lines[3], /blocks the task and the other routes are spent/, "the ask waits for the routes to run out");
+  assert.match(lines[3], /why the task needs it, and what you would use it for/, "and the ask names a reason and an intended use");
   const inside = suggestGrant({ field: "read_file", path: "/work/.env.eyg" }, { roots: "/work", policy: "/p" });
   assert.match(inside[1], /a rule of \/p, not a root/, "when no root would help it says so instead of guessing one");
 
@@ -365,6 +368,7 @@ test("what a refusal names: the path, and the exact grant that would clear it", 
   assert.match(shown, /grants in force: g9: \/p\/wide\.eyg for 2 tool calls \(0 used\) roots \+ \/tmp/, "and every call names the grants in force");
   assert.equal(refused[0][0].tone, "error", "the status line is still the status line");
   assert.match(flat(refused.filter((row) => row[0].tone === "warning")), /one tool call, N calls/, "with the durations to choose from");
+  assert.match(flat(refused.filter((row) => row[0].tone === "warning")), /why the task needs it/, "and the ask template, shown collapsed too");
 });
 
 test("a model may narrow to a shipped policy and may not name a module", () => {

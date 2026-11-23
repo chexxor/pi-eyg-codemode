@@ -229,7 +229,9 @@ several values puts `\n` in its own strings if it wants them on separate lines. 
 `StandardOut` calls: a program that prints `"a"` then `"b"` comes back as one line reading `ab`.
 
 - **the ask**, for every refusal that named a path: what was refused, the policy that refused it,
-  and the exact `/eyg-grant` an operator would run. A `denied by the host` refusal gets no such
+  the exact `/eyg-grant` an operator would run, and the rule the ask follows - a refusal is a fact
+  about one path, the operator is asked only when one blocks the task, and the ask names the
+  addition, the reason for it and the intended use. A `denied by the host` refusal gets no such
   row, because no grant opens those paths.
 - **the builtin list**, when the program named a builtin the runtime does not have - the runner's
   hint for that names no path, and a session whose only channel is effects cannot go and look.

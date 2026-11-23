@@ -102,7 +102,8 @@ The result opens with what the child was given - `child under <policy> (<where i
 status, and the budget on the rows where the budget stopped the call), and then every effect its policy
 refused, deduplicated (`childCalls`, `childAnswer` in `lib/render-helpers.mjs`). The refusals are the
 interesting part: they tell you where the boundary you set actually fell, without reading the child's
-transcript. The child's own session file stays in pi's session directory for the working directory, so
+transcript. They come to you and not to the operator: the ask for a wider reach is yours to make, and
+only once that boundary is what blocks the task. The child's own session file stays in pi's session directory for the working directory, so
 an audit of one call is a `ReadFile` of that file.
 
 One row is worth reading literally: in the child, a call's `policySource` is `spawner`, which is

@@ -84,9 +84,14 @@ on its value, as the last two lines above do.
 
 ## Reading the result
 
-A line such as `write_file denied by policy: /abs/path` is a fact about the permission, not a crash: this
-session has no other channel and a program cannot change the policy from inside, so report the refusal or
-change what the program asks for. A refused effect left nothing on disk, so after a program continues past
+A line such as `write_file denied by policy: /abs/path` is a fact about one path, not a crash and not a
+report to the operator: this session has no other channel and a program cannot change the policy from
+inside, so keep solving inside what the policy allows - another path, another effect, a shipped library, a
+narrower question - and do not stop to announce a refusal that does not block the task. Ask the operator
+for a grant only when the refusal blocks the task and the other routes are spent; the ask names the exact
+addition (the policy field, the path or root, the duration: one tool call, N calls, or the rest of the
+session, through `/eyg-grant`), why the task cannot proceed without it, and what it would be used for - the
+refusal rows print that template. A refused effect left nothing on disk, so after a program continues past
 one check the evidence with a later `ReadFile` or `ReadDirectory`. Four effects answer a refusal another
 way, because their replies have nowhere to put one - `perform Now()`, `Random()`, `Flip()` and
 `Exit(code)` end the run with `Aborted with reason: <the policy's reason>` instead of resuming it. And a

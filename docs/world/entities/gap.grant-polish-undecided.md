@@ -14,8 +14,8 @@ superseded_by: null
 # Gap: the grant loop shipped, and three pieces of its polish were left out on purpose
 
 The mechanism is recorded and partly measured in `docs/world/entities/pi.session-grants.md`:
-a refusal names the ask, the operator answers with `/eyg-grant`, the grant is a session entry
-the branch replays. The milestone that gave a spawner control over its child parked the
+a refusal carries the ask template, the operator answers with `/eyg-grant`, the grant is a session
+entry the branch replays. The milestone that gave a spawner control over its child parked the
 remaining polish as a row here rather than doing it - a live proof, a time bound, and the
 operator's view of what is widened. Each piece below says what exists today, what does not,
 and the step that closes it. `verify` goes red when a piece lands, which is how this record
@@ -33,8 +33,8 @@ of wall: one `pi --mode rpc` session over a gitignored scratch project, a typed
 
 **2. Nothing bounds a grant in time.** A grant ends by spend or by revoke:
 `grants.filter((grant) => grant.calls === null || grant.used < grant.calls)`
-(`lib/render-helpers.mjs:442`, read 2026-11-21), and `Date.now()` appears in the grant path
-only to name the id (`g${Date.now().toString(36)}`, `extensions/eyg-codemode.ts:1417`). A
+(`lib/render-helpers.mjs:588`, read 2026-11-21), and `Date.now()` appears in the grant path
+only to name the id (`g${Date.now().toString(36)}`, `extensions/eyg-codemode.ts:1719`). A
 session grant therefore keeps widening an hour later, and across any idle gap, until someone
 revokes it or cuts the branch. No field carries a deadline, and the shape is a decision rather
 than a patch: a wall-clock deadline per grant or an idle timeout; what the entry stores; and
@@ -45,14 +45,14 @@ is for. Trigger to decide: the first grant left in force across a break by accid
 first unattended run (`pi --print`) that takes a grant nobody is there to revoke.
 
 **3. The operator cannot see the grants in force without starting one.** What exists:
-`/eyg-grant revoke [id]` (`extensions/eyg-codemode.ts:1329-1340`, one line in
-`guides/how-to-write-a-policy.md:32`), one-line descriptions with the spend in
-`describeGrant` (`lib/render-helpers.mjs:448`), and a `grants in force: ...` row in every eyg
-call's output (`lib/render-helpers.mjs:675`), so the session sees the state even though a
+`/eyg-grant revoke [id]` (`extensions/eyg-codemode.ts:1628-1639`, one line in
+`guides/how-to-write-a-policy.md:34`), one-line descriptions with the spend in
+`describeGrant` (`lib/render-helpers.mjs:594`), and a `grants in force: ...` row in every eyg
+call's output (`lib/render-helpers.mjs:828`), so the session sees the state even though a
 grant entry itself never reaches the model. What does not: a listing subcommand. `state()`,
-the line that builds "grants in force now" (`extensions/eyg-codemode.ts:1324-1327`), is
-reachable only on the command's two error paths (1365, 1383) and inside the confirmation
-summary (1416), so `revoke` is the only subcommand and asking "what is widened right now" means
+the line that builds "grants in force now" (`extensions/eyg-codemode.ts:1623-1626`), is
+reachable only on the command's two error paths (1664, 1682) and inside the confirmation
+summary (1715), so `revoke` is the only subcommand and asking "what is widened right now" means
 beginning a grant. First step: `/eyg-grant` with no arguments answering the list instead of
 opening the dialogs, or a `status` subcommand, plus the argument grammar
 (`<policy | absolute module path> <one | N | session> [roots=/abs,/abs]`) as a row in
