@@ -16,7 +16,7 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
 import { surfaceDriftProblems } from "../bin/agent/gen-surface.mjs";
-import { argumentPolicyPath, bindingOrder, budgetRefusal, externBindings, builtinErrors, builtinHintRows, builtinRows, callBudget, callLines, checkDeclaredEffects, CHILD_TOOL_ALLOWLIST, classifyProbeOutput, COLLAPSED_SOURCE_LINES, childAnswer, childArgv, childCalls, childEnvOverrides, childRefusalRows, childTools, describeGrant, EFFECT_ALLOWLIST_ENV, effectFieldsFor, effectLine, effectsUsed, eygCallCount, eygSettings, findMetadata, fieldsOutside, formatDuration, grantEvents, GRANT_ENTRY, GENERATED_MARK, VARIABLE_ENTRY, isUnder, LANGUAGE_DOCS, libraryAliases, MAX_CALLS_ENV, outsideRoot, prepareCallArguments, shippedPolicyPath, probeArguments, probeProgram, POLICY_FIELDS, referenceLines, refusalHints, replayGrants, replayVariables, resolvePolicy, resolveRoots, resultLines, ruleMappingEffects, rootsInside, runnerCandidates, runnerFailureLine, sessionDepth, spawnerPolicy, spawnerRoots, subagentCallLines, subagentResultRows, suggestGrant, surfaceFileLines, surfaceRows, SURFACE_FILE, eygStringLiteral, topLevelBindings, variableDir, variableEvents, variableImportProblems, variableModule, variableName, variablePrelude, VARIABLE_SCOPES, variableRows, variableWriteOutcomes, variableWriteProgram } from "../lib/render-helpers.mjs";
+import { argumentPolicyPath, bindingOrder, budgetRefusal, externBindings, builtinErrors, builtinHintRows, builtinRows, callBudget, callLines, checkDeclaredEffects, CHILD_TOOL_ALLOWLIST, classifyProbeOutput, COLLAPSED_SOURCE_LINES, childAnswer, childArgv, childCalls, childEnvOverrides, childRefusalRows, childTools, describeGrant, EFFECT_ALLOWLIST_ENV, effectFieldsFor, effectLine, effectsUsed, eygCallCount, eygSettings, findMetadata, fieldsOutside, formatDuration, grantEvents, GRANT_ENTRY, GENERATED_MARK, handledEffectLabels, handledEffectRefusal, parseArguments, VARIABLE_ENTRY, isUnder, LANGUAGE_DOCS, libraryAliases, MAX_CALLS_ENV, outsideRoot, prepareCallArguments, shippedPolicyPath, probeArguments, probeProgram, POLICY_FIELDS, referenceLines, refusalHints, replayGrants, replayVariables, resolvePolicy, resolveRoots, resultLines, ruleMappingEffects, rootsInside, runnerCandidates, runnerFailureLine, sessionDepth, spawnerPolicy, spawnerRoots, subagentCallLines, subagentResultRows, suggestGrant, surfaceFileLines, surfaceRows, SURFACE_FILE, eygStringLiteral, topLevelBindings, variableDir, variableEvents, variableImportProblems, variableModule, variableName, variablePrelude, VARIABLE_SCOPES, variableRows, variableWriteOutcomes, variableWriteProgram } from "../lib/render-helpers.mjs";
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
 
@@ -841,4 +841,25 @@ test("kept bindings: the argument and the rows", () => {
   assert.ok(!flat(callLines({ code: "note" }, false)).includes("extern"), "a call that keeps nothing says nothing about it");
   assert.deepEqual(prepareCallArguments({ code: "let note = 1", extern: "session" }).extern, "session", "the argument survives the argument mapping");
   assert.deepEqual(VARIABLE_SCOPES, ["user", "workspace", "session"], "furthest to nearest, the order a nearer scope shadows in");
+});
+
+// A call has one host for its effects, so the tool parses the program it is about to run and
+// refuses one that installs a `handle` clause of its own. The tree shapes below are recorded
+// from `eyg parse -c` output, because the tagged form is the compiler's, not this package's.
+test("a program that handles an effect for itself is named, not run", () => {
+  const handler = JSON.parse('{"0":"a","a":{"0":"f","b":{"0":"i","v":1},"l":"_"},"f":{"0":"a","a":{"0":"f","b":{"0":"f","b":{"0":"a","a":{"0":"v","l":"v"},"f":{"0":"v","l":"resume"}},"l":"resume"},"l":"v"},"f":{"0":"h","l":"Foo"}}}');
+  assert.deepEqual(handledEffectLabels(handler), ["Foo"], "a handler of a label is the tagged node the compiler writes");
+  const performed = JSON.parse('{"0":"a","a":{"0":"a","a":{"0":"a","a":{"0":"a","a":{"0":"u"},"f":{"0":"a","a":{"0":"i","v":1},"f":{"0":"e","l":"limit"}}},"f":{"0":"a","a":{"0":"i","v":0},"f":{"0":"e","l":"offset"}}},"f":{"0":"a","a":{"0":"s","v":"/a"},"f":{"0":"e","l":"path"}}},"f":{"0":"p","l":"ReadFile"}}');
+  assert.deepEqual(handledEffectLabels(performed), [], "a `perform` is not a handler");
+  const fields = JSON.parse('{"0":"l","l":"a","t":{"0":"v","l":"a"},"v":{"0":"a","a":{"0":"a","a":{"0":"u"},"f":{"0":"a","a":{"0":"i","v":2},"f":{"0":"e","l":"l"}}},"f":{"0":"a","a":{"0":"i","v":1},"f":{"0":"e","l":"h"}}}}');
+  assert.deepEqual(handledEffectLabels(fields), [], "a record field named `h` beside one named `l` is not a handler");
+  const text = JSON.parse('{"0":"l","l":"s","t":{"0":"v","l":"s"},"v":{"0":"s","v":"h"}}');
+  assert.deepEqual(handledEffectLabels(text), [], "the letter h inside a string is not a handler");
+  const twice = JSON.parse('{"0":"a","a":{"0":"h","l":"ReadFile"},"f":{"0":"h","l":"ReadFile"}}');
+  assert.deepEqual(handledEffectLabels(twice), ["ReadFile"], "two clauses for one label are named once");
+  assert.deepEqual(parseArguments("1"), ["parse", "-c", "1"], "the parse question goes through argv, with no flag that changes what is parsed");
+  const line = handledEffectRefusal(["ReadFile", "Fetch"]);
+  assert.ok(line.includes("ReadFile, Fetch"), "the refusal names the labels the program handled");
+  assert.ok(line.includes("guard"), "the refusal says who decides the effects instead");
+  assert.ok(line.includes("/eyg-grant"), "the refusal points at the way to widen the host that is not a clause");
 });

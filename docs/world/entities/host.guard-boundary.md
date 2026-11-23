@@ -4,16 +4,16 @@ type: entity
 owner: delegate
 status: current
 verified_at: 2026-11-23
-verify: "node --test test/host-coverage.test.mjs > /dev/null && grep -q '^let build = (policy, ctx, body) -> {' host/guard.eyg && node bin/agent/refusal-probe.mjs 2>&1 | grep -q 'write_file denied by policy: /tmp/' && node bin/agent/refusal-probe.mjs --program test/fixtures/secret-probe.eyg --inside-roots 2>&1 | grep -q 'read_file denied by policy: .*\\.env\\.eyg' && node bin/agent/refusal-probe.mjs --program test/fixtures/unnamed-effect.eyg 2>&1 | grep -q 'unhandled effect Foo' && node bin/agent/refusal-probe.mjs --program test/fixtures/inner-handler.eyg 2>&1 | grep -q 'what the program was answered: read_file denied by policy: /tmp/' && node bin/agent/refusal-probe.mjs --program test/fixtures/abort-probe.eyg 2>&1 | grep -q 'Aborted with reason'"
+verify: "node --test test/host-coverage.test.mjs > /dev/null && grep -q '^let build = (policy, ctx, body) -> {' host/guard.eyg && node bin/agent/refusal-probe.mjs 2>&1 | grep -q 'write_file denied by policy: /tmp/' && node bin/agent/refusal-probe.mjs --program test/fixtures/secret-probe.eyg --inside-roots 2>&1 | grep -q 'read_file denied by policy: .*\\.env\\.eyg' && node bin/agent/refusal-probe.mjs --program test/fixtures/unnamed-effect.eyg 2>&1 | grep -q 'unhandled effect Foo' && node bin/agent/refusal-probe.mjs --program test/fixtures/inner-handler.eyg 2>&1 | grep -q 'what the program was answered: read_file denied by policy: /tmp/' && node bin/agent/refusal-probe.mjs --program test/fixtures/abort-probe.eyg 2>&1 | grep -q 'Aborted with reason' && test \"$(node bin/agent/refusal-probe.mjs --program test/fixtures/self-write-probe.eyg --inside-roots | grep -o 'denied by the host' | wc -l)\" = 4 && test ! -e policies/self-write-probe.eyg && test ! -e host/self-write-probe"
 confidence: high
-sources: [host/guard.eyg, host/PURPOSE, lib/render-helpers.mjs, extensions/eyg-codemode.ts, test/host-coverage.test.mjs, test/fixtures/refusal-probe.eyg, test/fixtures/secret-probe.eyg, test/fixtures/unnamed-effect.eyg, test/fixtures/inner-handler.eyg, test/fixtures/abort-probe.eyg, guides/tool-reference.md, notes/pi-codemode-host-guard-contract.md]
+sources: [host/guard.eyg, host/PURPOSE, lib/render-helpers.mjs, extensions/eyg-codemode.ts, test/host-coverage.test.mjs, test/fixtures/refusal-probe.eyg, test/fixtures/secret-probe.eyg, test/fixtures/unnamed-effect.eyg, test/fixtures/inner-handler.eyg, test/fixtures/abort-probe.eyg, test/fixtures/self-write-probe.eyg, guides/tool-reference.md, notes/pi-codemode-host-guard-contract.md, notes/guard-self-protection.md]
 supersedes: null
 superseded_by: null
 ---
 # The guard holds: a handler per effect, and the model's code cannot get outside it
 
 `host/guard.eyg` is an EYG program, run by the ordinary installed CLI with no flag, that decides
-every effect of a call. Five boundary facts make it a boundary rather than a convention; each was
+every effect of a call. Six boundary facts make it a boundary rather than a convention; each was
 probed on the installed CLI (`eyg v0.1.0`) on 2026-11-22 by running a probe file with `eyg run <file>`,
 and each is re-runnable here through `node bin/agent/refusal-probe.mjs`, which builds the same three
 files the tool builds.
@@ -47,6 +47,21 @@ files the tool builds.
    model's own `handle ReadFile` clause re-performs the read, the answer the program gets is
    `read_file denied by policy: /tmp/eyg-inner-handler-probe.txt`, `exit=0`, and no file exists at
    that path (`@measured 2026-11-22`, 0.2 s).
+6. **A call cannot change the files that decide it.** The entry imports the guard and the policy by
+   absolute path, and a session's roots are its working directory, so a session run inside this
+   package has `host/guard.eyg` and `policies/*.eyg` inside its own roots - a program that rewrote
+   either would be writing the rules of its next call. The guard refuses `write_file`, `append_file`,
+   `delete_file` and `make_directory` for any path under `ctx.protected` **before the policy rule is
+   consulted**, and the tool writes that list as the package's `host/` and `policies/` plus the
+   resolved policy module wherever it lives (`hostProtectedPaths` in `lib/render-helpers.mjs`,
+   `shield` in `host/guard.eyg`), so no policy - the operator's own included - opens those paths and
+   a wider root does not either. The refusal says `denied by the host`, which is how a program tells
+   it from one a rule made. Reads are not shielded: reading the guard and the policies is how a
+   program learns what it may ask for. Re-runnable: `node bin/agent/refusal-probe.mjs --program
+   test/fixtures/self-write-probe.eyg --inside-roots` - four `denied by the host` answers, one
+   `read_file guard: allowed`, `exit=0`, and no file at either target path (`@measured 2026-11-23`,
+   0.4 s). The targets are names that do not exist, so a run that ever performed them leaves a stray
+   file instead of damaging a tracked one.
 
 Two consequences the package had to build for:
 
@@ -75,4 +90,7 @@ performs effects exists to install.
 `--program test/fixtures/secret-probe.eyg --inside-roots` (`read_file denied by policy: <tree>/.env.eyg`,
 0.15 s), `--program test/fixtures/unnamed-effect.eyg` (`error: unhandled effect Foo({})`),
 `node --test test/host-coverage.test.mjs` (3 pass, 0 fail, 0.1 s), and the probe files under the
-session's scratch directory quoted in `notes/pi-codemode-host-guard-contract.md`.
+session's scratch directory quoted in `notes/pi-codemode-host-guard-contract.md`; and 2026-11-23 by
+`--program test/fixtures/self-write-probe.eyg --inside-roots` (four `denied by the host` answers naming
+`<tree>/policies/self-write-probe.eyg` and `<tree>/host/self-write-probe`, then `read_file guard:
+allowed`, `exit=0`, 0.4 s, and `git status --porcelain policies host` empty afterwards).

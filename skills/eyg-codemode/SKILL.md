@@ -46,6 +46,12 @@ A refused effect resumes the program with an `Error`, and `let _ = perform Write
 answer away, so the call looks like success while nothing was written: bind a name you use and branch
 on its value, as the last two lines above do.
 
+- A program never handles an effect itself. The tool parses the code before it runs it and refuses a
+  program that names a `handle` clause, with the labels it handled in the message: one call has one
+  host for its effects, the guard, and a clause in the program answers the program instead of asking
+  that host. Perform the effect and match its answer; changing what is decided is a grant, which is
+  the operator's to give.
+
 - `match` arms: the first arm takes no leading `|`, an arm after it takes none either, and the only arm
   that carries a `|` is the **catch-all**, written `| (name) -> { ... }`. `_ -> { ... }` is not a
   pattern, and a constructor arm written `| Error(_) -> { ... }` fails with `unexpected ->` at the

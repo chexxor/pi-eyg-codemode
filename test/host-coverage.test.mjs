@@ -9,7 +9,7 @@ import { readFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 import { dirname, join } from "node:path";
 
-import { contextLiteral, entryProgram, ENTRY_FILE, GUARD_FILE, programModule, PROGRAM_FILE } from "../lib/render-helpers.mjs";
+import { contextLiteral, entryProgram, ENTRY_FILE, GUARD_FILE, hostProtectedPaths, programModule, PROGRAM_FILE } from "../lib/render-helpers.mjs";
 
 const here = dirname(fileURLToPath(import.meta.url));
 const tree = join(here, "..");
@@ -110,7 +110,7 @@ test("one call is three files and one argv, with the guard around the program", 
   const entry = entryProgram({
     guard: "/pkg/host/guard.eyg",
     policy: "/pkg/policies/agent-roots.eyg",
-    ctx: contextLiteral({ roots: ["/work a"], cwd: "/work", fields: ["read_file"] }),
+    ctx: contextLiteral({ roots: ["/work a"], cwd: "/work", fields: ["read_file"], protected: hostProtectedPaths({ packageDir: "/pkg", policyPath: "/pkg/policies/agent-roots.eyg" }) }),
     program: "/tmp/call-1/program.eyg",
   });
   assert.ok(entry.indexOf("let guard = import") < entry.indexOf("let policy = import"), "the guard is imported first");
@@ -119,7 +119,10 @@ test("one call is three files and one argv, with the guard around the program", 
     "the program is imported inside the guarded body, never outside it",
   );
   assert.ok(entry.trimEnd().endsWith("})"), "the body calls the program and closes the guard");
-  assert.ok(entry.includes('{roots: ["/work a"], cwd: "/work", fields: ["read_file"]}'), "ctx reaches the policy as a literal");
+  assert.ok(
+    entry.includes('{roots: ["/work a"], cwd: "/work", fields: ["read_file"], protected: ["/pkg/host", "/pkg/policies"]}'),
+    "ctx reaches the policy as a literal, with the paths the guard refuses to change",
+  );
   assert.equal(entry.includes("--"), false, "the entry passes no flag to anything");
   assert.equal(entry.includes("perform"), false, "the entry itself performs no effect");
 
@@ -127,4 +130,43 @@ test("one call is three files and one argv, with the guard around the program", 
   const wrapped = programModule(source);
   assert.ok(wrapped.includes(source), "the program text travels verbatim");
   assert.ok(wrapped.startsWith("let run = (_) -> {") && wrapped.endsWith("{run}\n"), "one exported `run` function carries it");
+});
+
+// The files that decide a call are inside the roots of a session run in this package, so
+// the call must not be able to change them. The list is the tool's to name and the guard's
+// to enforce: a policy cannot open them, because the guard checks before any rule runs.
+test("a call cannot change the files that decide it", () => {
+  assert.deepEqual(
+    hostProtectedPaths({ packageDir: "/pkg", policyPath: "/pkg/policies/agent-roots.eyg" }),
+    ["/pkg/host", "/pkg/policies"],
+    "the package's own guard directory and policy directory, and nothing else",
+  );
+  assert.deepEqual(
+    hostProtectedPaths({ packageDir: "/pkg", policyPath: "/operator/strict.eyg" }),
+    ["/pkg/host", "/pkg/policies", "/operator/strict.eyg"],
+    "a policy of the operator's own outside the package is protected by name, not by its directory",
+  );
+  assert.deepEqual(hostProtectedPaths({}), [], "with no package and no policy there is nothing to name");
+
+  const guard = read(GUARD_FILE);
+  for (const effect of ["write_file", "append_file", "delete_file", "make_directory"]) {
+    assert.ok(guard.includes(`shield("${effect}", ctx, path,`), `the guard shields ${effect} itself, before the rule`);
+  }
+  assert.equal(guard.includes('shield("read_file"'), false, "a read is not shielded: a program reads the rules it runs under");
+
+  const tool = read("extensions", "eyg-codemode.ts");
+  assert.equal((tool.match(/protected: hostProtectedPaths\(\{ packageDir: dir, policyPath:/g) ?? []).length, 2, "a call and an allowlist probe both hand the guard the protected paths");
+});
+
+// One host per call, checked before the call: the tool asks the binary what the program
+// handles for itself and refuses the call when the answer is not empty.
+test("a call parses its program before it runs it", () => {
+  const tool = read("extensions", "eyg-codemode.ts");
+  assert.ok(tool.includes("pi.exec(runner, parseArguments(code)"), "the parse question is asked through argv, like the run");
+  assert.ok(
+    tool.indexOf("parseArguments(code)") < tool.indexOf("await spawn(mode, code, timeout)"),
+    "the program is parsed before anything of it runs",
+  );
+  assert.equal((tool.match(/pi\.exec\(runner,/g) ?? []).length, 2, "a call starts the binary twice: the parse and the guarded run");
+  assert.equal(/parseArguments\([^)]*--/.test(tool), false, "the parse argv carries no flag");
 });

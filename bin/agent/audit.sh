@@ -110,12 +110,23 @@ refusal_probe() {
   return 0
 }
 
+# One host per call: the tool parses a program before it runs it and refuses one that handles
+# an effect for itself. The scan shares `handledEffectLabels` and `parseArguments` with the
+# tool, so this row proves the mechanism the refusal rests on: the fixture with a clause is
+# named, the fixture without one is not.
+handler_scan() {
+  node bin/agent/handler-scan.mjs test/fixtures/inner-handler.eyg | grep -qx ReadFile || return 1
+  node bin/agent/handler-scan.mjs test/fixtures/refusal-probe.eyg | grep -q . && return 1
+  return 0
+}
+
 echo "audit in $pkg"
 run_check "surface file current" node bin/agent/gen-surface.mjs --check
 run_check "unit test and drift guard" node --test 'test/*.mjs'
 run_check "shipped EYG modules check" eyg_modules
 run_check "guard covers every effect row" node --test test/host-coverage.test.mjs
 run_check "refusals the shipped policies owe" refusal_probe
+run_check "a program that handles an effect is named" handler_scan
 run_check "kept binding shapes" node bin/agent/check-variable-shapes.mjs
 run_check "world lint" node pi-simple-world-model/bin/world_lint.mjs
 run_check "world verify $verify_args" node pi-simple-world-model/bin/world_verify.mjs $verify_args

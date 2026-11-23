@@ -12,6 +12,7 @@
 //   node bin/agent/refusal-probe.mjs --with-policy deny-all # the narrowest policy
 //   node bin/agent/refusal-probe.mjs --fields read_file,standard_out --with-policy spawner-effects
 //   node bin/agent/refusal-probe.mjs --program test/fixtures/secret-probe.eyg --inside-roots
+//   node bin/agent/refusal-probe.mjs --program test/fixtures/self-write-probe.eyg --inside-roots
 //
 // The program runs with its working directory outside the roots unless `--inside-roots`
 // says otherwise, which is what makes the write probe's relative path land outside them.
@@ -20,7 +21,7 @@ import { mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { fileURLToPath } from "node:url";
-import { contextLiteral, entryProgram, programModule } from "../../lib/render-helpers.mjs";
+import { contextLiteral, entryProgram, hostProtectedPaths, programModule } from "../../lib/render-helpers.mjs";
 
 const packageDir = fileURLToPath(new URL("../..", import.meta.url)).replace(/\/+$/, "");
 const argv = process.argv.slice(2);
@@ -41,7 +42,7 @@ const programPath = join(scratch, "program.eyg");
 const entryPath = join(scratch, "entry.eyg");
 const guard = join(packageDir, "host/guard.eyg");
 const policy = join(packageDir, "policies", `${policyName}.eyg`);
-const ctx = contextLiteral({ roots, cwd, fields });
+const ctx = contextLiteral({ roots, cwd, fields, protected: hostProtectedPaths({ packageDir, policyPath: policy }) });
 
 let code = 0;
 let out = "";

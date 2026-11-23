@@ -58,8 +58,8 @@ host performs it.
   inside one `run` function) and `entry.eyg` (which imports the guard, the policy and the
   program) into a scratch directory of its own and spawns
   `<binary> <mode> <entry.eyg>` - no shell in between, so quoting cannot be a route around
-  the checks (`runGuarded` in `extensions/eyg-codemode.ts:458`, the one place it spawns at
-  `:769`).
+  the checks (`runGuarded` in `extensions/eyg-codemode.ts:465`, the one place it spawns at
+  `:487`).
 - The per-effect checks are a program this package ships: `host/guard.eyg` installs one
   `handle` clause per effect row of `guides/eyg-surface.tsv` and applies the policy around
   the model's code, which is imported inside the guarded body. A label the guard does not
@@ -72,14 +72,14 @@ host performs it.
   module is skipped, and when none names one the tool refuses rather than running unchecked. The
   call's `policy` argument sits outside that chain: it is
   honoured only when it names the policy the chain already chose or `NARROWEST_POLICY_FILE`
-  (`narrows` in `lib/render-helpers.mjs:406`, used at `:445`), and anything else comes back
-  `refusedArgument` (`extensions/eyg-codemode.ts:702`, and `:1297` for a child's policy).
+  (`narrows` in `lib/render-helpers.mjs:467`, used at `:506`), and anything else comes back
+  `refusedArgument` (`extensions/eyg-codemode.ts:711`, and `:1331` for a child's policy).
 - The binary is chosen by name, not by asking it what it can do: `EYG_CODEMODE_RUNNER` (an
   absolute path), else `eyg` on PATH - two places, no third (`runnerCandidates` in
   `lib/render-helpers.mjs:363`, used at `extensions/eyg-codemode.ts:749` and `:1408`). Nothing
   is asked of it but the mode word and a file this package wrote; a missing binary, or one with
   no such mode command, ends the call with one line naming the install and quoting the command
-  that was run (`runnerFailureLine` in `lib/render-helpers.mjs:606`).
+  that was run (`runnerFailureLine` in `lib/render-helpers.mjs:667`).
 - **Nothing here waits on a build of the language.** The installed CLI runs every call:
   `eyg --version` answers `eyg v0.1.0` and `eyg run <the entry this package writes>` runs the
   guard (`@measured 2026-11-22`), so what a shipped policy decides at runtime is re-runnable

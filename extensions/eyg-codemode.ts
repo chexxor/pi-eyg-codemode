@@ -95,12 +95,16 @@ import {
   formatDuration,
   grantEvents,
   GRANT_ENTRY,
+  handledEffectLabels,
+  handledEffectRefusal,
+  hostProtectedPaths,
   LANGUAGE_DOCS,
   MAX_CALLS_ENV,
   bindingOrder,
   entryProgram,
   externBindings,
   libraryAliases,
+  parseArguments,
   prepareCallArguments,
   probeProgram,
   programModule,
@@ -163,6 +167,9 @@ const SUBAGENT_DEFAULT_TIMEOUT_S = 120;
 const SUBAGENT_MAX_TIMEOUT_S = 300;
 const MIN_TIMEOUT_MS = 100;
 const PROBE_TIMEOUT_MS = 5_000;
+// The handler check is one parse of the program text, which the binary answers in a tenth
+// of a second; it gets its own budget so a slow parse cannot eat the call's timeout.
+const PARSE_TIMEOUT_MS = 5_000;
 const ACTIONS = ["run", "eval", "effects", "reference", "list_functions", "describe_function"];
 /// The policy a spawner's effect allowlist is enforced by, and the policy it is a
 /// narrowing of. Both live inside this package, so the two paths are resolved here
@@ -502,6 +509,7 @@ export default function (pi: ExtensionAPI) {
       "- treat that as a fact about the permission, not as a failure of the program.",
       "There is no shell, no package manager and no way to change the policy from inside",
       "a program; a program that needs a denied effect must ask for it and stop.",
+      "A program may not handle its own effects: the tool parses the program before running it and refuses one that names a `handle` clause, because the guard is the one host for a call's effects. Perform the effect and match its answer; a refusal is a value you can match.",
       "By default the program runs under the package's policy over the session working",
       "directory: reads and writes inside that directory are performed, everything else",
       "is refused and reported. mode `eval` is pure and prints the value; mode `run`",
@@ -538,6 +546,7 @@ export default function (pi: ExtensionAPI) {
       "When eyg returns a `denied by policy` message, change what the program asks for or report the refusal; do not search for another way to run a command.",
       "A refused eyg effect is a value, not a crash: bind it with a name you use (`let written = perform WriteFile(...)`) and report `written`, because `let _ =` discards the refusal and makes the call look like success when nothing was written.",
       "Use eyg mode eval for a pure computation and eyg mode run when the program performs effects.",
+      "A program must not handle its own effects: a `handle` clause in the code you pass in is refused before the program runs, because the guard is the one host for a call's effects. Perform the effect and match its answer instead.",
       "Write an eyg effect as `perform Name(argument)`, bound with `let name =` or `let _ =` when another expression follows; `Name(argument)` alone is a function call and fails to parse.",
       "Every eyg path must be absolute: the policy sees absolute paths, and relative paths are resolved from the session's working directory before the policy decides.",
       "Find files with `perform Search({path, pattern, limit})` - one call, absolute paths you can hand to ReadFile; a refusal is `Error(\"search denied by policy: /abs/root\")`.",
@@ -764,6 +773,7 @@ export default function (pi: ExtensionAPI) {
         roots: roots.split(",").map((root) => root.trim()).filter((root) => root !== ""),
         cwd,
         fields: spawnerEffects(process.env, chain.depth),
+        protected: hostProtectedPaths({ packageDir: dir, policyPath: policy }),
       });
       const spawn = async (mode: string, source: string, timeoutMs: number) =>
         runGuarded(pi, { runner, mode, guard, policy, ctx: ctxLiteral, source, cwd, signal, timeoutMs });
@@ -1017,6 +1027,30 @@ export default function (pi: ExtensionAPI) {
         prelude.push(`${variablePrelude(binding)}\n`);
       }
       const code = `${prelude.join("")}${params.code}`;
+
+      // One host per call. The guard names every effect, so a program that installs its own
+      // `handle` clause is refused before anything runs. Such a clause cannot widen what the
+      // policy allows - boundary fact 5 of `docs/world/entities/host.guard-boundary.md` - but
+      // it can answer the program instead of asking the host, and that is the boundary this
+      // package exists to hold. The question goes to the binary's parser rather than to a
+      // text scan, so the word `handle` in a string, or a function named `handle`, is not a
+      // refusal, and the refused labels come back named. A runner that cannot answer the
+      // question stops the call: a program whose effects were not checked is not run.
+      const parsed = await pi.exec(runner, parseArguments(code), { signal, timeout: PARSE_TIMEOUT_MS, cwd });
+      if (parsed.code !== 0) {
+        const why = [parsed.stdout, parsed.stderr].filter((text) => text !== "").join("\n").trim() || "no output";
+        return refuseToRun(`the program was not run: parsing it answered exit ${parsed.code}, so its effects could not be checked. ${why}`);
+      }
+      let tree: unknown = null;
+      try {
+        tree = JSON.parse(parsed.stdout);
+      } catch {
+        return refuseToRun(`the program was not run: the parse of it came back as something that is not JSON, so its effects could not be checked.`);
+      }
+      const handled = handledEffectLabels(tree);
+      if (handled.length > 0) {
+        return refuseToRun(handledEffectRefusal(handled));
+      }
 
       const spawnResult = await spawn(mode, code, timeout);
       const result = spawnResult.result;
@@ -1417,6 +1451,7 @@ export default function (pi: ExtensionAPI) {
           roots: reachableRoots.split(",").map((root) => root.trim()).filter((root) => root !== ""),
           cwd,
           fields: [],
+          protected: hostProtectedPaths({ packageDir: dir, policyPath: parentPolicy }),
         });
         const runner = candidates[0];
         const probeRoot = reachableRoots.split(",")[0].trim();

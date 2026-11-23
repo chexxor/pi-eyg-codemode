@@ -1,0 +1,29 @@
+// The self-protection rule: the files that decide a call are not files that call can
+// change. Each of the four change effects is aimed at a path under the package's own
+// `policies/` and `host/`, which is inside the roots this probe runs with, and each answer
+// is printed. The names are ones that do not exist, so a run that ever performed them would
+// leave a stray file rather than damage a tracked one. Reading the same paths stays open:
+// a program is meant to be able to read the rules it runs under.
+// Run: node bin/agent/refusal-probe.mjs --program test/fixtures/self-write-probe.eyg --inside-roots
+let answer = (label, value) -> {
+  match value {
+    Error(why) -> { !string_append(label, !string_append(": ", why)) }
+    | (_) -> { !string_append(label, ": PERFORMED") }
+  }
+}
+
+let wrote = perform WriteFile({path: "{{root}}/policies/self-write-probe.eyg", contents: !string_to_binary("x")})
+let appended = perform AppendFile({path: "{{root}}/policies/self-write-probe.eyg", contents: !string_to_binary("x")})
+let made = perform MakeDirectory("{{root}}/host/self-write-probe")
+let deleted = perform DeleteFile("{{root}}/policies/self-write-probe.eyg")
+let read = perform ReadFile({path: "{{root}}/host/guard.eyg", offset: 0, limit: 8})
+let read_line = match read {
+  Ok(_) -> { "read_file guard: allowed" }
+  Error(why) -> { !string_append("read_file guard: ", why) }
+}
+let first = perform StandardOut(answer("write_file", wrote))
+let second = perform StandardOut(answer("append_file", appended))
+let third = perform StandardOut(answer("make_directory", made))
+let fourth = perform StandardOut(answer("delete_file", deleted))
+let fifth = perform StandardOut(read_line)
+perform StandardOut("four changes asked, one read asked")

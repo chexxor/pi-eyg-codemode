@@ -9,6 +9,7 @@ the README and by the how-to pages.*
 The sections:
 
 - [What the tool decides, and in what order](#what-the-tool-decides-and-in-what-order)
+- [Who decides an effect: one host per call](#who-decides-an-effect-one-host-per-call)
 - [What a policy rule answers with](#what-a-policy-rule-answers-with)
 - [Plan first, then act, with the same program](#plan-first-then-act-with-the-same-program)
 - [The effect surface, answered rather than remembered](#the-effect-surface-answered-rather-than-remembered)
@@ -31,6 +32,7 @@ The sections:
 | mode | `run`; `eval` is pure and prints the value | `extensions/eyg-codemode.ts`. `action` selects what the call does - `run`, `eval`, `effects`, `reference`, `list_functions`, `describe_function` (`ACTIONS`) - and `prepareCallArguments` in `lib/render-helpers.mjs` maps `mode` from sessions resumed before the rename |
 | timeout | 30 s default, 120 s cap; the parameter is `timeout` in **seconds** | `extensions/eyg-codemode.ts` |
 | argv | `[mode, entryPath]`: the entry this package wrote in a scratch directory of its own, which imports the guard, the policy and the model's program; the directory is removed when the run ends | `runGuarded` in `extensions/eyg-codemode.ts`; the three files come from `entryProgram`, `programModule` and `contextLiteral` in `lib/render-helpers.mjs` |
+| a parse of the program | always, before the run, for `run` and `eval` | `[parse, -c, code]` through the same binary (`parseArguments` in `lib/render-helpers.mjs`); a program that names a `handle` clause is refused with its labels, and a binary that cannot answer the parse stops the call rather than running an unchecked program |
 
 | environment | meaning |
 | --- | --- |
@@ -52,10 +54,34 @@ and the `/eyg-grant` that would have allowed it.
 The policy is imported before the guard is installed, and an effect raised at a module's top
 level is never performed, guard or no guard (`unhandled effect`, `docs/world/entities/host.guard-boundary.md`),
 so a policy cannot ask the host for its own configuration. The tool hands it over instead: the
-entry writes `ctx = {roots, cwd, fields}` as a literal, which `contextLiteral` in
-`lib/render-helpers.mjs` builds. What a *program* gets when it asks for the environment is the
-answer the policy chooses - `env: (_) -> { Mock(None({})) }` under `policies/agent-roots.eyg` -
-which is why a token belongs in a policy the operator wrote and never in a program.
+entry writes `ctx = {roots, cwd, fields, protected}` as a literal, which `contextLiteral` in
+`lib/render-helpers.mjs` builds. `protected` names the paths that decide the call - the package's
+own `host/` and `policies/`, plus the policy module resolved for the call when it lives outside
+the package (`hostProtectedPaths`) - and the guard refuses the four change effects under them
+before any rule runs (`shield` in `host/guard.eyg`), so a session whose roots are this package
+cannot rewrite the rules of its next call. What a *program* gets when it asks for the environment
+is the answer the policy chooses - `env: (_) -> { Mock(None({})) }` under `policies/agent-roots.eyg`
+- which is why a token belongs in a policy the operator wrote and never in a program.
+
+## Who decides an effect: one host per call
+
+A call has one host for its effects: the guard. Two rules keep that true, and both are checked
+outside the program, where the program cannot reach them.
+
+- **The program may not handle an effect itself.** Before a program runs, the tool asks the binary
+  to parse it and refuses one that names a `handle` clause, naming the labels it handled
+  (`parseArguments` and `handledEffectLabels` in `lib/render-helpers.mjs`, used by
+  `extensions/eyg-codemode.ts`; `bin/agent/handler-scan.mjs` runs the same two steps on a file).
+  A clause there could not have widened what the policy allows - the guard sits outside it, and an
+  effect a clause re-performs is decided again - but it answers the program instead of asking the
+  host, and that is the boundary this package exists to hold. Perform the effect and match its
+  answer; widening what is decided is a grant, which is the operator's to give.
+- **The program may not change the files that decide it.** The guard refuses `write_file`,
+  `append_file`, `delete_file` and `make_directory` for a path under `ctx.protected`, before the
+  policy rule for that effect is consulted, so no policy and no grant opens those paths. The
+  refusal says `denied by the host` rather than `denied by policy`, which is how a program tells
+  the two apart and knows a grant will not help. Reads of those paths are allowed: reading the
+  guard and the policies is how a program learns what it may ask for.
 
 ## What a policy rule answers with
 

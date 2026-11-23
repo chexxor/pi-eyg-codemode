@@ -5,11 +5,16 @@
 //
 //   let guard = import "<this file>"
 //   let policy = import "<policy module>"
-//   let ctx = {roots: [...], cwd: "...", fields: [...]}
+//   let ctx = {roots: [...], cwd: "...", fields: [...], protected: [...]}
 //   guard.build(policy.rules(ctx), ctx, (_) -> {
 //     let program = import "<program file written for this call>"
 //     program.run({})
 //   })
+//
+// `roots`, `cwd` and `fields` are values a policy reads. `protected` is read by
+// the guard itself, and a hand-written entry has to write it too: a call whose
+// ctx omits it gets a missing-field error at its first write effect rather than
+// an unguarded write.
 //
 // # Why a handler per effect
 //
@@ -84,6 +89,24 @@
 // recomputation over values the program already holds, so no rule decides them and
 // the guard re-performs them. `Search` is a walk, not a host effect, so a search
 // costs one decision for the root and one per directory it lists.
+//
+// # Self-protection
+//
+// The entry imports the guard and the policy by absolute path, and the roots a
+// session gets are its working directory, so a session run inside this package
+// has the files that decide it inside its own roots. A program that rewrote
+// `host/guard.eyg` or a policy module would be writing the rules for its next
+// call, which is the whole decision for that call. So the guard refuses
+// `write_file`, `append_file`, `delete_file` and `make_directory` for any path
+// under `ctx.protected` before the policy rule is consulted, and the tool writes
+// that list as the package's own `host/` and `policies/` plus the policy module
+// resolved for this call wherever it lives. It is the guard that refuses, not a
+// rule, so no policy - including one of the operator's own, or one a session
+// asked to be wider - opens those paths, and a wider root does not either.
+//
+// Reads are not covered: reading the guard and the policies is how a program
+// learns what it may ask for, and a read changes nothing. A program that needs
+// different rules asks the operator, who changes the policy outside a call.
 
 // ---------------------------------------------------------------- strings, paths
 
@@ -145,6 +168,44 @@ let absolute = (cwd, path) -> {
     False(_) -> { append(cwd, append("/", path)) }
   }
   append("/", join_parts(collapse(parts(raw))))
+}
+
+// ------------------------------------------------------------ self-protection
+
+// Equal to `root` or inside it, compared with a trailing `/` so `/a/policies-x`
+// is not under `/a/policies`. Paths arrive absolute and collapsed.
+let is_under = (root, path) -> {
+  let root = match !string_ends_with(root, "/") {
+    True(_) -> { root }
+    False(_) -> { append(root, "/") }
+  }
+  match !equal(append(path, "/"), root) {
+    True(_) -> { True({}) }
+    False(_) -> { !string_starts_with(path, root) }
+  }
+}
+
+let under_any = (roots, path) -> {
+  !list_fold(roots, False({}), (root, found) -> {
+    match found {
+      True(_) -> { True({}) }
+      False(_) -> { is_under(root, path) }
+    }
+  })
+}
+
+// A change to a file the host decides with is refused whatever the rule says, and
+// the reason says `denied by the host` so a program can tell this refusal from one
+// a policy made and knows asking for a grant will not open the path.
+let shield = (effect, ctx, path, decision) -> {
+  match under_any(ctx.protected, path) {
+    True(_) -> {
+      Mock(append(effect, append(" denied by the host: ", append(path, " decides what this call may do"))))
+    }
+    False(_) -> {
+      decision
+    }
+  }
 }
 
 // ------------------------------------------------------------ the Search walk
@@ -327,7 +388,7 @@ let with_search = (policy, ctx, cont) -> {
 let with_write_file = (policy, ctx, cont) -> {
   handle WriteFile((request, resume) -> {
     let path = absolute(ctx.cwd, request.path)
-    let decision = policy.write_file({path: path, contents: request.contents})
+    let decision = shield("write_file", ctx, path, policy.write_file({path: path, contents: request.contents}))
     match decision {
       Pass(request2) -> {
         let reply = perform WriteFile({path: request2.path, contents: request2.contents})
@@ -341,7 +402,7 @@ let with_write_file = (policy, ctx, cont) -> {
 let with_append_file = (policy, ctx, cont) -> {
   handle AppendFile((request, resume) -> {
     let path = absolute(ctx.cwd, request.path)
-    let decision = policy.append_file({path: path, contents: request.contents})
+    let decision = shield("append_file", ctx, path, policy.append_file({path: path, contents: request.contents}))
     match decision {
       Pass(request2) -> {
         let reply = perform AppendFile({path: request2.path, contents: request2.contents})
@@ -353,8 +414,9 @@ let with_append_file = (policy, ctx, cont) -> {
 }
 
 let with_delete_file = (policy, ctx, cont) -> {
-  handle DeleteFile((path, resume) -> {
-    let decision = policy.delete_file(absolute(ctx.cwd, path))
+  handle DeleteFile((asked, resume) -> {
+    let path = absolute(ctx.cwd, asked)
+    let decision = shield("delete_file", ctx, path, policy.delete_file(path))
     match decision {
       Pass(path2) -> {
         let reply = perform DeleteFile(path2)
@@ -366,8 +428,9 @@ let with_delete_file = (policy, ctx, cont) -> {
 }
 
 let with_make_directory = (policy, ctx, cont) -> {
-  handle MakeDirectory((path, resume) -> {
-    let decision = policy.make_directory(absolute(ctx.cwd, path))
+  handle MakeDirectory((asked, resume) -> {
+    let path = absolute(ctx.cwd, asked)
+    let decision = shield("make_directory", ctx, path, policy.make_directory(path))
     match decision {
       Pass(path2) -> {
         let reply = perform MakeDirectory(path2)

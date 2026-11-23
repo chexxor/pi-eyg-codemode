@@ -41,7 +41,7 @@ id: invariant.purpose-every-dir
 type: invariant
 owner: human
 status: current
-verified_at: 2026-11-22
+verified_at: 2026-11-23
 verify: "for d in */; do test -f ${d}PURPOSE || exit 1; done"
 confidence: high
 sources: [docs/PURPOSE, pi-simple-world-model/lib/world_model.mjs]
