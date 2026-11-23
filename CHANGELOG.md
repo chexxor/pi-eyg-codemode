@@ -8,6 +8,16 @@ history, not as instructions for this tree. On 2026-11-19 the word "gate" was re
 
 ## Unreleased
 
+- **The grant ask is read off what the run printed.** `refusalHints` scans the run's output for
+  `<field> denied by policy: <path>`, so a program that catches the refusal value and prints words of
+  its own reports no refusal: measured in a fresh one-shot session (`pi --print --mode json --tools
+  eyg`), a `WriteFile` at a path outside the roots came back `refusals: []` and `grantId: null` even
+  though the guard refused it - no clause needed. That session also ran the imported-module route
+  through the registered tool and not only through `bin/agent/refusal-probe.mjs`: the importing call
+  answered a fabricated success, `exit=0`, no refusal, nothing on disk. `pi.session-grants` carries
+  the limit, `gap.one-host-check-not-transitive` the through-the-tool row, and `docs/world/traps.md`
+  the front-matter escape that failed a claim.
+
 - **A limit of the one-host rule, named and measured.** The parse that refuses a program handling
   its own effects covers the text the tool assembles - the prelude of `import` lines and the program -
   and not the body of a module that text imports. A clause inside an imported module installs inside
