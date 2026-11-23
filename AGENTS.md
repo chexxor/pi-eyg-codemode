@@ -124,7 +124,7 @@ host performs it.
 | `for f in policies/*.eyg libraries/*.eyg host/*.eyg; do eyg check "$f"; done` (the audit's `shipped EYG modules check` row) | 0.65 s wall | 2026-11-22 |
 | `node pi-simple-world-model/bin/world_lint.mjs` | 0.06 s wall | 2026-11-18 |
 | `node pi-simple-world-model/bin/world_map.mjs --check` | 0.04 s wall | 2026-11-18 |
-| `node pi-simple-world-model/bin/world_verify.mjs --all` | 11.3 s wall, 112 claims, 0 failed - the claim chains run CLI probes, so this is no longer the cheap row it was | 2026-11-23 |
+| `node pi-simple-world-model/bin/world_verify.mjs --all` | 11.3 s wall, every claim in `docs/world/` (the count is the map's), 0 failed - the chains run CLI probes, so this is no longer the cheap row it was | 2026-11-23 |
 | `pi --world-model-check` | 1.14 s wall | 2026-11-18 |
 | `pi list` | registers the four project packages by absolute path | 2026-11-18 |
 
