@@ -3,7 +3,7 @@ id: pi.codemode-tool
 type: entity
 owner: delegate
 status: current
-verified_at: 2026-11-22
+verified_at: 2026-11-23
 verify: "test -f extensions/eyg-codemode.ts && grep -qF '[mode, entryPath]' extensions/eyg-codemode.ts && grep -q 'join(dir, \"policies\", \"agent-roots.eyg\")' extensions/eyg-codemode.ts && grep -q 'renderCall:' extensions/eyg-codemode.ts && grep -q 'prepareArguments' extensions/eyg-codemode.ts && grep -q 'DEFAULT_TIMEOUT_S' extensions/eyg-codemode.ts && grep -q 'list_functions' extensions/eyg-codemode.ts && grep -q '\"reference\", \"list_functions\"' extensions/eyg-codemode.ts && grep -q 'buildRegistry' extensions/eyg-codemode.ts && grep -qF 'rmSync(scratch' extensions/eyg-codemode.ts && test -f lib/render-helpers.mjs && grep -q 'export function callLines' lib/render-helpers.mjs && grep -q 'defaultTools' .pi/settings.json && grep -q '\"-builtin:codemode\"' .pi/settings.json && test -f libraries/search.eyg && test -f notes/pi_codemode_registry_probe.md && ! grep -q 'import \"' policies/agent-roots.eyg"
 confidence: high
 sources: [extensions/eyg-codemode.ts, policies/agent-roots.eyg, policies/deny-all.eyg, package.json, lib/render-helpers.mjs, README.md, .pi/settings.json, notes/pi_codemode_host_gate.md, notes/pi_codemode_registry_probe.md, notes/pi-codemode-policy-inlining.md, notes/pi-codemode-host-guard-contract.md, guides/tool-reference.md, host/guard.eyg]

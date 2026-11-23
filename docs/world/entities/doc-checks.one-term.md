@@ -3,7 +3,7 @@ id: doc-checks.one-term
 type: entity
 owner: delegate
 status: current
-verified_at: 2026-11-22
+verified_at: 2026-11-23
 verify: "node bin/agent/doc-checks.mjs one-term | grep -qx 'one-term: ok'"
 confidence: high
 sources: [bin/agent/doc-checks.mjs, bin/agent/audit.sh, test/doc-checks.test.mjs, README.md, notes/wording-the-checks-not-the-gate.md]

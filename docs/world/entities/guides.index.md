@@ -3,7 +3,7 @@ id: guides.index
 type: entity
 owner: delegate
 status: current
-verified_at: 2026-11-22
+verified_at: 2026-11-23
 verify: "test -f guides/first-session.md && test -f guides/tool-reference.md && test -f guides/how-to-share-functions.md && test -f guides/how-to-write-a-policy.md && test -f guides/how-to-spawn-a-subagent.md && test -f guides/how-to-point-the-tool-at-your-runner.md && test -f guides/how-to-read-in-slices.md && test -f guides/eyg-surface.tsv && ! ls guides | grep -qE '^(syntax|builtins_reference|cli_effects_reference|install_prebuilt|install_from_source|pi_codemode_agent)\.md$' && grep -q 'eyg-surface.tsv' README.md"
 confidence: high
 sources: [guides/PURPOSE, guides/first-session.md, guides/tool-reference.md, guides/how-to-write-a-policy.md, guides/eyg-surface.tsv, README.md, bin/agent/gen-surface.mjs]

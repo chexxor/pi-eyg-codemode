@@ -3,7 +3,7 @@ id: doc-checks.citations
 type: entity
 owner: delegate
 status: current
-verified_at: 2026-11-22
+verified_at: 2026-11-23
 verify: "node bin/agent/doc-checks.mjs citations | grep -qx 'citations: ok'"
 confidence: high
 sources: [bin/agent/doc-checks.mjs, test/doc-checks.test.mjs, AGENTS.md, notes/pi-eyg-codemode-workspace-port.md]

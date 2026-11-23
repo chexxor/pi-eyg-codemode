@@ -3,7 +3,7 @@ id: pi.reference-action
 type: entity
 owner: delegate
 status: current
-verified_at: 2026-11-22
+verified_at: 2026-11-23
 verify: "grep -q '\"reference\"' extensions/eyg-codemode.ts && grep -q 'export function referenceLines' lib/render-helpers.mjs && grep -q 'SURFACE_FILE = \"guides/eyg-surface.tsv\"' lib/render-helpers.mjs && grep -q 'no such builtin' lib/render-helpers.mjs && grep -q 'not decided by a policy' lib/render-helpers.mjs && grep -q 'surfaceDriftProblems' test/render-helpers.test.mjs && grep -q 'referenceLines' test/render-helpers.test.mjs"
 confidence: medium
 sources: [extensions/eyg-codemode.ts, lib/render-helpers.mjs, test/render-helpers.test.mjs, guides/eyg-surface.tsv, bin/agent/gen-surface.mjs, guides/tool-reference.md, skills/eyg-codemode/SKILL.md, docs/world/entities/usability.without-language-skill.md, notes/reference-answer-shape.md]

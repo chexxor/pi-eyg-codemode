@@ -3,7 +3,7 @@ id: ADR-003-doc-delegation
 type: adr
 owner: human
 status: accepted
-verified_at: 2026-11-22
+verified_at: 2026-11-23
 verify: "grep -q 'eyg.run/guides/install-a-prebuilt-binary' README.md && ! grep -q 'not from this README' README.md && ! test -f guides/install_prebuilt.md && test -f guides/eyg-surface.tsv"
 confidence: high
 sources: [README.md, docs/world/entities/guides.index.md, guides/eyg-surface.tsv]

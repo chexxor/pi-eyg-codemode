@@ -3,7 +3,7 @@ id: pi.session-grants
 type: entity
 owner: delegate
 status: current
-verified_at: 2026-11-22
+verified_at: 2026-11-23
 verify: "grep -q 'eyg-grant' extensions/eyg-codemode.ts && grep -q GRANT_ENTRY lib/render-helpers.mjs && grep -q argumentPolicyPath extensions/eyg-codemode.ts && node --test test/render-helpers.test.mjs"
 confidence: high
 sources: [extensions/eyg-codemode.ts, lib/render-helpers.mjs, test/render-helpers.test.mjs, notes/pi-codemode-session-grants.md, guides/how-to-write-a-policy.md, guides/tool-reference.md]

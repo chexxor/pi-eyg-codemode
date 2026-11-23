@@ -3,7 +3,7 @@ id: gap.grant-polish-undecided
 type: entity
 owner: delegate
 status: current
-verified_at: 2026-11-22
+verified_at: 2026-11-23
 verify: "grep -q 'UNVERIFIED: the N-calls duration' docs/world/entities/pi.session-grants.md && grep -q 'grant.used < grant.calls' lib/render-helpers.mjs && ! grep -qE 'tokens\\[0\\] === .(status|list|show)' extensions/eyg-codemode.ts && grep -q 'gap.grant-polish-undecided' docs/world/runbooks/runbook.next-milestone.md"
 confidence: high
 sources: [extensions/eyg-codemode.ts, lib/render-helpers.mjs, test/render-helpers.test.mjs, docs/world/entities/pi.session-grants.md, docs/world/runbooks/runbook.next-milestone.md, notes/pi-codemode-session-grants.md, guides/how-to-write-a-policy.md]
