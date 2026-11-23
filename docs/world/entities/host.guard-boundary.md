@@ -73,6 +73,10 @@ files the tool builds.
    string or a function named `handle` is not a refusal. Re-runnable: `node
    bin/agent/handler-scan.mjs test/fixtures/inner-handler.eyg` prints `ReadFile` and the same
    command on `test/fixtures/refusal-probe.eyg` prints nothing (`@measured 2026-11-23`, 0.15 s each).
+   The refusal reaching a model was proved in a fresh one-shot session (`pi --print --mode json
+   --model <the model this session runs on> --tools eyg`, 22.5 s, `@measured 2026-11-23`) handed a
+   program with a `handle ReadFile` clause: the tool answered `the program handles 1 effect(s) for
+   itself (ReadFile)` and ran nothing.
 
 Two consequences the package had to build for:
 

@@ -859,6 +859,7 @@ test("a program that handles an effect for itself is named, not run", () => {
   assert.deepEqual(handledEffectLabels(twice), ["ReadFile"], "two clauses for one label are named once");
   assert.deepEqual(parseArguments("1"), ["parse", "-c", "1"], "the parse question goes through argv, with no flag that changes what is parsed");
   const line = handledEffectRefusal(["ReadFile", "Fetch"]);
+  assert.ok(!line.startsWith("eyg refused"), "the caller adds the refusal prefix, so the message must not repeat it");
   assert.ok(line.includes("ReadFile, Fetch"), "the refusal names the labels the program handled");
   assert.ok(line.includes("guard"), "the refusal says who decides the effects instead");
   assert.ok(line.includes("/eyg-grant"), "the refusal points at the way to widen the host that is not a clause");

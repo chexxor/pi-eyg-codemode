@@ -72,14 +72,14 @@ host performs it.
   module is skipped, and when none names one the tool refuses rather than running unchecked. The
   call's `policy` argument sits outside that chain: it is
   honoured only when it names the policy the chain already chose or `NARROWEST_POLICY_FILE`
-  (`narrows` in `lib/render-helpers.mjs:467`, used at `:506`), and anything else comes back
+  (`narrows` in `lib/render-helpers.mjs:468`, used at `:507`), and anything else comes back
   `refusedArgument` (`extensions/eyg-codemode.ts:711`, and `:1331` for a child's policy).
 - The binary is chosen by name, not by asking it what it can do: `EYG_CODEMODE_RUNNER` (an
   absolute path), else `eyg` on PATH - two places, no third (`runnerCandidates` in
   `lib/render-helpers.mjs:363`, used at `extensions/eyg-codemode.ts:749` and `:1408`). Nothing
   is asked of it but the mode word and a file this package wrote; a missing binary, or one with
   no such mode command, ends the call with one line naming the install and quoting the command
-  that was run (`runnerFailureLine` in `lib/render-helpers.mjs:667`).
+  that was run (`runnerFailureLine` in `lib/render-helpers.mjs:668`).
 - **Nothing here waits on a build of the language.** The installed CLI runs every call:
   `eyg --version` answers `eyg v0.1.0` and `eyg run <the entry this package writes>` runs the
   guard (`@measured 2026-11-22`), so what a shipped policy decides at runtime is re-runnable
