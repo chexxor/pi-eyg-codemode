@@ -30,6 +30,13 @@ same three files the tool writes and starts the installed CLI:
 | `node bin/agent/handler-scan.mjs test/fixtures/imported-handler.eyg` | prints nothing - the program text names no clause |
 | `node bin/agent/handler-scan.mjs test/fixtures/imported-handler-lib.eyg` | prints `WriteFile` - the clause is in the module |
 
+The same day the route was run through the tool itself, in a fresh one-shot session
+(`pi --print --mode json --tools eyg --model <model>`, `policySource: project settings`, roots =
+this tree): the call importing `test/fixtures/imported-handler-lib.eyg` answered
+`FABRICATED-BY-IMPORTED-CLAUSE`, `exit=0`, `refusals: []`, `grantId: null`, and nothing existed at
+the target path, while the same write with no clause in the program answered `REFUSED-BY-GUARD`. So
+the probe's answer is not an artifact of the harness.
+
 Two routes reach a module, and neither needs a privilege the session lacks. A program can write
 `let lib = import "<absolute path>"` in its own text - the probe's module sat in this tree, and a
 second run imported one from `/tmp`, outside every root, and it ran: an `import` is not an effect,
@@ -39,9 +46,10 @@ and is not in `ctx.protected`, which covers only the package's `host/` and `poli
 
 **What this is not.** It is not an escalation. Boundary fact 5 still holds: a clause cannot make the
 host perform what the policy refuses, and its re-perform reaches the guard and is decided again. What
-it breaks is the honesty of the answer and of the ask. The guard's refusal never reaches the tool, so
-`refusalHints` emits no grant suggestion and the session never makes the ask the design depends on;
-and the run's own output reports an effect the host did not perform. The same fabrication is already
+it breaks is the honesty of the answer and of the ask. The guard's refusal never reaches the tool, and
+the ask is read off the run's output text (`docs/world/entities/pi.session-grants.md`), so no grant
+suggestion is emitted and the session never makes the ask the design depends on; and the run's own
+output reports an effect the host did not perform. The same fabrication is already
 available in plain code - a function that returns a made-up string where a read would have gone - so
 this route adds no new capability, only a typed one that survives the check. It also does not need an
 adversarial model: a helper written by an earlier session can carry a clause that a later session

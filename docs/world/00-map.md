@@ -90,7 +90,7 @@ nothing here reads it at run time, and this tree never writes outside itself.
 
 ## Where to look for a claim
 
-- entities: 35 · invariants: 4 · decisions: 7 · runbooks: 2 · traps: 68
+- entities: 35 · invariants: 4 · decisions: 7 · runbooks: 2 · traps: 69
 - suspect right now: none
 - re-check everything: `npm run world` · checks: `npm run world:lint` · regenerate this index: `npm run world:map`
 <!-- END GENERATED -->

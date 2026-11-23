@@ -4,7 +4,7 @@ type: entity
 owner: delegate
 status: current
 verified_at: 2026-11-23
-verify: "grep -q 'eyg-grant' extensions/eyg-codemode.ts && grep -q GRANT_ENTRY lib/render-helpers.mjs && grep -q argumentPolicyPath extensions/eyg-codemode.ts && node --test test/render-helpers.test.mjs"
+verify: "grep -q 'eyg-grant' extensions/eyg-codemode.ts && grep -q GRANT_ENTRY lib/render-helpers.mjs && grep -q argumentPolicyPath extensions/eyg-codemode.ts && node --test test/render-helpers.test.mjs && node -e 'import(\"./lib/render-helpers.mjs\").then(m=>process.exit(m.refusalHints(\"REFUSED-BY-GUARD\").length===0 && m.refusalHints(\"write_file denied by policy: /tmp/x\").length===1?0:1))'"
 confidence: high
 sources: [extensions/eyg-codemode.ts, lib/render-helpers.mjs, test/render-helpers.test.mjs, notes/pi-codemode-session-grants.md, guides/how-to-write-a-policy.md, guides/tool-reference.md]
 ---
@@ -20,6 +20,12 @@ operator chooses - one tool call, N calls, or the rest of the session - and can 
   `suggestGrant` in `lib/render-helpers.mjs`). They render collapsed as well as expanded, and the
   row that no root would fix says so instead of guessing one. The last line of the row tells the
   model it cannot grant it itself.
+- **The ask is read off what the run printed.** Those rows come from scanning the run's output for
+  that sentence, so a program that catches the refusal value and prints words of its own reports no
+  refusal at all: measured 2026-11-23 in a fresh one-shot session, a `WriteFile` at a path outside
+  the roots, in a program that matched `Error(why)` and printed its own marker, came back with
+  `refusals: []` and `grantId: null` even though the guard had refused it. Nothing host-side records
+  that a refusal happened, so the loop depends on the program quoting it.
 - **The durations, and who chooses.** `/eyg-grant` bare asks through `ctx.ui.select`: the policy
   (or an absolute module path via `ctx.ui.input`), then "one tool call (recommended: retry exactly
   the refused program)", "a number of tool calls", or "the rest of the session (widest: every
