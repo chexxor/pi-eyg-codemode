@@ -10,8 +10,9 @@ Why the sequence deserves its own page: "a program reaches the host only through
 policy decides every effect" is not a property of the EYG language, and it is not a rule the
 model agrees to follow. It is built, out of three files written for one call and deleted when the
 call ends. Once you know the order those files are written in, you can predict what a call will
-do before you send it, and you can see what a program would have to do to get outside the checks -
-which is nothing, and the last two sections test that.
+do before you send it, and you can see what a program would have to do to get outside the checks.
+The answer is: nothing, as long as the entry is the one the tool wrote - and the eighth section
+prints what a call looks like when there is no entry.
 
 The steps, in the order the tool does them:
 
@@ -37,12 +38,12 @@ second, does not spend one of a child session's calls, and does not consume a gr
 made - the tool counts a call against a grant only when the call reached a policy. Cheap refusals
 are the ones a session retries after changing one word.
 
-`action: "reference"` also answers at this stage: it reads `guides/eyg-surface.tsv` and prints the
-builtins and the effect surface, so it works on a machine with no binary installed at all.
+`action: "reference"` answers one step later: it reads `guides/eyg-surface.tsv` and prints the
+builtins and the effect surface, so it answers on a machine with no binary installed at all.
 
 ## The policy, the guard, the roots and the binary are resolved
 
-Four lookups, and three of them can end the call.
+Four lookups, and two of them can end the call where they stand.
 
 **The policy module.** The order of the slots is stated once, in the table "Which policy a call
 gets" in `guides/how-to-write-a-policy.md`. What matters for the shape of a call is what the
@@ -59,7 +60,8 @@ without, and a call that cannot find one does not run the program anyway.
 **The roots, and the binary.** The roots are resolved to a list of absolute paths and the binary
 to one path - `EYG_CODEMODE_RUNNER` if it is set, otherwise `eyg` on `PATH`. Nothing is asked of
 that binary before the run and nothing during it except the mode word and a file this package
-wrote, which is why a missing or unsuitable binary is one refusal line rather than a probe.
+wrote, which is why a missing or unsuitable binary is not caught here: it answers with one refusal
+line at the run, naming the command that was tried.
 
 The resolved values reach the policy as a **literal in a file**, not through the environment: the
 entry writes `ctx = {roots, cwd, fields, protected}` (`contextLiteral` and `hostProtectedPaths` in
@@ -71,7 +73,8 @@ the package layout, so the tool tells it.
 ## A prelude is prepended to the program
 
 The program the tool parses and runs is not quite the program the model wrote. In front of it goes
-one line per name in `libraries` and one per binding this session kept with `extern`:
+one line per name in the call's `libraries` parameter and one per binding this session kept with
+`extern`:
 
 ```
 let search_lib = import "/<package>/libraries/search.eyg"
