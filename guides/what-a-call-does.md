@@ -70,6 +70,12 @@ because it is imported before any handler exists and an effect raised at a modul
 never performed. That is also why `protected` has to be written down: the guard cannot discover
 the package layout, so the tool tells it.
 
+One freedom in that resolution: the policy module does not have to sit inside the roots. The entry
+`import`s it and an import is not an effect, so the binary opens that file itself; a module in
+`/operator/policies/mine.eyg` loads for a session rooted in `/work`. What the roots decide is
+whether the *program* can `ReadFile` that same path, which is a different question the policy
+answers like any other.
+
 ## A prelude is prepended to the program
 
 The program the tool parses and runs is not quite the program the model wrote. In front of it goes
@@ -187,7 +193,8 @@ mechanical:
   path exactly as the program wrote it.
 - The four change effects are refused first for any path under `ctx.protected` - the package's own
   `host/` and `policies/` - whatever the policy says. That refusal says `denied by the host`, which
-  is how a program learns that asking for a grant will not help.
+  is how a program learns that asking for a grant will not help. Reading those same paths is not
+  refused: the shield is about changing the rules a call runs under, not about seeing them.
 - A `Search` is one decision for the root and then one per directory the walk lists, each under
   the `read_directory` field.
 - `DecodeJSON`, `EYGParse`, `Hash` and `Sign` are recomputation over values the program already
@@ -215,6 +222,11 @@ and check the handler list against the surface rows with `node --test test/host-
 The tool's answer is the runner's own output plus whatever the tool can add to make the outcome
 actionable. The first line is the status - `eyg run: ran in 0.81 s wall`, `exit 1 in 0.12 s wall`,
 `timed out after 2 s in 2.01 s wall` - then the program's stdout and stderr, then any of these:
+
+`StandardOut` writes exactly the string it is given and appends nothing, so a program that prints
+several values puts `\n` in its own strings if it wants them on separate lines. The
+`(N output lines)` a result row names counts the newlines the run produced, not the number of
+`StandardOut` calls: a program that prints `"a"` then `"b"` comes back as one line reading `ab`.
 
 - **the ask**, for every refusal that named a path: what was refused, the policy that refused it,
   and the exact `/eyg-grant` an operator would run. A `denied by the host` refusal gets no such

@@ -19,14 +19,16 @@ directory")` takes a bare path and answers `Ok(List({name, type}))` where `type`
 deconstructs tagged values (<https://eyg.run/guides/eyg-syntax-guide>):
 
 ```eyg
+let line = (text) -> { perform StandardOut(!string_append(text, "\n")) }
+
 let report = (entries) -> {
   !list_fold(entries, {}, (entry, _) -> {
     let {name: n, type: kind} = entry
     match kind {
-      Directory(_) -> { perform StandardOut(n) }
+      Directory(_) -> { line(n) }
       File(e) -> {
         let {size: s} = e
-        perform StandardOut(!string_append(n, !string_append(" ", !int_to_string(s))))
+        line(!string_append(n, !string_append(" ", !int_to_string(s))))
       }
     }
   })
@@ -63,12 +65,13 @@ at the size from step 1 stops at what the file is rather than at what it hoped.
 
 ## Print each slice as you go
 
-Call `StandardOut` per slice rather than returning one value. The collapsed call row names
-the effects the program uses, then its first four source lines and `... N more lines`; the
-result row starts with the first line the program printed and names the total as
-`(N output lines)`. A program that slices and prints gives you a row you can read; one that
-returns the whole file gives you a row of counts. Name the slice function and call it by
-name, so the four lines shown are your names rather than a nested `match`.
+Call `StandardOut` per slice rather than returning one value, and end each string with `\n` so one
+slice is one line (`guides/what-a-call-does.md` explains what a result row counts). The collapsed
+call row names the effects the program uses, then its first four source lines and `... N more
+lines`; the result row starts with the first line the program printed and names the total as
+`(N output lines)`. A program that slices and prints gives you a row you can read; one that returns
+the whole file gives you a row of counts. Name the slice function and call it by name, so the four
+lines shown are your names rather than a nested `match`.
 
 ## How these were checked
 
@@ -89,7 +92,7 @@ the effects it decides.
   never contents, and a listed name is not permission to read that path
   (`guides/eyg-surface.tsv` names the effect and its policy field).
 - A read you expected and did not get is the policy's decision, not the file's: see
-  `guides/how-to-write-a-policy.md`, where a path ending `.env.eyg` is refused by both
-  shipped policies.
+  `guides/how-to-write-a-policy.md`, where a path ending `.env.eyg` is refused by every policy this
+  package ships.
 - A whole file at once is one `ReadFile` with a `limit` above the size. Slicing is about the
   row you read back, not about a file too big to exist.
