@@ -75,10 +75,10 @@ nothing here reads it at run time, and this tree never writes outside itself.
 | world-model.package | `pi-simple-world-model/` is a pi package carried in this workspace as a copy, declared per project in ... | delegate | 2026-11-23 |
 | invariant.eyg-over-bash | EYG is the language this package runs its agent in, and it does not have an effect to run shell commands. | human | 2026-11-23 |
 | invariant.notes-frontmatter | Every note carries `name:` front-matter. | human | 2026-11-23 |
-| invariant.purpose-every-dir | Every top-level directory has a `PURPOSE` file, so the generated tier-0 map can name what each one is for. | human | 2026-11-22 |
+| invariant.purpose-every-dir | Every top-level directory has a `PURPOSE` file, so the generated tier-0 map can name what each one is for. | human | 2026-11-23 |
 | invariant.policy-self-contained | A policy module in this package imports nothing outside the package. | human | 2026-11-23 |
 | ADR-000-world-model | ## Context Agents rediscover the layout, act on stale assumptions, and re-litigate settled decisions. | human | 2026-11-23 |
-| ADR-001-world-model-import | ## Context The world model tool (`pi-simple-world-model`) is authored in `another of the operator's projects`. | delegate | 2026-11-22 |
+| ADR-001-world-model-import | ## Context The world model tool (`pi-simple-world-model`) is authored in `another of the operator's projects`. | delegate | 2026-11-23 |
 | ADR-002-handler-seam | **Superseded 2026-11-22 by `docs/world/decisions/ADR-006-guard-in-package.md`.** The choice this record made - that the ... | human | 2026-11-23 |
 | ADR-003-doc-delegation | ## Context A new user of this package needs two different things: how to get an EYG CLI onto their machine, and what ... | human | 2026-11-23 |
 | ADR-004-doc-shape-for-two-readers | ## Context Three readers, and each needs a different thing from this tree: 1. | human | 2026-11-23 |
@@ -89,7 +89,7 @@ nothing here reads it at run time, and this tree never writes outside itself.
 
 ## Where to look for a claim
 
-- entities: 34 · invariants: 4 · decisions: 7 · runbooks: 2 · traps: 63
+- entities: 34 · invariants: 4 · decisions: 7 · runbooks: 2 · traps: 65
 - suspect right now: none
 - re-check everything: `npm run world` · checks: `npm run world:lint` · regenerate this index: `npm run world:map`
 <!-- END GENERATED -->
