@@ -37,11 +37,21 @@ means the rule is a hard dependency on the binary answering `parse`. The officia
 does; a binary that does not stops every call rather than quietly running unchecked ones, which is
 the same choice the package already makes about a missing policy or a missing guard.
 
-**What it does not catch, and cannot.** A program can still simulate an effect in plain code - a
-function that returns a made-up string where a read would have gone - and nothing in the host can
-tell that from a real one, because the host only ever sees the effects that were performed. The
-rule removes the language's own escape hatch, which is the one that is checkable; the rest is a
-model lying in its output, which is a review question rather than a policy one.
+**What it does not catch, and cannot.** The check is not transitive over imports: the parse covers
+the text the tool assembles - the prelude of `import` lines and the program - and a clause written
+inside a module that text imports installs inside the guarded body unnamed, which is measured in
+`docs/world/entities/gap.one-host-check-not-transitive.md`. Closing that would mean the tool resolving
+imports the way the compiler does, over a set the program itself chooses by naming paths. The type
+row is no help either: per an operator-supplied report read off the language repository (UNVERIFIED
+here), `handle L` deletes `L` from the effect row, but a function that handled an effect and one that
+never needed one print identically, the row is closed against the platform only at the top level and
+in a few builtin positions, and the language has no ascription, so "this module must be effect-free"
+cannot be written. And a program can still simulate an effect in plain code - a function that returns
+a made-up string where a read would have gone - and nothing in the host can tell that from a real one,
+because the host only ever sees the effects that were performed. The rule removes the language's own
+escape hatch, which is the one that is checkable; the rest is a model lying in its output, which is a
+review question rather than a policy one. That is also why the limit above costs honesty and not
+reach: the fabrication an imported clause performs is one the model could type out itself.
 
 **Rejected.** Letting the clause run and relying on fact 5, since the answer rather than the reach
 is the harm. A textual scan, for the false positives above. A type-level check, for the reason in

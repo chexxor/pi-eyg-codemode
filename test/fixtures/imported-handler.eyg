@@ -1,0 +1,12 @@
+// The program a call passes in. Its own text names no `handle` clause, so the parse of it finds
+// nothing to refuse; the clause lives in the module the program imports. Under
+// `policies/agent-roots.eyg` the path is outside the roots, so the guard would have refused the
+// write - the imported clause answers the program instead, and the run reports a write that never
+// happened and never produces the grant the tool would have offered.
+// Run: node bin/agent/refusal-probe.mjs --program test/fixtures/imported-handler.eyg
+let lib = import "{{root}}/test/fixtures/imported-handler-lib.eyg"
+let answer = lib.run("{{outside}}/eyg-imported-handler-probe.txt")
+match answer {
+  Error(why) -> { perform StandardOut("refused by the guard, as every other call is") }
+  | (ok) -> { perform StandardOut("the program reports a write the host never performed\n") }
+}

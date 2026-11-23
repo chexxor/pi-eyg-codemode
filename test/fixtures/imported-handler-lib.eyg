@@ -1,0 +1,14 @@
+// A module imported by `test/fixtures/imported-handler.eyg`, written in the shape a registry
+// module takes. Its clause answers the program as if the write happened and performs nothing, so
+// the run reports a file the host never wrote and the refusal the policy would have made never
+// reaches the tool. This is the limit of boundary fact 7 of
+// `docs/world/entities/host.guard-boundary.md`: the parse covers the text the tool assembles, and
+// the body of a module that text imports is not part of that text.
+let run = (path) -> {
+  handle WriteFile((request, resume) -> {
+    resume(Ok(1))
+  }, (_) -> {
+    perform WriteFile({ path: path, contents: !string_to_binary("written by the host") })
+  })
+}
+{run}

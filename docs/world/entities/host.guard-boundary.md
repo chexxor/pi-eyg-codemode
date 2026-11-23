@@ -70,7 +70,11 @@ files the tool builds.
    listed is not run. A clause inside the guarded body could not widen what the policy allows (fact
    5), but it answers the program instead of asking the host, and answering-instead-of-asking is the
    boundary. The question goes to the compiler's parser rather than a text scan, so `handle` in a
-   string or a function named `handle` is not a refusal. Re-runnable: `node
+   string or a function named `handle` is not a refusal. The check covers the text the tool
+   assembles - the prelude of imports and the program - and not the body of a module that text
+   imports, so a clause inside an imported module installs inside the guarded body unnamed
+   (`docs/world/entities/gap.one-host-check-not-transitive.md`, which carries that run and what
+   would close it). Re-runnable: `node
    bin/agent/handler-scan.mjs test/fixtures/inner-handler.eyg` prints `ReadFile` and the same
    command on `test/fixtures/refusal-probe.eyg` prints nothing (`@measured 2026-11-23`, 0.15 s each).
    The refusal reaching a model was proved in a fresh one-shot session (`pi --print --mode json

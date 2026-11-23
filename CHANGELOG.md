@@ -8,6 +8,16 @@ history, not as instructions for this tree. On 2026-11-19 the word "gate" was re
 
 ## Unreleased
 
+- **A limit of the one-host rule, named and measured.** The parse that refuses a program handling
+  its own effects covers the text the tool assembles - the prelude of `import` lines and the program -
+  and not the body of a module that text imports. A clause inside an imported module installs inside
+  the guarded body unnamed: `test/fixtures/imported-handler.eyg` and its module answer the program
+  with a successful write the host never performed, print no refusal, and leave nothing on disk, while
+  the same path with no clause is refused as every other call is. Reach is unchanged (boundary fact 5)
+  - what breaks is the honesty of the answer and of the ask, and plain code can already do it. Closing
+  it needs a parse that resolves imports; the effect row cannot answer the question. Recorded as
+  `docs/world/entities/gap.one-host-check-not-transitive.md`, with a row in `runbook.next-milestone`.
+
 - **The notes caught up with the guard.** The notes still described the host this package replaced
   on 2026-11-22 - a spawn that named `--policy`, a capability probe, "a fresh clone of this package
   refuses every call", "nothing runs on a machine holding only the release" - and every gate stayed
