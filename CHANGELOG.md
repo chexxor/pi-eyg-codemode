@@ -8,6 +8,15 @@ history, not as instructions for this tree. On 2026-11-19 the word "gate" was re
 
 ## Unreleased
 
+- **A refusal is a fact about one path, not a report to the operator.** The tool's description, its
+  promptGuidelines, `skills/eyg-codemode/SKILL.md` and the guides told a session to report every refusal
+  and ask for a grant; they now tell it to keep solving inside what the policy allows and to ask only when
+  a refusal blocks the task - and then to name the addition (the policy field, the path or root, the
+  duration), why the task needs it, and what it will be used for. `suggestGrant` returns a fourth row and
+  `refusalRows` renders every row, so that template rides with the refusal; the unit test pins the rows and
+  `pi.session-grants` carries the loop. Why the judgment sits with the model, and what the operator gives
+  up by it, is in `notes/pi-codemode-ask-last-resort.md`.
+
 - **The grant ask is read off what the run printed.** `refusalHints` scans the run's output for
   `<field> denied by policy: <path>`, so a program that catches the refusal value and prints words of
   its own reports no refusal: measured in a fresh one-shot session (`pi --print --mode json --tools

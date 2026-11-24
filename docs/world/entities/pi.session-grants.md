@@ -65,6 +65,18 @@ program next ran under `policySource: session grant` with roots `<project>,/tmp`
 session file replayed through `grantEvents`/`replayGrants` reproduces each of those states, and a
 branch cut before the first grant record replays with no grant in force at all.
 
+Measured 2026-11-23 in a fresh one-shot session over a scratch project under `.ai-work` (`pi --print
+--mode json --offline --approve --no-session --no-context-files --tools eyg --model
+strata/qwen3.8-flash-next-iq3_s --thinking off`, 440 s wall, three `eyg` calls): asked to put a file at
+`/tmp/ask-last-resort-report.txt` with the roots at the project only, the session's first program failed
+to parse, its second performed the `WriteFile` and printed the answer, and came back `exit 1` with
+`refusals: [{write_file, /tmp/ask-last-resort-report.txt}]`, `grantId: null` and the four rows; its next
+call was `action: "effects"` rather than a report - it went to check that no other effect reaches that
+path - and its final message was one ask naming the addition (`/eyg-grant`, `agent-roots`, `roots + /tmp`,
+one tool call), why nothing inside the policy reaches it, and what the grant would be used for, with the
+in-roots fallback offered in the same message. The first call is the old limit again: a program that
+performs the write and returns its answer without printing it comes back with no refusal rows at all.
+
 UNVERIFIED: the N-calls duration is pinned by the unit test and was not run live; a `/tree` jump
 in a real session was not driven, only the replay over the recorded session file. That live
 proof, a time bound on a grant, and an operator's way to list the grants in force are owed

@@ -120,7 +120,7 @@ host performs it.
 | `node bin/agent/refusal-probe.mjs` (one guarded call from a shell: the entry, the policy import and the program module the tool writes, run as `eyg run <entry>`; `--with-policy`, `--fields`, `--program`, `--inside-roots`) | 0.19 s wall | 2026-11-22 |
 | `node --test test/host-coverage.test.mjs` (the guard names every effect row of the surface file) | 0.09 s wall | 2026-11-22 |
 | `node bin/agent/check-variable-shapes.mjs` (generates a kept binding's text and runs it through the CLI on PATH, with no policy module loaded) | 0.40 s wall, eleven rows | 2026-11-22 |
-| `pi --print --mode json --tools eyg <prompt>` (one fresh session, one tool call) | 20-40 s wall; needs `--model`, the default model hangs | 2026-11-20 |
+| `pi --print --mode json --tools eyg <prompt>` (one fresh session) | 440 s wall for three `eyg` calls - the wall is the model's generation, not the calls, so budget for the task's calls and run it in the background; needs `--model`, the default model hangs | 2026-11-23 |
 | `for f in policies/*.eyg libraries/*.eyg host/*.eyg; do eyg check "$f"; done` (the audit's `shipped EYG modules check` row) | 0.65 s wall | 2026-11-22 |
 | `node pi-simple-world-model/bin/world_lint.mjs` | 0.06 s wall | 2026-11-18 |
 | `node pi-simple-world-model/bin/world_map.mjs --check` | 0.04 s wall | 2026-11-18 |
