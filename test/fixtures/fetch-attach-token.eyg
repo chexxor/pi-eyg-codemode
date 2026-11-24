@@ -1,0 +1,21 @@
+// A policy rule the probes splice into a *copy* of a shipped policy: wrap another rule and put a
+// header on the request before the inner rule decides. `attach_token(pass)` puts the header on
+// every host the program asks for; `attach_token(one_host)` puts it on the pinned host only.
+// The rebuilt record lists every field: `{headers: [...], ..request}` infers a record with only
+// `headers`, and composing that with a rule that reads `request.host` answers
+// `error: missing row 'host'`. Run: node test/fixtures/fetch-operator-policy.mjs token.
+// Probe fixture only: nothing under policies/ changes.
+  let attach_token = (rule) -> {
+    (request) -> {
+      rule({
+        method: request.method,
+        scheme: request.scheme,
+        host: request.host,
+        port: request.port,
+        path: request.path,
+        query: request.query,
+        headers: [{ key: "Authorization", value: "Bearer probe-token-not-a-secret" }],
+        body: request.body,
+      })
+    }
+  }

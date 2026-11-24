@@ -4,9 +4,9 @@ type: entity
 owner: delegate
 status: current
 verified_at: 2026-11-24
-verify: "grep -q 'Ask the operator for a grant only when' extensions/eyg-codemode.ts && grep -q 'why the task needs it, and what you would use it for' lib/render-helpers.mjs && grep -q 'only when the refusal blocks the task' skills/eyg-codemode/SKILL.md && grep -q GRANT_ENTRY lib/render-helpers.mjs && grep -q argumentPolicyPath extensions/eyg-codemode.ts && node --test test/render-helpers.test.mjs && node -e 'import(\"./lib/render-helpers.mjs\").then(m=>{const rows=m.suggestGrant({field:\"write_file\",path:\"/tmp/x\"},{roots:\"/work\",policy:\"/p\"});const scanned=m.refusalHints(\"write_file denied by policy: /tmp/x\").length===1&&m.refusalHints(\"REFUSED-BY-GUARD\").length===0;process.exit(rows.length===4&&rows[1].includes(\"/eyg-grant\")&&rows[3].includes(\"why the task needs it\")&&scanned?0:1)})'"
+verify: "grep -q 'Ask the operator for a grant only when' extensions/eyg-codemode.ts && grep -q 'why the task needs it, and what you would use it for' lib/render-helpers.mjs && grep -q 'only when the refusal blocks the task' skills/eyg-codemode/SKILL.md && grep -q GRANT_ENTRY lib/render-helpers.mjs && grep -q argumentPolicyPath extensions/eyg-codemode.ts && grep -q 'notes/pi-codemode-ask-last-resort' docs/world/entities/pi.session-grants.md && grep -q 'tokens\\[0\\] === \"status\"' extensions/eyg-codemode.ts && node --test test/render-helpers.test.mjs && node -e 'import(\"./lib/render-helpers.mjs\").then(m=>{const rows=m.suggestGrant({field:\"write_file\",value:\"/tmp/x\"},{roots:\"/work\",policy:\"/p\"});const byRule=m.suggestGrant({field:\"fetch\",value:null},{roots:\"/work\",policy:\"/p\"});const scanned=m.refusalHints(\"write_file denied by policy: /tmp/x\").length===1&&m.refusalHints(\"REFUSED-BY-GUARD\").length===0&&m.refusalHints(\"fetch denied by policy\")[0].value===null;process.exit(rows.length===4&&rows[1].includes(\"/eyg-grant\")&&rows[3].includes(\"why the task needs it\")&&byRule[1].includes(\"no roots addition covers it\")&&scanned?0:1)})'"
 confidence: high
-sources: [extensions/eyg-codemode.ts, lib/render-helpers.mjs, test/render-helpers.test.mjs, notes/pi-codemode-session-grants.md, guides/how-to-write-a-policy.md, guides/tool-reference.md]
+sources: [extensions/eyg-codemode.ts, lib/render-helpers.mjs, test/render-helpers.test.mjs, notes/pi-codemode-session-grants.md, notes/pi-codemode-ask-last-resort.md, guides/how-to-write-a-policy.md, guides/tool-reference.md, guides/what-a-call-does.md]
 ---
 # The in-session grant loop
 
@@ -15,12 +15,16 @@ description, the prompt guidelines, `skills/eyg-codemode/SKILL.md` and the guide
 solving inside what the policy allows, and it asks the operator - in chat, answered by `/eyg-grant`,
 registered by `extensions/eyg-codemode.ts` - only when a refusal blocks the task and the routes inside the
 policy are spent. The grant widens the policy for a duration the
-operator chooses - one tool call, N calls, or the rest of the session - and can be revoked.
+operator chooses - one tool call, N calls, or the rest of the session - and can be revoked. Why that
+judgment sits with the model, and what it costs the operator, is `notes/pi-codemode-ask-last-resort.md`.
 
-- **The rows carry the ask template.** A call whose output contains `<field> denied by policy: <path>`
-  returns rows naming the path, the policy that refused it and the exact grant that would have
-  allowed it, including the first directory no root covers (`refusalHints`, `outsideRoot`,
-  `suggestGrant` in `lib/render-helpers.mjs`). They render collapsed as well as expanded, and the
+- **The rows carry the ask template.** A call whose output contains `<field> denied by policy`, with
+  or without a value after the colon, returns rows naming the field, what the policy was given
+  (`refusalHints` answers `{field, value}`, `value: null` when the rule quoted nothing), the policy that
+  refused it and the exact grant that would have allowed it (`describeRefusal`, `outsideRoot`,
+  `suggestGrant` in `lib/render-helpers.mjs`). A path outside every root gets the first directory no
+  root covers; a path already under one gets "the refusal is a rule of <policy>, not a root"; a value
+  that is not a path - a host, an environment name, or nothing - gets "no roots addition covers it". They render collapsed as well as expanded, and the
   row that no root would fix says so instead of guessing one. The two rows after the grant say the
   refusal does not end the call, and what the ask has to name once it is made: the addition above, why
   the task needs it, and what it would be used for (`refusalRows` prints all four for the first refusal
@@ -77,11 +81,29 @@ one tool call), why nothing inside the policy reaches it, and what the grant wou
 in-roots fallback offered in the same message. The first call is the old limit again: a program that
 performs the write and returns its answer without printing it comes back with no refusal rows at all.
 
+Measured 2026-11-24 in a fresh one-shot session over a scratch project under `.ai-work` whose
+`.pi/settings.json` declares this package with `eyg: { policy: "agent-roots", roots: [] }`, so the
+project is its only root (the same command with the model this host serves, 642 s wall, 17 `eyg`
+calls, `rc 0`): asked for one report line at `/tmp/ask-alt-report.txt` from two notes inside the
+project, it read the notes, then attempted the `/tmp` write twice - the first call matched
+`Error(why)` and returned it without printing, so it came back with the status line and `refusals:
+[]` alone, the limit above repeated - and the second printed it, which is where the rows appeared:
+`refused: write_file at /tmp/ask-alt-report.txt under <package>/policies/agent-roots.eyg`, the grant
+that would have allowed it with `roots + /tmp`, and the two rows saying the refusal does not end the
+call and what an ask must name. Its next call wrote the same line inside the project root and read it
+back. Only its final message named `/eyg-grant` - the policy, the root, "one tool call" - as what the
+operator could do once the task was already done in roots: the alternative first, the ask last. The
+`/tmp` file did not exist when the run ended, and a run in a scratch project with no
+`.pi/settings.json` at all was void - no package declared, no `eyg` tool, zero calls.
+
 UNVERIFIED: the N-calls duration is pinned by the unit test and was not run live; a `/tree` jump
-in a real session was not driven, only the replay over the recorded session file. That live
-proof, a time bound on a grant, and an operator's way to list the grants in force are owed
-work, carried as `docs/world/entities/gap.grant-polish-undecided.md` with a row in
-`docs/world/runbooks/runbook.next-milestone.md`.
+in a real session was not driven, only the replay over the recorded session file. That live proof and
+a time bound on a grant are owed work, carried as
+`docs/world/entities/gap.grant-polish-undecided.md` with a row in
+`docs/world/runbooks/runbook.next-milestone.md`. What landed instead is the operator's view: `/eyg-grant
+status` answers the line `grantStatusLine` builds (`lib/render-helpers.mjs:595`), the same line the
+command's own errors already carried, and every row of `details.refusals` now names the value the
+policy was given rather than pretending it is always a path.
 
 ## Not this
 
@@ -93,4 +115,6 @@ work, carried as `docs/world/entities/gap.grant-polish-undecided.md` with a row 
 @measured 2026-11-20 by `node .ai-work/grant-loop/drive.mjs` (one `pi --mode rpc` session, five
 prompts, seven dialogs answered by the driver; verdict in `.ai-work/grant-loop/report.json`), by
 replaying that session file through `grantEvents`/`replayGrants`, and by
-`node --test 'test/*.mjs'` (pass 1, fail 0, 0.04 s).
+`node --test 'test/*.mjs'`; the 2026-11-23 and 2026-11-24 one-shot sessions by
+`sh .ai-work/ask-alt/drive.sh` over `.ai-work/ask-alt/proj`, whose `parse.mjs` counts the calls, the
+`denied by policy` lines and the write paths, with the verdict in `.ai-work/ask-alt/run.status`.

@@ -1,0 +1,13 @@
+// Does a call get a fresh key pair? Both shipped policies refuse the field. The
+// argument is the tool's own probe shape (`Eddsa({})`), so the ask is well shaped
+// and reaches the rule rather than the runtime's shape check. A landed key would
+// print the byte sizes only - the key itself is never printed.
+let answer = perform CreateKey(Eddsa({}))
+match answer {
+  Ok(_) -> {
+    perform StandardOut("CREATE KEY LANDED")
+  }
+  Error(reason) -> {
+    perform StandardOut(!string_append("refused: ", reason))
+  }
+}

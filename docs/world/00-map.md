@@ -65,9 +65,11 @@ nothing here reads it at run time, and this tree never writes outside itself.
 | overlay.agent-harness | Overlay is the EYG repository's own agent. | delegate | 2026-11-24 |
 | overlay.policy-rules | A running EYG program is stopped at every effect before the host performs it, and a user-supplied function decides. | delegate | 2026-11-24 |
 | pi.codemode-tool | This workspace **is** the package: `pi list` (2026-11-18) resolves the declaration `..` in `.pi/settings.json` to this ... | delegate | 2026-11-24 |
+| pi.fetch-and-injection-exfiltration | `fetch` is a checked effect whose policy field is `fetch`, and both shipped policies refuse it by name: `fetch: ... | delegate | 2026-11-24 |
 | pi.first-draft | `README.md` opens with a status line calling the package a first draft that has not been proved in extended use, and ... | delegate | 2026-11-24 |
 | pi.policy-config | Two questions the operator asked, answered in the tree: which policy the package uses if you set nothing, and where to ... | delegate | 2026-11-24 |
 | pi.reference-action | `action: "reference"` (`code: ""`) prints the language surface the session is writing against: `eyg reference: 29 ... | delegate | 2026-11-24 |
+| pi.registry-scope-persistence | A session's roots contain the two directories a call can leave code in for a later call: the function-registry scope ... | delegate | 2026-11-24 |
 | pi.session-grants | A refused effect is a value the program gets back, not a report the model owes the operator: the tool description, the ... | delegate | 2026-11-24 |
 | pi.spawner-policy | `policies/spawner-effects.eyg` is the third policy this package ships: `agent-roots.eyg` with an allowlist check over ... | delegate | 2026-11-24 |
 | pi.subagent-spawn | `eyg_subagent`, registered by `extensions/eyg-codemode.ts`, starts a second pi session in the same working directory ... | delegate | 2026-11-24 |
@@ -91,7 +93,7 @@ nothing here reads it at run time, and this tree never writes outside itself.
 
 ## Where to look for a claim
 
-- entities: 36 · invariants: 4 · decisions: 7 · runbooks: 2 · traps: 77
+- entities: 38 · invariants: 4 · decisions: 7 · runbooks: 2 · traps: 86
 - suspect right now: doc-checks.citations
 - re-check everything: `npm run world` · checks: `npm run world:lint` · regenerate this index: `npm run world:map`
 <!-- END GENERATED -->

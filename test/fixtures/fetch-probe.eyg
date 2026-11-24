@@ -1,0 +1,21 @@
+// One network request, printed as what the host returned. The shipped policies refuse `fetch`
+// by name, so under them the answer is the refusal text; under a module of the operator's that
+// allows it the request is made and the listener logs the bytes that left the process.
+// Run: node bin/agent/refusal-probe.mjs --with-policy <an operator module of yours> --program test/fixtures/fetch-probe.eyg
+// `{{port}}` is the port the probe was told to use (`--port`), so the listener and the program
+// agree without anyone reserving a fixed port.
+let request = {
+  method: GET({}),
+  scheme: HTTP({}),
+  host: "127.0.0.1",
+  port: Some({{port}}),
+  path: "/sent",
+  query: None({}),
+  headers: [],
+  body: !string_to_binary("the bytes a session can read")
+}
+let got = perform Fetch(request)
+match got {
+  Error(why) -> { perform StandardOut(why) }
+  Ok(r) -> { perform StandardOut("FETCH LANDED") }
+}

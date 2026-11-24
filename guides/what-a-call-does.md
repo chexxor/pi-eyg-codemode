@@ -228,9 +228,12 @@ several values puts `\n` in its own strings if it wants them on separate lines. 
 `(N output lines)` a result row names counts the newlines the run produced, not the number of
 `StandardOut` calls: a program that prints `"a"` then `"b"` comes back as one line reading `ab`.
 
-- **the ask**, for every refusal that named a path: what was refused, the policy that refused it,
-  the exact `/eyg-grant` an operator would run, and the rule the ask follows - a refusal is a fact
-  about one path, the operator is asked only when one blocks the task, and the ask names the
+- **the ask**, for every refusal the run printed: what was refused - `write_file at /tmp/x`,
+  `fetch asked for 127.0.0.1`, or `fetch` alone when the rule quoted nothing - the policy that
+  refused it, and the exact `/eyg-grant` an operator would run: the first directory no root covers,
+  "the refusal is a rule of `<policy>`, not a root" for a path already under one, or "no roots
+  addition covers it" for a value that is not a path. Then the rule the ask follows - a refusal is a
+  fact about one value, the operator is asked only when one blocks the task, and the ask names the
   addition, the reason for it and the intended use. A `denied by the host` refusal gets no such
   row, because no grant opens those paths.
 - **the builtin list**, when the program named a builtin the runtime does not have - the runner's

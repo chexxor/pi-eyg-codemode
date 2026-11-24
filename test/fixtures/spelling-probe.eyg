@@ -1,0 +1,43 @@
+// One file, six spellings of its name. `hide_secrets` (`policies/agent-roots.eyg:131`)
+// is a suffix test on the path text, and the roots rule compares path text too, so the
+// question is what a spelling does to a rule. The last two names are written from bytes
+// so the two encodings of "café" are visible in the fixture text: `195 169` is the
+// precomposed e-acute, `101 204 129` is an `e` followed by the combining acute.
+let text = (bytes) -> {
+  match !string_from_binary(!binary_from_integers(bytes)) {
+    Ok(value) -> { value }
+    Error(_) -> { "decode failed" }
+  }
+}
+let rows = [
+  {label: "plain", name: ".env.eyg"},
+  {label: "case-folded", name: ".ENV.EYG"},
+  {label: "trailing-dot", name: ".env.eyg."},
+  {label: "trailing-space", name: ".env.eyg "},
+  {label: "composed", name: text([99, 97, 102, 195, 169, 46, 116, 120, 116])},
+  {label: "decomposed", name: text([99, 97, 102, 101, 204, 129, 46, 116, 120, 116])}
+]
+let report = (row) -> {
+  let path = !string_append("{{root}}/", row.name)
+  let wrote = perform WriteFile({path: path, contents: !string_to_binary("marker")})
+  let read = perform ReadFile({path: path, offset: 0, limit: 20})
+  let read_answer = (answer) -> {
+    match answer {
+      Ok(_) -> { "read landed" }
+      Error(reason) -> { reason }
+    }
+  }
+  let wrote_answer = (answer) -> {
+    match answer {
+      Ok(_) -> { "wrote" }
+      Error(reason) -> { reason }
+    }
+  }
+  !string_append(
+    !string_append(!string_append(row.label, ": wrote="), wrote_answer(wrote)),
+    !string_append(" read=", read_answer(read))
+  )
+}
+perform StandardOut(!list_fold(rows, "spelling probe", (row, acc) -> {
+  !string_append(!string_append(acc, "\n"), report(row))
+}))

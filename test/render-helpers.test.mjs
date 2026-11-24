@@ -16,7 +16,7 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
 import { surfaceDriftProblems } from "../bin/agent/gen-surface.mjs";
-import { argumentPolicyPath, bindingOrder, budgetRefusal, externBindings, builtinErrors, builtinHintRows, builtinRows, callBudget, callLines, checkDeclaredEffects, CHILD_TOOL_ALLOWLIST, classifyProbeOutput, COLLAPSED_SOURCE_LINES, childAnswer, childArgv, childCalls, childEnvOverrides, childRefusalRows, childTools, describeGrant, EFFECT_ALLOWLIST_ENV, effectFieldsFor, effectLine, effectsUsed, eygCallCount, eygSettings, findMetadata, fieldsOutside, formatDuration, grantEvents, GRANT_ENTRY, GENERATED_MARK, handledEffectLabels, handledEffectRefusal, parseArguments, VARIABLE_ENTRY, isUnder, LANGUAGE_DOCS, libraryAliases, MAX_CALLS_ENV, outsideRoot, prepareCallArguments, shippedPolicyPath, probeArguments, probeProgram, POLICY_FIELDS, referenceLines, refusalHints, replayGrants, replayVariables, resolvePolicy, resolveRoots, resultLines, ruleMappingEffects, rootsInside, runnerCandidates, runnerFailureLine, sessionDepth, spawnerPolicy, spawnerRoots, subagentCallLines, subagentResultRows, suggestGrant, surfaceFileLines, surfaceRows, SURFACE_FILE, eygStringLiteral, topLevelBindings, variableDir, variableEvents, variableImportProblems, variableModule, variableName, variablePrelude, VARIABLE_SCOPES, variableRows, variableWriteOutcomes, variableWriteProgram } from "../lib/render-helpers.mjs";
+import { argumentPolicyPath, bindingOrder, budgetRefusal, describeRefusal, grantStatusLine, externBindings, builtinErrors, builtinHintRows, builtinRows, callBudget, callLines, checkDeclaredEffects, CHILD_TOOL_ALLOWLIST, classifyProbeOutput, COLLAPSED_SOURCE_LINES, childAnswer, childArgv, childCalls, childEnvOverrides, childRefusalRows, childTools, describeGrant, EFFECT_ALLOWLIST_ENV, effectFieldsFor, effectLine, effectsUsed, eygCallCount, eygSettings, findMetadata, fieldsOutside, formatDuration, grantEvents, GRANT_ENTRY, GENERATED_MARK, handledEffectLabels, handledEffectRefusal, parseArguments, VARIABLE_ENTRY, isUnder, LANGUAGE_DOCS, libraryAliases, MAX_CALLS_ENV, outsideRoot, prepareCallArguments, shippedPolicyPath, probeArguments, probeProgram, POLICY_FIELDS, referenceLines, refusalHints, replayGrants, replayVariables, resolvePolicy, resolveRoots, resultLines, ruleMappingEffects, rootsInside, runnerCandidates, runnerFailureLine, sessionDepth, spawnerPolicy, spawnerRoots, subagentCallLines, subagentResultRows, suggestGrant, surfaceFileLines, surfaceRows, SURFACE_FILE, eygStringLiteral, topLevelBindings, variableDir, variableEvents, variableImportProblems, variableModule, variableName, variablePrelude, VARIABLE_SCOPES, variableRows, variableWriteOutcomes, variableWriteProgram } from "../lib/render-helpers.mjs";
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
 
@@ -338,12 +338,17 @@ test("the grant store: durations, expiry, revoke, and the branch it lives on", (
   assert.equal(rebuilt.active.used, 1, "so a refused call does not spend the grant");
   assert.deepEqual(rebuilt.roots, ["/extra"], "and a grant carries roots as well as a policy");
   assert.equal(replayGrants(grantEvents([{ type: "custom", customType: "other", data: grant("gX", 1) }])).policy, null, "an entry that is not on this extension's type is not a grant");
+
+  // What `/eyg-grant status` answers, the same line the command's own errors carry.
+  assert.equal(grantStatusLine(three.grants), "grants in force now: g2: /p/wide.eyg for 3 tool calls (2 used) - revoke with /eyg-grant revoke <g2>", "the listing names the grant, its spend and the id to revoke it with");
+  assert.match(grantStatusLine(replayGrants([grant("wide", null), grant("narrow", 1)]).grants), /wide: \/p\/wide\.eyg for the rest of the session \| narrow: \/p\/wide\.eyg for 1 tool call \(0 used\)/, "and every grant in force, oldest first");
+  assert.equal(grantStatusLine([]), "no grant is in force now", "and the honest answer when nothing is widened");
 });
 
 test("what a refusal names: the path, and the exact grant that would clear it", () => {
   const output = "eyg run: exit 1 in 0.11 s wall\nError(\"write_file denied by policy: /tmp/outside\")\nError(\"write_file denied by policy: /tmp/outside\")";
   const hints = refusalHints(output);
-  assert.deepEqual(hints, [{ field: "write_file", path: "/tmp/outside" }], "one hint per distinct refusal");
+  assert.deepEqual(hints, [{ field: "write_file", value: "/tmp/outside" }], "one hint per distinct refusal");
   assert.equal(outsideRoot("/tmp/outside", ["/work"]), "/tmp", "the first directory no root covers");
   assert.equal(outsideRoot("/work/sub/file.eyg", ["/work"]), null, "a path already under a root needs a rule, not a root");
   const lines = suggestGrant(hints[0], { roots: "/work", policy: "/pkg/policies/agent-roots.eyg" });
@@ -355,8 +360,24 @@ test("what a refusal names: the path, and the exact grant that would clear it", 
   assert.match(lines[2], /keep solving inside what the policy allows/, "a refusal is not a reason to stop");
   assert.match(lines[3], /blocks the task and the other routes are spent/, "the ask waits for the routes to run out");
   assert.match(lines[3], /why the task needs it, and what you would use it for/, "and the ask names a reason and an intended use");
-  const inside = suggestGrant({ field: "read_file", path: "/work/.env.eyg" }, { roots: "/work", policy: "/p" });
+  const inside = suggestGrant({ field: "read_file", value: "/work/.env.eyg" }, { roots: "/work", policy: "/p" });
   assert.match(inside[1], /a rule of \/p, not a root/, "when no root would help it says so instead of guessing one");
+
+  // The other shape the shipped policy prints: a rule that refuses the effect itself
+  // quotes no value, and a host is not a path. Neither may be answered with a root.
+  const byRule = refusalHints("Error(\"fetch denied by policy\")\nError(\"create_key denied by policy\")");
+  assert.deepEqual(byRule, [{ field: "fetch", value: null }, { field: "create_key", value: null }], "a refusal that names no value is still a refusal");
+  const ruleRows = suggestGrant(byRule[0], { roots: "/work", policy: "/pkg/policies/agent-roots.eyg" });
+  assert.equal(ruleRows[0], "refused: fetch under /pkg/policies/agent-roots.eyg", "the row names the field and invents no path");
+  assert.match(ruleRows[1], /whose fetch rule admits this effect/, "the ask names the rule that has to change");
+  assert.match(ruleRows[1], /refuses fetch outright: no roots addition covers it/, "and says plainly that a root would not help");
+  const host = refusalHints("fetch denied by policy: 127.0.0.1")[0];
+  assert.deepEqual(host, { field: "fetch", value: "127.0.0.1" }, "a host is a value, not a path");
+  const hostRows = suggestGrant(host, { roots: "/work", policy: "/p" });
+  assert.equal(hostRows[0], "refused: fetch asked for 127.0.0.1 under /p", "named with what the policy was given");
+  assert.match(hostRows[1], /names 127\.0\.0\.1, not a path: no roots addition covers it/, "and it says so instead of offering a root");
+  assert.equal(hostRows[1].includes("roots + /"), false, "no root is offered at all");
+  assert.equal(describeRefusal({ field: "standard_in", value: null }), "standard_in", "one phrase for a refusal that names no value");
 
   // The rows are visible collapsed: the operator has to see the ask to answer it.
   const refused = resultLines({
@@ -427,12 +448,12 @@ test("a subagent: argv, tools, effect fields and the environment it starts with"
   assert.equal(isUnder("/", "/work"), false, "and neither is its parent");
   assert.equal(isUnder("/work", "/work"), true, "a root covers itself");
   const childRecords = [
-    JSON.stringify({ type: "tool_execution_end", toolName: "eyg", result: { details: { policy: "/p.eyg", policySource: "spawner", roots: "/work", exit: 0, refusals: [{ field: "write_file", path: "/tmp/x" }] } } }),
+    JSON.stringify({ type: "tool_execution_end", toolName: "eyg", result: { details: { policy: "/p.eyg", policySource: "spawner", roots: "/work", exit: 0, refusals: [{ field: "write_file", value: "/tmp/x" }] } } }),
     JSON.stringify({ type: "message", message: { role: "assistant", content: [{ type: "text", text: "wrote it, /tmp was refused" }] } }),
     "not json",
   ].join("\n");
   assert.deepEqual(childCalls(childRecords).map((call) => call.policySource), ["spawner"], "the child's calls, read out of its JSON records");
-  assert.deepEqual(childCalls(childRecords)[0].refusals, [{ field: "write_file", path: "/tmp/x" }], "and its refusals reach the parent");
+  assert.deepEqual(childCalls(childRecords)[0].refusals, [{ field: "write_file", value: "/tmp/x" }], "and its refusals reach the parent");
   assert.equal(childCalls(childRecords)[0].budget, null, "a call that merely ran carries no budget");
   const budgetRecord = JSON.stringify({ type: "tool_execution_end", toolName: "eyg", result: { details: { ran: false, budget: 2, callsMade: 2 } } });
   assert.equal(childCalls(budgetRecord)[0].budget, 2, "a call the budget refused carries the budget, which is how the spawner knows the child ran out");
@@ -513,8 +534,8 @@ test("the rows a subagent spawn renders: the ask, and what came back", () => {
       exit: 0,
       argv: ["--print", "--mode", "json", "--tools", "eyg", "t"],
       policy: "/p.eyg",
-      calls: [{ policy: "/p.eyg", policySource: "spawner", roots: "/work", exit: 0, refusals: [{ field: "write_file", path: "/tmp/x" }] }],
-      refusals: [{ field: "write_file", path: "/tmp/x" }],
+      calls: [{ policy: "/p.eyg", policySource: "spawner", roots: "/work", exit: 0, refusals: [{ field: "write_file", value: "/tmp/x" }] }],
+      refusals: [{ field: "write_file", value: "/tmp/x" }],
     },
   };
   const answered = subagentResultRows(childResult, false, 1200);
@@ -525,7 +546,7 @@ test("the rows a subagent spawn renders: the ask, and what came back", () => {
   assert.ok(!flat(answered).includes("argv:"), "the argv belongs to the expanded row");
   assert.match(flat(subagentResultRows(childResult, true, 1200)), /argv: pi --print --mode json --tools eyg t/, "and shows there");
   assert.ok(flat(subagentResultRows(childResult, true, 1200)).includes("child under /p.eyg"), "expanded carries the whole report");
-  assert.equal(childRefusalRows({ policy: "/p.eyg", refusals: [{ field: "read_file", path: "/x" }] }).length, 2, "the refusal and the reason it stands");
+  assert.equal(childRefusalRows({ policy: "/p.eyg", refusals: [{ field: "read_file", value: "/x" }] }).length, 2, "the refusal and the reason it stands");
   assert.equal(childRefusalRows({ policy: "/p.eyg", refusals: [] }).length, 0, "no refusal, no lecture");
   const refusedSpawn = subagentResultRows({ content: [{ type: "text", text: "eyg refused: a subagent gets no children" }], details: { gated: true, ran: false } }, false, undefined);
   assert.equal(tones(refusedSpawn).split("\n")[0], "error", "a refused spawn is an error row");
@@ -763,7 +784,7 @@ test("kept bindings: a session branch replays its own definitions", () => {
 test("kept bindings: a refused write is reported as the refused effect it is", () => {
   const output = 'mkdir /operator-home/.pi/eyg-variables: ok\nwrite /operator-home/.pi/eyg-variables/note.eyg: write_file denied by policy: /operator-home/.pi/eyg-variables/note.eyg\n';
   const hints = refusalHints(output);
-  assert.deepEqual(hints, [{ field: "write_file", path: "/operator-home/.pi/eyg-variables/note.eyg" }], "the refusal is the row the write program printed");
+  assert.deepEqual(hints, [{ field: "write_file", value: "/operator-home/.pi/eyg-variables/note.eyg" }], "the refusal is the row the write program printed");
   const keep = [{ name: "note", source: '"x"', references: [] }];
   const files = [{ path: "/operator-home/.pi/eyg-variables/note.eyg", contents: 'let note = "x"\n{note}\n' }];
   const refused = variableWriteOutcomes({ scope: "user", keep, files, output, present: [], code: 0, killed: false });

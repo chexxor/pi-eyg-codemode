@@ -30,8 +30,9 @@ session entry (`pi.appendEntry`) that the branch replays. The ask a grant answer
 session that has spent its routes inside the policy, and it names the addition, the reason for it
 and the intended use (`guides/what-a-call-does.md`). `/eyg-grant` asks for the policy or
 module path, the roots to add to the ones the policy reads, and the duration; typed with its
-arguments (`/eyg-grant agent-roots 3 roots=/tmp`) it asks only for the confirmation, and
-`/eyg-grant revoke` ends one early. `docs/world/entities/pi.session-grants.md` carries what one
+arguments (`/eyg-grant agent-roots 3 roots=/tmp`) it asks only for the confirmation, `/eyg-grant
+status` answers what is in force without starting a grant, and `/eyg-grant revoke` ends one early.
+`docs/world/entities/pi.session-grants.md` carries what one
 sequence did, and `notes/pi-codemode-session-grants.md` why it sits on the operator's side.
 
 The project file is the per-project knob, and it is the one to use: a session started in
@@ -107,19 +108,26 @@ Allow one host:
 let one_host = (request) -> {
   match !equal(request.host, "api.github.com") {
     True(_) -> { Pass(request) }
-    False(_) -> { Mock(Error("fetch denied by policy")) }
+    False(_) -> { Mock("fetch denied by policy") }
   }
 }
 ```
 
 The `Fetch` value is a record with `method`, `scheme`, `host`, `port`, `path`, `query`,
-`headers` and `body`, so a rule reads `request.host`. To attach a token, `Pass` a rebuilt
-request: a record update overwrites only fields that already exist
-(<https://eyg.run/guides/eyg-syntax-guide>), so
-a rewritten request lists every field. A token belongs in the policy module rather than in
-the program, because the module is authored on the host: its own `perform Env("...")` runs
-at the top of the module, outside the checks your program is under, while the program's
-`Env` answers whatever the `env` rule says.
+`headers` and `body`, so a rule reads `request.host`.
+
+A refusal is the reason as a plain String. What `Mock` answers an effect with is what that
+effect's own reply type allows, and `Error("...")` is not a String: `eyg check` accepts it and
+the run aborts instead of refusing.
+
+To attach a token, `Pass` a rebuilt request: a record update overwrites only fields that already
+exist (<https://eyg.run/guides/eyg-syntax-guide>), so a rewritten request lists every field -
+`{headers: [...], ..request}` infers a record carrying only `headers`, and a rule you compose it
+with that reads `request.host` answers `missing row 'host'`. Compose the token rule with a host
+rule rather than with `pass`: an unwrapped one puts the header on every host the program asks
+for. A token belongs in the policy module rather than in the program, because the module is
+authored on the host: its own `perform Env("...")` runs at the top of the module, outside the
+checks your program is under, while the program's `Env` answers whatever the `env` rule says.
 
 Move the roots instead of the rules when the session is simply in the wrong place.
 `eyg.roots` in `.pi/settings.json` is a list of absolute paths; `EYG_ALLOWED_ROOTS` is the same

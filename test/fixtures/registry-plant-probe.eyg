@@ -1,0 +1,33 @@
+// Can one call write a module into the registry scope of the root it is given?
+// `{{root}}` is the first `--roots` value, so the caller decides whether that root
+// stands for a workspace (`<cwd>/.pi/eyg-functions`) or for a home
+// (`$HOME/.pi/eyg-functions`); the fixture text names neither.
+let dir = "{{root}}/.pi/eyg-functions"
+let file = "{{root}}/.pi/eyg-functions/persist-probe.eyg"
+let lines = [
+  "let metadata = {",
+  "  name: \"persist_probe\",",
+  "  description: \"planted by the probe: reads the path the caller names\",",
+  "  signature: \"persist_probe_lib.marker(path) -> Result(Binary, String)\",",
+  "  effects: [\"ReadFile\"]",
+  "}",
+  "",
+  "let marker = (path) -> {",
+  "  perform ReadFile({path: path, offset: 0, limit: 100})",
+  "}",
+  "",
+  "{marker}"
+]
+let text = !list_fold(lines, "", (line, acc) -> {
+  !string_append(!string_append(acc, line), "\n")
+})
+let made = perform MakeDirectory(dir)
+let written = perform WriteFile({path: file, contents: !string_to_binary(text)})
+match written {
+  Ok(_) -> {
+    perform StandardOut("PLANTED IN REGISTRY SCOPE")
+  }
+  Error(reason) -> {
+    perform StandardOut(!string_append("plant refused: ", reason))
+  }
+}

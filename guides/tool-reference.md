@@ -25,7 +25,7 @@ The sections:
 | policy module | `policies/agent-roots.eyg` inside the installed package, the path taken from `import.meta.url` | `lib/render-helpers.mjs` (`resolvePolicy`), used by `extensions/eyg-codemode.ts`; the path reaches the program through the entry, which imports the module (`entryProgram`); the order of the slots is stated in `guides/how-to-write-a-policy.md` |
 | project key | nothing set: the package default and the working directory | `eyg.policy` (a shipped policy name such as `agent-roots`, or an absolute module path) and `eyg.roots` (absolute paths) in `.pi/settings.json`; pi merges global and project settings and keeps keys it does not know, and the tool re-reads both keys on every call |
 | roots | the session working directory | `lib/render-helpers.mjs` (`resolveRoots`): the roots a spawner narrowed this session to, then `eyg.roots`, then `EYG_ALLOWED_ROOTS`, then the working directory, plus the roots of a grant in force; the entry writes the resolved list into the `ctx` the policy reads (`contextLiteral`) |
-| widening for the rest of the session | nothing widened: a refusal stays a refusal | the operator's `/eyg-grant` command (`extensions/eyg-codemode.ts`), whose record `replayGrants` in `lib/render-helpers.mjs` reads back off the session branch; the order is in `guides/how-to-write-a-policy.md` |
+| widening for one call, N calls or the session | nothing widened: a refusal stays a refusal | the operator's `/eyg-grant` command (`extensions/eyg-codemode.ts`): `/eyg-grant <agent-roots \| deny-all \| an absolute module path> <one \| N \| session> [roots=/abs,/abs]`, typed arguments asked once; `/eyg-grant status` lists what is in force, `/eyg-grant revoke [id]` ends one early; whose record `replayGrants` in `lib/render-helpers.mjs` reads back off the session branch. The order is in `guides/how-to-write-a-policy.md` |
 | a second session | none started | the `eyg_subagent` tool (`extensions/eyg-codemode.ts`): `pi --print --mode json --tools <tools>` built as argv, its boundary from `childEnvOverrides` and checked by `rootsInside` and `childTools`, its effect allowlist enforced by `policies/spawner-effects.eyg`, its call budget by `callBudget`, its report parsed by `childCalls`/`childAnswer`; `guides/how-to-spawn-a-subagent.md` |
 | kept bindings | none kept: a `let` defined in one call is not in scope on the next | the `extern` argument (`session`, `workspace`, `user`): `keptBindings` in `extensions/eyg-codemode.ts` reads the two directories and this session's records into the prelude, and a file scope is kept by a program built by `variableWriteProgram` and reported by `variableWriteOutcomes` (`lib/render-helpers.mjs`); `guides/how-to-keep-bindings.md` |
 | runner | `EYG_CODEMODE_RUNNER` (an absolute path) when set, else `eyg` on PATH | `lib/render-helpers.mjs` (`runnerCandidates`), used by `extensions/eyg-codemode.ts`; a binary that is missing, or that reads the mode word as a file name, gets one line naming the install and quoting the command that was run (`runnerFailureLine`) |
@@ -48,7 +48,7 @@ The sections:
 
 The orders - which policy a call gets, and which roots it reads - are stated once, in
 `guides/how-to-write-a-policy.md`. Both are printed in every expanded row, and a refused
-call adds what the collapsed row shows too: the path it was denied, the policy that denied it,
+call adds what the collapsed row shows too: what the policy was given, the policy that denied it,
 the `/eyg-grant` that would have allowed it, and the template an ask follows - the addition, the
 reason for it and the intended use (`guides/what-a-call-does.md`).
 
@@ -299,12 +299,12 @@ file is in this tree:
 read_file denied by policy: <this tree>/.env.eyg
 ```
 
-In a tool session the same refusal arrives with the ask rows added: the path it was denied and the
-`/eyg-grant` that would have allowed it (`refusalRows` and `grantRows` in
-`lib/render-helpers.mjs`). One exception is worth knowing before you read a session transcript:
-those rows appear when the refusal names a path, and a policy that refuses without one -
-`policies/deny-all.eyg` answers `read_file denied by policy` and nothing else - leaves the tool
-nothing to put in them.
+In a tool session the same refusal arrives with the ask rows added: what the policy was given, the
+policy that refused it and the `/eyg-grant` that would have allowed it (`refusalHints`,
+`describeRefusal` and `suggestGrant` in `lib/render-helpers.mjs`, rendered by `refusalRows` and
+`grantRows`). A refusal that quotes no value - `policies/deny-all.eyg` answers `read_file denied by
+policy` and nothing else - still gets them, and its ask says that no roots addition covers it instead
+of naming a path it was never given.
 
 ## Captures, and how they are marked
 

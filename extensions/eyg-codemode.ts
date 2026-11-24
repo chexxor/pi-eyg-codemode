@@ -83,6 +83,8 @@ import {
   contextLiteral,
   DEPTH_ENV,
   describeGrant,
+  describeRefusal,
+  grantStatusLine,
   EFFECT_ALLOWLIST_ENV,
   effectFieldsFor,
   effectLine,
@@ -1227,7 +1229,7 @@ export default function (pi: ExtensionAPI) {
       "Do not grant the child `read` to give it reach: `read` is pi's own tool, no policy decides it, and it hands the child this session's read reach. The default child tool list is `eyg` alone.",
       "Give `max_calls` when the task is a survey rather than a task with a known end; a child stopped by its budget reports what it found.",
       "Never spawn a subagent to get past a refusal: the child is bounded by your reach, and a grant you hold does not reach it. Ask the operator for the grant and do the work yourself.",
-      "Read the child's refusals in the result before deciding what to do next; they name the field, the path and the policy that refused it.",
+      "Read the child's refusals in the result before deciding what to do next: each one names the field, what the policy was given (a path, or nothing when the policy refuses the effect itself) and the policy that refused it.",
       "A subagent session costs a model run of its own: one spawn per chunk of work, not one per question.",
     ],
 
@@ -1547,10 +1549,10 @@ export default function (pi: ExtensionAPI) {
 
       const calls = childCalls(result.stdout + "\n" + result.stderr);
       const answer = childAnswer(result.stdout);
-      const refusals: { field: string; path: string }[] = [];
+      const refusals: { field: string; value: string | null }[] = [];
       for (const call of calls) {
         for (const hint of call.refusals) {
-          if (!refusals.some((seen) => seen.field === hint.field && seen.path === hint.path)) refusals.push(hint);
+          if (!refusals.some((seen) => seen.field === hint.field && seen.value === hint.value)) refusals.push(hint);
         }
       }
       const durationMs = Date.now() - startedAt;
@@ -1597,7 +1599,7 @@ export default function (pi: ExtensionAPI) {
         `child under ${runPolicy} (${policySource}), roots ${childRoots.join(", ")}, tools ${given.tools.join(", ")}, ${budgetLine}. Its policy comes from this session's settings or a shipped policy; a grant made here does not reach it.`,
         `child's final message:\n${answer === "" ? "(the child left no final message)" : answer}`,
         `child eyg calls: ${calls.length}${calls.length === 0 && stderr !== "" ? ` (stderr: ${stderr.split("\n").slice(-5).join(" | ")})` : ""}`,
-        ...calls.map((call, index) => `  ${index + 1}. under ${call.policy ?? "?"} (${call.policySource ?? "?"}) roots ${call.roots ?? "?"} exit ${call.exit ?? "?"}${call.budget !== null ? ` out of calls (budget ${call.budget})` : ""}${call.refusals.length > 0 ? ` refused ${call.refusals.map((hint) => `${hint.field} at ${hint.path}`).join(", ")}` : ""}`),
+        ...calls.map((call, index) => `  ${index + 1}. under ${call.policy ?? "?"} (${call.policySource ?? "?"}) roots ${call.roots ?? "?"} exit ${call.exit ?? "?"}${call.budget !== null ? ` out of calls (budget ${call.budget})` : ""}${call.refusals.length > 0 ? ` refused ${call.refusals.map(describeRefusal).join(", ")}` : ""}`),
         ...(effectFields.length > 0 ? [`effects the child was given: ${effectFields.join(", ")}`] : []),
         ...effectNotes.map((note) => `note: ${note}`),
         ...asks,
@@ -1620,10 +1622,13 @@ export default function (pi: ExtensionAPI) {
       const tokens = (args ?? "").trim().split(/\s+/).filter((token) => token !== "");
       const say = (message: string, kind: "info" | "warning" | "error" = "info") => ctx.ui.notify(message, kind);
 
-      const state = () =>
-        inForce.length === 0
-          ? "no grant is in force now"
-          : `grants in force now: ${inForce.map((grant) => describeGrant(grant)).join(" | ")}`;
+      const state = () => grantStatusLine(inForce);
+
+      // The operator's question "what is widened right now", answered without starting a
+      // grant: the listing is the same line the command's own errors already carried.
+      if (tokens[0] === "status") {
+        return say(inForce.length === 0 ? `${state()}: the next eyg call runs under the policy the settings name` : state());
+      }
 
       if (tokens[0] === "revoke") {
         if (inForce.length === 0) return say("no grant is in force to revoke.", "warning");

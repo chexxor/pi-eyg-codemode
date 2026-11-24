@@ -1,0 +1,20 @@
+// One POST with a body and a header the *program* sets, so a probe can tell a header the program
+// wrote from a header the policy attached. The header record is `{key, value}`: write `name` here
+// instead of `key` and the run answers `error: missing record field: key` - a type error in the
+// guard, not a refusal.
+// Run: node bin/agent/refusal-probe.mjs --port <port> --with-policy <policy> --program test/fixtures/fetch-post-probe.eyg
+let request = {
+  method: POST({}),
+  scheme: HTTP({}),
+  host: "127.0.0.1",
+  port: Some({{port}}),
+  path: "/sent-post",
+  query: None({}),
+  headers: [{ key: "Authorization", value: "Bearer program-side-token-not-a-secret" }],
+  body: !string_to_binary("the bytes a session can read")
+}
+let got = perform Fetch(request)
+match got {
+  Error(why) -> { perform StandardOut(why) }
+  Ok(r) -> { perform StandardOut("POST LANDED") }
+}

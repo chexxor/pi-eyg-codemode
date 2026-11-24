@@ -12,9 +12,11 @@
 //   node bin/agent/refusal-probe.mjs --with-policy deny-all # the narrowest policy
 //   node bin/agent/refusal-probe.mjs --fields read_file,standard_out --with-policy spawner-effects
 //   node bin/agent/refusal-probe.mjs --program test/fixtures/secret-probe.eyg --inside-roots
+//   node bin/agent/refusal-probe.mjs --with-policy /tmp/my-policies/open.eyg   # a module of your own
 //   node bin/agent/refusal-probe.mjs --program test/fixtures/self-write-probe.eyg --inside-roots
 //   node bin/agent/refusal-probe.mjs --roots /tmp/where-the-link-is --program test/fixtures/symlink-read-probe.eyg
 //   node bin/agent/refusal-probe.mjs --roots /tmp/a --protected /tmp/b --program test/fixtures/symlink-write-probe.eyg
+//   node bin/agent/refusal-probe.mjs --port 45678 --program test/fixtures/fetch-probe.eyg   # the fixture names its port {{port}}
 //
 // The program runs with its working directory outside the roots unless `--inside-roots`
 // says otherwise, which is what makes the write probe's relative path land outside them.
@@ -41,13 +43,14 @@ const programFile = flag("program", join(packageDir, "test/fixtures/refusal-prob
 const insideRoots = argv.includes("--inside-roots");
 const roots = [resolve(flag("roots", packageDir))];
 const shielded = flag("protected", "");
+const port = flag("port", "8077");
 
 const scratch = mkdtempSync(join(tmpdir(), "eyg-refusal-probe-"));
 const cwd = insideRoots ? roots[0] : scratch;
 const programPath = join(scratch, "program.eyg");
 const entryPath = join(scratch, "entry.eyg");
 const guard = join(packageDir, "host/guard.eyg");
-const policy = join(packageDir, "policies", `${policyName}.eyg`);
+const policy = policyName.startsWith("/") ? resolve(policyName) : join(packageDir, "policies", `${policyName}.eyg`);
 const protectedPaths = shielded === "" ? hostProtectedPaths({ packageDir, policyPath: policy }) : [resolve(shielded)];
 const ctx = contextLiteral({ roots, cwd, fields, protected: protectedPaths });
 
@@ -58,7 +61,8 @@ try {
     readFileSync(programFile, "utf8")
       .replaceAll("{{root}}", roots[0])
       .replaceAll("{{cwd}}", cwd)
-      .replaceAll("{{outside}}", scratch),
+      .replaceAll("{{outside}}", scratch)
+      .replaceAll("{{port}}", port),
   ));
   writeFileSync(entryPath, entryProgram({ guard, policy, ctx, program: programPath }));
   try {

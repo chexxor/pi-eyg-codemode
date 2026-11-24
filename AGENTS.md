@@ -58,8 +58,8 @@ host performs it.
   inside one `run` function) and `entry.eyg` (which imports the guard, the policy and the
   program) into a scratch directory of its own and spawns
   `<binary> <mode> <entry.eyg>` - no shell in between, so quoting cannot be a route around
-  the checks (`runGuarded` in `extensions/eyg-codemode.ts:465`, the one place it spawns at
-  `:487`).
+  the checks (`runGuarded` in `extensions/eyg-codemode.ts:467`, the one place it spawns at
+  `:489`).
 - The per-effect checks are a program this package ships: `host/guard.eyg` installs one
   `handle` clause per effect row of `guides/eyg-surface.tsv` and applies the policy around
   the model's code, which is imported inside the guarded body. A label the guard does not
@@ -73,13 +73,13 @@ host performs it.
   call's `policy` argument sits outside that chain: it is
   honoured only when it names the policy the chain already chose or `NARROWEST_POLICY_FILE`
   (`narrows` in `lib/render-helpers.mjs:468`, used at `:507`), and anything else comes back
-  `refusedArgument` (`extensions/eyg-codemode.ts:711`, and `:1331` for a child's policy).
+  `refusedArgument` (`extensions/eyg-codemode.ts:713`, and `:1333` for a child's policy).
 - The binary is chosen by name, not by asking it what it can do: `EYG_CODEMODE_RUNNER` (an
   absolute path), else `eyg` on PATH - two places, no third (`runnerCandidates` in
   `lib/render-helpers.mjs:363`, used at `extensions/eyg-codemode.ts:749` and `:1408`). Nothing
   is asked of it but the mode word and a file this package wrote; a missing binary, or one with
   no such mode command, ends the call with one line naming the install and quoting the command
-  that was run (`runnerFailureLine` in `lib/render-helpers.mjs:671`).
+  that was run (`runnerFailureLine` in `lib/render-helpers.mjs:699`).
 - **Nothing here waits on a build of the language.** The installed CLI runs every call:
   `eyg --version` answers `eyg v0.1.0` and `eyg run <the entry this package writes>` runs the
   guard (`@measured 2026-11-22`), so what a shipped policy decides at runtime is re-runnable
@@ -120,7 +120,7 @@ host performs it.
 | `node bin/agent/refusal-probe.mjs` (one guarded call from a shell: the entry, the policy import and the program module the tool writes, run as `eyg run <entry>`; `--with-policy`, `--fields`, `--program`, `--inside-roots`) | 0.19 s wall | 2026-11-22 |
 | `node --test test/host-coverage.test.mjs` (the guard names every effect row of the surface file) | 0.09 s wall | 2026-11-22 |
 | `node bin/agent/check-variable-shapes.mjs` (generates a kept binding's text and runs it through the CLI on PATH, with no policy module loaded) | 0.40 s wall, eleven rows | 2026-11-22 |
-| `pi --print --mode json --tools eyg <prompt>` (one fresh session) | 440 s wall for three `eyg` calls - the wall is the model's generation, not the calls, so budget for the task's calls and run it in the background; needs `--model`, the default model hangs | 2026-11-23 |
+| `pi --print --mode json --tools eyg <prompt>` (one fresh session) | 440 s wall for three `eyg` calls - the wall is the model's generation, not the calls, so budget for the task's calls and run it in the background; needs `--model`, and it must be the model the server serves (`$PI_MODEL`) - `pi --list-models` also lists names the server answers 404 for, and the default model hangs | 2026-11-23 |
 | `for f in policies/*.eyg libraries/*.eyg host/*.eyg; do eyg check "$f"; done` (the audit's `shipped EYG modules check` row) | 0.65 s wall | 2026-11-22 |
 | `node pi-simple-world-model/bin/world_lint.mjs` | 0.06 s wall | 2026-11-18 |
 | `node pi-simple-world-model/bin/world_map.mjs --check` | 0.04 s wall | 2026-11-18 |

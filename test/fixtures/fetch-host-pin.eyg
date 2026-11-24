@@ -1,0 +1,10 @@
+// A policy rule the probes splice into a *copy* of a shipped policy: allow one host, refuse every
+// other. Run: node test/fixtures/fetch-pin.mjs > <scratch>/pinned.eyg, then pass that file to
+// bin/agent/refusal-probe.mjs with --with-policy. It is a probe fixture, not a policy the package
+// ships or loads: nothing under policies/ changes.
+  let one_host = (request) -> {
+    match !equal(request.host, "api.github.com") {
+      True(_) -> { Pass(request) }
+      False(_) -> { Mock(denied("fetch", request.host)) }
+    }
+  }

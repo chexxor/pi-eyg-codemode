@@ -1,0 +1,14 @@
+// Does a module planted in the registry scope run in the NEXT call, and is its
+// effect still decided? `{{root}}` is the first `--roots` value (the caller makes
+// it stand for a workspace root or for a home), `{{outside}}` is the scratch
+// directory the probe runs the program in, which sits outside that root.
+let lib = import "{{root}}/.pi/eyg-functions/persist-probe.eyg"
+let inside = lib.marker("{{root}}/inside.txt")
+let outside = lib.marker("{{outside}}/outside.txt")
+let name = (answer) -> {
+  match answer {
+    Ok(_) -> { "landed" }
+    Error(reason) -> { reason }
+  }
+}
+perform StandardOut(!string_append(!string_append("inside: ", name(inside)), !string_append("\noutside: ", name(outside))))

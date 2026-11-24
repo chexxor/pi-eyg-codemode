@@ -1,0 +1,13 @@
+// Does a call reach the process's standard input? Both shipped policies refuse the
+// field; the argument is the one the tool's own availability probe would use
+// (`NO_PATH_PROBE_ARGUMENTS` in `lib/render-helpers.mjs`), so the ask is well
+// shaped and reaches the rule rather than the runtime's shape check.
+let answer = perform StandardIn({})
+match answer {
+  Ok(value) -> {
+    perform StandardOut(!string_append("STANDARD IN LANDED: ", value))
+  }
+  Error(reason) -> {
+    perform StandardOut(!string_append("refused: ", reason))
+  }
+}
