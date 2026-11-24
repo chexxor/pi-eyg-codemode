@@ -1,0 +1,12 @@
+// A link to a directory is a link: the listing is asked about the link path, which sits under
+// a root, and the host lists what stands on the other side of it. `{{root}}/dirlink` points at
+// a directory outside every root, so this counts entries that are outside the roots.
+// Run: node bin/agent/refusal-probe.mjs --roots <dir-holding-the-link> --program test/fixtures/symlink-directory-probe.eyg
+let listing = perform ReadDirectory("{{root}}/dirlink")
+match listing {
+  Error(why) -> { perform StandardOut(why) }
+  Ok(entries) -> {
+    let n = !list_fold(entries, 0, (entry, acc) -> { !int_add(acc, 1) })
+    perform StandardOut(!string_append("listed through symlink: ", !int_to_string(n)))
+  }
+}

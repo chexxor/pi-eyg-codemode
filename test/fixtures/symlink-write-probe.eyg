@@ -1,0 +1,10 @@
+// The same route on the write side: the path the policy and the host shield are asked about
+// is the link, which sits under a root and is not under a shielded path, and the host follows
+// it. The probe points `{{root}}/wlink` at a file outside the roots, or at a file under the
+// path `--protected` names; either way the write is performed and the file appears there.
+// Run: node bin/agent/refusal-probe.mjs --roots <dir-holding-the-link> --program test/fixtures/symlink-write-probe.eyg
+let through = perform WriteFile({path: "{{root}}/wlink", contents: !string_to_binary("through the link")})
+match through {
+  Error(why) -> { perform StandardOut(why) }
+  | (_) -> { perform StandardOut("WROTE THROUGH SYMLINK") }
+}

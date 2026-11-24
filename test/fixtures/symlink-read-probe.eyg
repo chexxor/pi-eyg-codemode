@@ -1,0 +1,10 @@
+// The roots are compared against the path text the program wrote, not against what that
+// path is. A symlink standing inside a root is under the root, and the host follows it when
+// it performs the effect, so the bytes that come back can live outside every root. The probe
+// points `{{root}}/link` at a file outside the roots; a read through it is allowed.
+// Run: node bin/agent/refusal-probe.mjs --roots <dir-holding-the-link> --program test/fixtures/symlink-read-probe.eyg
+let through = perform ReadFile({path: "{{root}}/link", offset: 0, limit: 40})
+match through {
+  Error(why) -> { perform StandardOut(why) }
+  Ok(_) -> { perform StandardOut("READ THROUGH SYMLINK") }
+}

@@ -56,6 +56,7 @@ nothing here reads it at run time, and this tree never writes outside itself.
 | gap.policy-runner-not-on-main | The one-shot run with a policy module that this package used to start is not in the language repository's `main` as ... | delegate | 2026-11-24 |
 | gap.roots-have-no-config-file | This page recorded the hole: the roots in force were the session working directory or `EYG_ALLOWED_ROOTS`, ... | delegate | 2026-11-24 |
 | gap.runner-release-lacks-policy | This page recorded the hole: the latest release the language repository serves is `gleam_cli-v0.1.0` (read from its ... | delegate | 2026-11-24 |
+| gap.symlinks-escape-the-roots | `absolute` (`host/guard.eyg:165`) normalizes a path **lexically**: split it into segments, collapse `.` and `..`, ... | delegate | 2026-11-24 |
 | gap.windows-is-undocumented | The language's prebuilt-install page (<https://eyg.run/guides/install-a-prebuilt-binary>, read as a copy here on ... | delegate | 2026-11-24 |
 | guides.index | `guides/` holds what an agent reads before writing EYG, and it is one set now: prose this package wrote, plus ... | delegate | 2026-11-24 |
 | guides.surface-file | `guides/eyg-surface.tsv` is the whole offline answer to "what may I call, and what may I ask for": 29 `builtin` rows ... | delegate | 2026-11-24 |
@@ -90,7 +91,7 @@ nothing here reads it at run time, and this tree never writes outside itself.
 
 ## Where to look for a claim
 
-- entities: 35 · invariants: 4 · decisions: 7 · runbooks: 2 · traps: 75
+- entities: 36 · invariants: 4 · decisions: 7 · runbooks: 2 · traps: 76
 - suspect right now: none
 - re-check everything: `npm run world` · checks: `npm run world:lint` · regenerate this index: `npm run world:map`
 <!-- END GENERATED -->

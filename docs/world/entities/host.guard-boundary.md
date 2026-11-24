@@ -61,7 +61,9 @@ files the tool builds.
    test/fixtures/self-write-probe.eyg --inside-roots` - four `denied by the host` answers, one
    `read_file guard: allowed`, `exit=0`, and no file at either target path (`@measured 2026-11-23`,
    0.4 s). The targets are names that do not exist, so a run that ever performed them leaves a stray
-   file instead of damaging a tracked one.
+   file instead of damaging a tracked one. This holds against path text and not against what the text
+   is: a symlink standing inside a root is decided by the link's own path and the host follows it, so
+   a write reaches `policies/` that way (`docs/world/entities/gap.symlinks-escape-the-roots.md`).
 7. **A call parses its program before it runs it, and refuses one that handles an effect.** The
    tool asks the same binary for the program's syntax tree (`parseArguments` in
    `lib/render-helpers.mjs`) and refuses a program whose tree names a `handle` clause, naming the
