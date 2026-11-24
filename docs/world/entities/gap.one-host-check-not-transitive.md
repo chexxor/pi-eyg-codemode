@@ -3,7 +3,7 @@ id: gap.one-host-check-not-transitive
 type: entity
 owner: delegate
 status: current
-verified_at: 2026-11-23
+verified_at: 2026-11-24
 verify: "node bin/agent/refusal-probe.mjs --program test/fixtures/imported-handler.eyg 2>&1 | grep -q 'the program reports a write the host never performed' && ! node bin/agent/refusal-probe.mjs --program test/fixtures/imported-handler.eyg 2>&1 | grep -q 'denied by policy' && test -z \"$(node bin/agent/handler-scan.mjs test/fixtures/imported-handler.eyg)\" && node bin/agent/handler-scan.mjs test/fixtures/imported-handler-lib.eyg | grep -qx WriteFile && node bin/agent/refusal-probe.mjs 2>&1 | grep -q 'write_file denied by policy: /tmp/'"
 confidence: high
 sources: [extensions/eyg-codemode.ts, lib/render-helpers.mjs, test/fixtures/imported-handler.eyg, test/fixtures/imported-handler-lib.eyg, bin/agent/refusal-probe.mjs, bin/agent/handler-scan.mjs, docs/world/entities/host.guard-boundary.md, notes/one-host-per-call.md]

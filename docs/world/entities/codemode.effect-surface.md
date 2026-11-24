@@ -3,7 +3,7 @@ id: codemode.effect-surface
 type: entity
 owner: delegate
 status: current
-verified_at: 2026-11-23
+verified_at: 2026-11-24
 verify: "test $(grep -c 'PolicyField(' test/fixtures/rule_mapping.gleam) -eq 19 && test $(grep -c '^effect' guides/eyg-surface.tsv) -eq 23 && node bin/agent/gen-surface.mjs --check && node --test test/host-coverage.test.mjs > /dev/null && node bin/agent/refusal-probe.mjs --program test/fixtures/search-walk.eyg 2>&1 | grep -q 'search listed: 5' && node bin/agent/refusal-probe.mjs --with-policy spawner-effects --fields search,standard_out --program test/fixtures/search-walk.eyg 2>&1 | grep -q 'search listed: 0'"
 confidence: high
 sources: [guides/eyg-surface.tsv, bin/agent/gen-surface.mjs, test/fixtures/rule_mapping.gleam, policies/agent-roots.eyg, policies/deny-all.eyg, README.md, host/guard.eyg, test/host-coverage.test.mjs, test/fixtures/search-walk.eyg, guides/tool-reference.md]

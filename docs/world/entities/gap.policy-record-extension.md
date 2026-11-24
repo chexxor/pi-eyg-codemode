@@ -3,7 +3,7 @@ id: gap.policy-record-extension
 type: entity
 owner: delegate
 status: current
-verified_at: 2026-11-23
+verified_at: 2026-11-24
 verify: "test $(grep -v '^//' policies/agent-roots.eyg | sed '/^ *$/d' | grep -Fxc -f policies/spawner-effects.eyg) -ge 40 && grep -q 'record extension' notes/pi-eyg-codemode-policy-record-extension.md && grep -q 'gap.policy-record-extension' guides/how-to-write-a-policy.md && grep -q 'gap.policy-record-extension' docs/world/runbooks/runbook.next-milestone.md"
 confidence: high
 sources: [policies/agent-roots.eyg, policies/spawner-effects.eyg, notes/pi-eyg-codemode-policy-record-extension.md, notes/spawner-effect-allowlist.md, guides/how-to-write-a-policy.md, docs/world/runbooks/runbook.next-milestone.md]

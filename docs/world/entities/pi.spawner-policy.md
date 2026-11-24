@@ -3,7 +3,7 @@ id: pi.spawner-policy
 type: entity
 owner: delegate
 status: current
-verified_at: 2026-11-23
+verified_at: 2026-11-24
 verify: "eyg check policies/spawner-effects.eyg > /dev/null && grep -q 'EFFECT_ALLOWLIST_ENV = \"EYG_SUBAGENT_EFFECTS\"' lib/render-helpers.mjs && grep -qF 'SPAWNER_POLICY_NEVER = [\"CreateKey\", \"Fetch\", \"StandardIn\"]' lib/render-helpers.mjs && grep -qF 'NARROWING_POLICY = \"spawner-effects\"' extensions/eyg-codemode.ts && node bin/agent/refusal-probe.mjs --with-policy spawner-effects --fields read_file,standard_out | grep -qF 'write_file denied by policy: EYG_SUBAGENT_EFFECTS=read_file,standard_out' && node bin/agent/refusal-probe.mjs --with-policy spawner-effects --program test/fixtures/refusal-abort.eyg | grep -qF 'EYG_SUBAGENT_EFFECTS=\"' && node bin/agent/refusal-probe.mjs --with-policy spawner-effects --fields write_file --program test/fixtures/refusal-abort.eyg | grep -qF 'write_file denied by policy: /tmp/' && node bin/agent/refusal-probe.mjs --with-policy spawner-effects --fields read_file,write_file,standard_out --program test/fixtures/secret-probe.eyg --inside-roots | grep -q 'read_file denied by policy: .*\\.env\\.eyg'"
 confidence: high
 sources: [policies/spawner-effects.eyg, extensions/eyg-codemode.ts, lib/render-helpers.mjs, test/render-helpers.test.mjs, guides/how-to-spawn-a-subagent.md, notes/spawner-effect-allowlist.md, docs/world/entities/pi.subagent-spawn.md]

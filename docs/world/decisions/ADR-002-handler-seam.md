@@ -3,7 +3,7 @@ id: ADR-002-handler-seam
 type: adr
 owner: human
 status: superseded
-verified_at: 2026-11-23
+verified_at: 2026-11-24
 verify: "grep -q 'Plan first, then act' guides/tool-reference.md && grep -q '^superseded_by: ADR-006-guard-in-package' docs/world/decisions/ADR-002-handler-seam.md && grep -q 'ADR-002-handler-seam' docs/world/decisions/ADR-006-guard-in-package.md"
 confidence: high
 sources: [policies/agent-roots.eyg, policies/deny-all.eyg, README.md, notes/pi-codemode-handler-seam.md, guides/tool-reference.md]

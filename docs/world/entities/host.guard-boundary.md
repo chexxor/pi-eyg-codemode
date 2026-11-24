@@ -3,7 +3,7 @@ id: host.guard-boundary
 type: entity
 owner: delegate
 status: current
-verified_at: 2026-11-23
+verified_at: 2026-11-24
 verify: "node --test test/host-coverage.test.mjs > /dev/null && grep -q '^let build = (policy, ctx, body) -> {' host/guard.eyg && node bin/agent/refusal-probe.mjs 2>&1 | grep -q 'write_file denied by policy: /tmp/' && node bin/agent/refusal-probe.mjs --program test/fixtures/secret-probe.eyg --inside-roots 2>&1 | grep -q 'read_file denied by policy: .*\\.env\\.eyg' && node bin/agent/refusal-probe.mjs --program test/fixtures/unnamed-effect.eyg 2>&1 | grep -q 'unhandled effect Foo' && node bin/agent/refusal-probe.mjs --program test/fixtures/inner-handler.eyg 2>&1 | grep -q 'what the program was answered: read_file denied by policy: /tmp/' && node bin/agent/refusal-probe.mjs --program test/fixtures/abort-probe.eyg 2>&1 | grep -q 'Aborted with reason' && test \"$(node bin/agent/refusal-probe.mjs --program test/fixtures/self-write-probe.eyg --inside-roots | grep -o 'denied by the host' | wc -l)\" = 4 && test ! -e policies/self-write-probe.eyg && test ! -e host/self-write-probe && node bin/agent/handler-scan.mjs test/fixtures/inner-handler.eyg | grep -qx ReadFile && test -z \"$(node bin/agent/handler-scan.mjs test/fixtures/refusal-probe.eyg)\""
 confidence: high
 sources: [host/guard.eyg, host/PURPOSE, lib/render-helpers.mjs, extensions/eyg-codemode.ts, test/host-coverage.test.mjs, test/fixtures/refusal-probe.eyg, test/fixtures/secret-probe.eyg, test/fixtures/unnamed-effect.eyg, test/fixtures/inner-handler.eyg, test/fixtures/abort-probe.eyg, test/fixtures/self-write-probe.eyg, bin/agent/handler-scan.mjs, guides/tool-reference.md, guides/what-a-call-does.md, notes/pi-codemode-host-guard-contract.md, notes/guard-self-protection.md]

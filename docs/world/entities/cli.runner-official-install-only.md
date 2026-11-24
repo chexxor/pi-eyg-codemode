@@ -3,7 +3,7 @@ id: cli.runner-official-install-only
 type: entity
 owner: delegate
 status: current
-verified_at: 2026-11-23
+verified_at: 2026-11-24
 verify: "node -e 'import(\"./lib/render-helpers.mjs\").then(m => { const a = m.runnerCandidates(\"/srv/app\", {}), b = m.runnerCandidates(\"/srv/app\", {EYG_CODEMODE_RUNNER: \"/opt/eyg\"}); process.exit(a.length === 1 && a[0] === \"eyg\" && b.length === 1 && b[0] === \"/opt/eyg\" ? 0 : 1); })' && grep -qF '[mode, entryPath]' extensions/eyg-codemode.ts && grep -qF 'no eyg binary found at' lib/render-helpers.mjs && grep -qF 'is the command this package runs for every call' lib/render-helpers.mjs && ! grep -q 'resolveRunner' extensions/eyg-codemode.ts && ! grep -rq 'eyg-checked' lib/render-helpers.mjs extensions/eyg-codemode.ts test/ && test ! -e bin/agent/build-checked-runner.sh && node bin/agent/refusal-probe.mjs 2>&1 | grep -q 'write_file denied by policy: /tmp/'"
 confidence: high
 sources: [lib/render-helpers.mjs, extensions/eyg-codemode.ts, test/render-helpers.test.mjs, bin/PURPOSE, notes/official-installed-runner-only.md, guides/how-to-point-the-tool-at-your-runner.md, docs/world/entities/cli.prebuilt-binary.md, docs/world/entities/host.guard-boundary.md]

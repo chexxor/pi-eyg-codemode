@@ -3,7 +3,7 @@ id: runbook.next-milestone
 type: runbook
 owner: delegate
 status: current
-verified_at: 2026-11-23
+verified_at: 2026-11-24
 verify: "test -f docs/world/runbooks/runbook.next-milestone.md && grep -q 'gap.windows-is-undocumented' docs/world/runbooks/runbook.next-milestone.md && grep -q 'gap.policy-runner-not-on-main' docs/world/runbooks/runbook.next-milestone.md && grep -q 'gap.grant-polish-undecided' docs/world/runbooks/runbook.next-milestone.md && grep -q 'gap.policy-record-extension' docs/world/runbooks/runbook.next-milestone.md && grep -q 'gap.one-host-check-not-transitive' docs/world/runbooks/runbook.next-milestone.md"
 confidence: high
 sources: [docs/world/entities/gap.windows-is-undocumented.md, docs/world/entities/gap.policy-runner-not-on-main.md, docs/world/entities/gap.language-skill-home-undecided.md, docs/world/entities/gap.grant-polish-undecided.md, docs/world/entities/gap.policy-record-extension.md, docs/world/entities/gap.one-host-check-not-transitive.md, docs/world/decisions/ADR-004-doc-shape-for-two-readers.md, docs/world/decisions/ADR-006-guard-in-package.md]

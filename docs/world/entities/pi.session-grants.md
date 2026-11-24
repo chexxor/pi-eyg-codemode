@@ -3,7 +3,7 @@ id: pi.session-grants
 type: entity
 owner: delegate
 status: current
-verified_at: 2026-11-23
+verified_at: 2026-11-24
 verify: "grep -q 'Ask the operator for a grant only when' extensions/eyg-codemode.ts && grep -q 'why the task needs it, and what you would use it for' lib/render-helpers.mjs && grep -q 'only when the refusal blocks the task' skills/eyg-codemode/SKILL.md && grep -q GRANT_ENTRY lib/render-helpers.mjs && grep -q argumentPolicyPath extensions/eyg-codemode.ts && node --test test/render-helpers.test.mjs && node -e 'import(\"./lib/render-helpers.mjs\").then(m=>{const rows=m.suggestGrant({field:\"write_file\",path:\"/tmp/x\"},{roots:\"/work\",policy:\"/p\"});const scanned=m.refusalHints(\"write_file denied by policy: /tmp/x\").length===1&&m.refusalHints(\"REFUSED-BY-GUARD\").length===0;process.exit(rows.length===4&&rows[1].includes(\"/eyg-grant\")&&rows[3].includes(\"why the task needs it\")&&scanned?0:1)})'"
 confidence: high
 sources: [extensions/eyg-codemode.ts, lib/render-helpers.mjs, test/render-helpers.test.mjs, notes/pi-codemode-session-grants.md, guides/how-to-write-a-policy.md, guides/tool-reference.md]

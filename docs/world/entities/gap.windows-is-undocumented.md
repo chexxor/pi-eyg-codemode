@@ -3,7 +3,7 @@ id: gap.windows-is-undocumented
 type: entity
 owner: delegate
 status: current
-verified_at: 2026-11-23
+verified_at: 2026-11-24
 verify: "! grep -qi 'windows' README.md && grep -q 'eyg-windows-x64.exe' docs/world/entities/gap.windows-is-undocumented.md && grep -q 'install-a-prebuilt-binary' README.md"
 confidence: medium
 sources: [README.md, extensions/eyg-codemode.ts]
