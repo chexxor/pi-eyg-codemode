@@ -2,7 +2,7 @@
 id: doc-checks.citations
 type: entity
 owner: delegate
-status: current
+status: suspect
 verified_at: 2026-11-24
 verify: "node bin/agent/doc-checks.mjs citations | grep -qx 'citations: ok'"
 confidence: high
