@@ -93,10 +93,13 @@ Two consequences the package had to build for:
   function and called from the entry. A program must also end with an expression: a trailing `let`
   is a parse error inside the generated `program.eyg`.
 
-UNVERIFIED: an *effectful* published package imported by the model. `@standard` resolves offline and
-its functions are pure; the only published scope installed here has no effect-calling code, so the
-mechanism is inferred from facts 1 and 5 rather than observed. Trigger: a published package that
-performs effects exists to install.
+UNVERIFIED: an *effectful* package installed through the language's package manager. `@standard`
+resolves offline and its functions are pure, and no other published scope is installed here. The
+mechanism is observed for an imported module the call did not author -
+`docs/world/entities/pi.registry-scope-persistence.md` runs one inside the guarded body and the
+`ReadFile` inside it answers `read_file denied by policy` for a path outside the roots - but not for
+a module the language's own installer fetched. Trigger: a published package that performs effects
+exists to install.
 
 ## Not this
 
