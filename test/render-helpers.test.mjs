@@ -16,7 +16,7 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
 import { surfaceDriftProblems } from "../bin/agent/gen-surface.mjs";
-import { argumentPolicyPath, bindingOrder, budgetRefusal, describeRefusal, entryCheckArguments, entryCheckMisshapeRows, grantStatusLine, externBindings, bindingLocation, builtinErrors, misshapedAskRows, builtinHintRows, builtinRows, callBudget, callLines, checkDeclaredEffects, CHILD_TOOL_ALLOWLIST, classifyProbeOutput, COLLAPSED_SOURCE_LINES, childAnswer, childArgv, childCalls, childEnvOverrides, childRefusalRows, childTools, describeGrant, EFFECT_ALLOWLIST_ENV, effectFieldsFor, effectLine, effectsUsed, effectfulBindingProblem, eygCallCount, eygSettings, findMetadata, fieldsOutside, formatDuration, grantEvents, GRANT_ENTRY, GENERATED_MARK, handledEffectLabels, handledEffectRefusal, parseArguments, VARIABLE_ENTRY, isUnder, LANGUAGE_DOCS, libraryAliases, MAX_CALLS_ENV, outsideRoot, prepareCallArguments, shippedPolicyPath, probeArguments, probeProgram, POLICY_FIELDS, referenceLines, refusalHints, replayGrants, replayVariables, resolvePolicy, resolveRoots, resultLines, ruleMappingEffects, rootsInside, runnerCandidates, runnerFailureLine, sessionDepth, spawnerPolicy, spawnerRoots, subagentCallLines, subagentResultRows, suggestGrant, surfaceFileLines, surfaceRows, SURFACE_FILE, eygStringLiteral, topLevelBindings, variableBindingPath, variableDir, variableEvents, variableImportProblems, variableModule, variableName, variablePrelude, VARIABLE_SCOPES, variableRows, variableWriteOutcomes, variableWriteProgram } from "../lib/render-helpers.mjs";
+import { argumentPolicyPath, bindingOrder, budgetRefusal, describeRefusal, entryCheckArguments, entryCheckMisshapeRows, grantStatusLine, configLines, policySlots, rootSlots, externBindings, bindingLocation, builtinErrors, misshapedAskRows, builtinHintRows, builtinRows, callBudget, callLines, checkDeclaredEffects, CHILD_TOOL_ALLOWLIST, classifyProbeOutput, COLLAPSED_SOURCE_LINES, childAnswer, childArgv, childCalls, childEnvOverrides, childRefusalRows, childTools, describeGrant, EFFECT_ALLOWLIST_ENV, effectFieldsFor, effectLine, effectsUsed, effectfulBindingProblem, eygCallCount, eygSettings, findMetadata, fieldsOutside, formatDuration, grantEvents, GRANT_ENTRY, GENERATED_MARK, handledEffectLabels, handledEffectRefusal, parseArguments, VARIABLE_ENTRY, isUnder, LANGUAGE_DOCS, libraryAliases, MAX_CALLS_ENV, outsideRoot, prepareCallArguments, shippedPolicyPath, probeArguments, probeProgram, POLICY_FIELDS, referenceLines, refusalHints, replayGrants, replayVariables, resolvePolicy, resolveRoots, resultLines, ruleMappingEffects, rootsInside, runnerCandidates, runnerFailureLine, sessionDepth, spawnerPolicy, spawnerRoots, subagentCallLines, subagentResultRows, suggestGrant, surfaceFileLines, surfaceRows, SURFACE_FILE, eygStringLiteral, topLevelBindings, variableBindingPath, variableDir, variableEvents, variableImportProblems, variableModule, variableName, variablePrelude, VARIABLE_SCOPES, variableRows, variableWriteOutcomes, variableWriteProgram } from "../lib/render-helpers.mjs";
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
 
@@ -926,4 +926,64 @@ test("the refusal for a program that handles an effect names the labels and the 
   assert.ok(line.includes("ReadFile, Fetch"), "the refusal names the labels the program handled");
   assert.ok(line.includes("guard"), "the refusal says who decides the effects instead");
   assert.ok(line.includes("/eyg-grant"), "the refusal points at the way to widen the host that is not a clause");
+});
+
+test("action config: the rows that name the runner, the policy slot that chose it and the roots", () => {
+  assert.deepEqual(policySlots({}), [["session grant", null], ["spawner", null], ["project settings", null], ["EYG_POLICY", null], ["package default", null]], "an unset slot is named with null so the answer can print the whole list");
+  assert.deepEqual(resolvePolicy({ grant: "/grant/pol.eyg", env: "/env/pol.eyg" }), choice("/grant/pol.eyg", "session grant"), "a grant the operator made this session wins over an inherited EYG_POLICY");
+  const slots = policySlots({ grant: "/grant/pol.eyg", env: null, packageDefault: "/pkg/policies/agent-roots.eyg" });
+  assert.deepEqual(slots[0], ["session grant", "/grant/pol.eyg"], "the slots come back in the order a call reads them, the grant first");
+  const rootInfo = rootSlots({ spawner: ["/slice/a"], project: ["/proj/b", "/proj/c"], env: "/env/d", cwd: "/cwd" });
+  assert.deepEqual(rootInfo.slots.map(([name]) => name), ["spawner", "project eyg.roots", "EYG_ALLOWED_ROOTS", "the working directory"], "the roots slots print in the order a call reads them");
+  assert.equal(rootInfo.source, "spawner", "a spawner's slice replaces the project's roots rather than adding to them");
+  const grants = [{ id: "g1", policy: "/grant/pol.eyg", calls: 2, used: 1, roots: ["/grant/extra"] }];
+  const lines = configLines({
+    runner: "eyg",
+    runnerSource: "the name eyg on PATH",
+    policy: "/grant/pol.eyg",
+    policySource: "session grant",
+    slots,
+    roots: ["/slice/a", "/grant/extra"],
+    rootSource: rootInfo.source,
+    rootSlotsList: rootInfo.slots,
+    grantRoots: ["/grant/extra"],
+    grants,
+    scopes: [{ name: "workspace", dir: "/work/.pi/eyg-functions" }],
+    guard: "/pkg/host/guard.eyg",
+    timeoutMs: 30000,
+    timeoutSource: "the default",
+    timeoutCapMs: 120000,
+    shipped: ["agent-roots", "deny-all", "spawner-effects"],
+    narrowest: "deny-all",
+  });
+  assert.match(lines[0], /^eyg config:/, "the answer names itself");
+  assert.ok(lines[0].includes("nothing performed"), "the header says the answer performs nothing");
+  assert.ok(lines.some((line) => line.startsWith("  runner: eyg (from ")), "the runner is named with where the name came from");
+  const policyRow = lines.find((line) => line.includes("policy in force:"));
+  assert.ok(policyRow.includes("policy in force: /grant/pol.eyg (the slot that chose it: session grant)"), "the row names the policy and the slot that chose it");
+  const slotRow = lines.find((line) => line.includes("policy slots, first that names one wins:"));
+  assert.ok(slotRow.includes("session grant (/grant/pol.eyg)"), "the winner is in the slot list");
+  assert.ok(slotRow.includes("EYG_POLICY (unset)"), "the slots below the winner print even when they name nothing, so a session can see what sits above its own EYG_POLICY");
+  const narrowRow = lines.find((line) => line.includes("this call may narrow to:"));
+  assert.ok(narrowRow.includes("may narrow to: deny-all"), "a grant whose policy is not a shipped module leaves only the narrowest one the argument may name");
+  assert.ok(!narrowRow.includes("agent-roots") && !narrowRow.includes("spawner-effects"), "no shipped policy wider than the narrowest is offered to the argument");
+  const shippedConfig = configLines({ policy: "/pkg/policies/agent-roots.eyg", policySource: "package default", slots: policySlots({ packageDefault: "/pkg/policies/agent-roots.eyg" }), shipped: ["agent-roots", "deny-all", "spawner-effects"], narrowest: "deny-all.eyg" });
+  assert.ok(shippedConfig.some((line) => line.includes("may narrow to: agent-roots or deny-all")), "when the in-force policy is a shipped module the row lists it and the narrowest, and a bare module name is compared the same way as a path");
+  const rootsRow = lines.find((line) => line.includes("roots in force:"));
+  assert.ok(rootsRow.includes("roots in force: /slice/a, /grant/extra (from spawner)"), "the roots in force name the slot that chose them, and the project's roots are not in the list");
+  const rootsSlotRow = lines.find((line) => line.includes("roots slots, first that names one wins:"));
+  assert.ok(rootsSlotRow.includes("project eyg.roots (/proj/b, /proj/c)"), "the slot that lost prints with what it held, so the session knows what it has to change");
+  const grantRow = lines.find((line) => line.includes("roots the grant in force adds on top of that list:"));
+  assert.ok(grantRow.includes("/grant/extra"), "a grant's roots get their own row rather than folding into the roots in force");
+  const grantsRow = lines.find((line) => line.includes("grants in force:"));
+  assert.equal(grantsRow, `  grants in force: ${grantStatusLine(grants)}`, "the grant row comes from the same helper the rest of the tool describes a grant with");
+  assert.equal(configLines({ grants: [] }).find((line) => line.includes("grants in force:")).trim(), "grants in force: no grant is in force now", "an empty grant list says so instead of printing nothing");
+  const scopeRow = lines.find((line) => line.includes("registry scopes that exist:"));
+  assert.ok(scopeRow.includes("workspace /work/.pi/eyg-functions"), "a scope prints as its name and its directory");
+  assert.ok(scopeRow.includes("the tool reads them and never writes one"), "the row says the tool never writes a scope");
+  const denyAll = configLines({ policy: "/pkg/policies/deny-all.eyg", policySource: "argument", slots: policySlots({ packageDefault: "/pkg/policies/agent-roots.eyg" }), shipped: ["agent-roots", "deny-all", "spawner-effects"], narrowest: "deny-all" });
+  assert.equal(denyAll.length, lines.length - 1, "the grant's-roots row is the only row a config with no grant leaves out; every other row is still there");
+  assert.ok(denyAll.some((line) => line.includes("may narrow to: deny-all - the policy argument names")), "narrowed to the narrowest policy the row offers only it");
+  assert.ok(denyAll.some((line) => line.includes("roots in force: unset")), "an unset slot prints unset instead of an empty list");
+  assert.ok(lines[lines.length - 1].includes("action \"effects\""), "the answer points at the action that states what a policy decides, which this answer does not");
 });

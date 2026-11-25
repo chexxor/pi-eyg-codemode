@@ -29,7 +29,7 @@ The sections:
 | a second session | none started | the `eyg_subagent` tool (`extensions/eyg-codemode.ts`): `pi --print --mode json --tools <tools>` built as argv, its boundary from `childEnvOverrides` and checked by `rootsInside` and `childTools`, its effect allowlist enforced by `policies/spawner-effects.eyg`, its call budget by `callBudget`, its report parsed by `childCalls`/`childAnswer`; `guides/how-to-spawn-a-subagent.md` |
 | kept bindings | none kept: a `let` defined in one call is not in scope on the next | the `extern` argument (`session`, `workspace`, `user`): `keptBindings` in `extensions/eyg-codemode.ts` reads the two directories and this session's records into the prelude, and a file scope is kept by a program built by `variableWriteProgram` and reported by `variableWriteOutcomes` (`lib/render-helpers.mjs`); `guides/how-to-keep-bindings.md` |
 | runner | `EYG_CODEMODE_RUNNER` (an absolute path) when set, else `eyg` on PATH | `lib/render-helpers.mjs` (`runnerCandidates`), used by `extensions/eyg-codemode.ts`; a binary that is missing, or that reads the mode word as a file name, gets one line naming the install and quoting the command that was run (`runnerFailureLine`) |
-| mode | `run`; `eval` is pure and prints the value | `extensions/eyg-codemode.ts`. `action` selects what the call does - `run`, `eval`, `effects`, `reference`, `list_functions`, `describe_function` (`ACTIONS`) - and `prepareCallArguments` in `lib/render-helpers.mjs` maps `mode` from sessions resumed before the rename |
+| mode | `run`; `eval` is pure and prints the value | `extensions/eyg-codemode.ts`. `action` selects what the call does - `run`, `eval`, `effects`, `config`, `reference`, `list_functions`, `describe_function` (`ACTIONS`) - and `prepareCallArguments` in `lib/render-helpers.mjs` maps `mode` from sessions resumed before the rename; `action: "config"` answers what the next call runs under (`configLines`) |
 | timeout | 30 s default, 120 s cap; the parameter is `timeout` in **seconds** | `extensions/eyg-codemode.ts` |
 | argv | `[mode, entryPath]`: the entry this package wrote in a scratch directory of its own, which imports the guard, the policy and the model's program, and writes the refusal record as its last line; the directory is removed when the run ends | `runGuarded` in `extensions/eyg-codemode.ts`; the two files come from `entryProgram` and `programModule`, and the record path the entry writes last from `RECORD_FILE`, all in `lib/render-helpers.mjs` |
 | a parse of the program | always, before the run, for `run` and `eval` | `[parse, -c, code]` through the same binary (`parseArguments` in `lib/render-helpers.mjs`); a program that names a `handle` clause is refused with its labels, and a binary that cannot answer the parse stops the call rather than running an unchecked program |
@@ -48,7 +48,11 @@ The sections:
 | `EYG_CODEMODE_DEPTH` | set by `eyg_subagent` for the child: `1` in a child, and a child at depth 1 is refused a child of its own |
 
 The orders - which policy a call gets, and which roots it reads - are stated once, in
-`guides/how-to-write-a-policy.md`. Both are printed in every expanded row, and a refused
+`guides/how-to-write-a-policy.md`. `action: "config"` answers both, and the runner, the guard,
+the grants and the registry scopes, off the same functions the next call reads rather than a copy
+of them, so the rows cannot disagree with what that call will run; it performs nothing, and a
+package with no guard refuses it rather than naming a configuration nothing runs under
+(`docs/world/entities/pi.config-action.md`). Both are printed in every expanded row, and a refused
 call adds what the collapsed row shows too: what the policy was given, the policy that denied it,
 the `/eyg-grant` that would have allowed it, and the template an ask follows - the addition, the
 reason for it and the intended use (`guides/what-a-call-does.md`).

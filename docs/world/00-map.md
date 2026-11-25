@@ -66,6 +66,7 @@ nothing here reads it at run time, and this tree never writes outside itself.
 | overlay.agent-harness | Overlay is the EYG repository's own agent. | delegate | 2026-11-25 |
 | overlay.policy-rules | A running EYG program is stopped at every effect before the host performs it, and a user-supplied function decides. | delegate | 2026-11-25 |
 | pi.codemode-tool | This workspace **is** the package: `pi list` (2026-11-18) resolves the declaration `..` in `.pi/settings.json` to this ... | delegate | 2026-11-25 |
+| pi.config-action | `action: "config"` (`code: ""`) prints the configuration of the call that would come next: the runner candidate and ... | delegate | 2026-11-25 |
 | pi.fetch-and-injection-exfiltration | `fetch` is a checked effect whose policy field is `fetch`, and both shipped policies refuse it by name: `fetch: ... | delegate | 2026-11-25 |
 | pi.first-draft | `README.md` opens with a status line calling the package a first draft that has not been proved in extended use, and ... | delegate | 2026-11-25 |
 | pi.policy-config | Two questions the operator asked, answered in the tree: which policy the package uses if you set nothing, and where to ... | delegate | 2026-11-25 |
@@ -95,7 +96,7 @@ nothing here reads it at run time, and this tree never writes outside itself.
 
 ## Where to look for a claim
 
-- entities: 40 · invariants: 4 · decisions: 7 · runbooks: 2 · traps: 94
+- entities: 41 · invariants: 4 · decisions: 7 · runbooks: 2 · traps: 95
 - suspect right now: none
 - re-check everything: `npm run world` · checks: `npm run world:lint` · regenerate this index: `npm run world:map`
 <!-- END GENERATED -->

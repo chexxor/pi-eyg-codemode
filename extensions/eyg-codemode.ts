@@ -134,6 +134,9 @@ import {
   resultLines,
   resolvePolicy,
   resolveRoots,
+  rootSlots,
+  policySlots,
+  configLines,
   runnerCandidates,
   runnerFailureLine,
   rootsInside,
@@ -190,7 +193,7 @@ const PROBE_TIMEOUT_MS = 5_000;
 // of a second; it gets its own budget so a slow parse cannot eat the call's timeout.
 const PARSE_TIMEOUT_MS = 5_000;
 const ENTRY_CHECK_TIMEOUT_MS = 5_000;
-const ACTIONS = ["run", "eval", "effects", "reference", "list_functions", "describe_function"];
+const ACTIONS = ["run", "eval", "effects", "config", "reference", "list_functions", "describe_function"];
 /// The policy a spawner's effect allowlist is enforced by, and the policy it is a
 /// narrowing of. Both live inside this package, so the two paths are resolved here
 /// rather than written out.
@@ -594,6 +597,7 @@ export default function (pi: ExtensionAPI) {
       "`extern` keeps the top-level `let` bindings of this call under a name: `session`, `workspace` (<cwd>/.pi/eyg-variables/) or `user` ($HOME/.pi/eyg-variables/). Only the source text is kept, and it is evaluated again on the call that names it; a file scope is written by a program that performs WriteFile, so the policy decides that write like any other.",
       "action selects what the call does: `run` (default) performs effects, `eval` is pure,",
       "`effects` answers what the policy in force decides for every effect the CLI can name,",
+      "`config` answers what the next call in this session would run under - the runner, the policy and the slot that chose it, the roots and their source, the grants in force, the registry scopes and the timeout - without spawning anything or performing an effect,",
       "`reference` prints every builtin the package's reference guide lists and the effect",
       "surface with the field that decides each one - it performs nothing and asks the policy",
       "nothing, so it answers even where no runner was found,",
@@ -636,12 +640,12 @@ export default function (pi: ExtensionAPI) {
 
     parameters: Type.Object({
       code: Type.String({
-        description: "EYG source. The last expression is the value; use Exit or the record `script` field for a status. Pass \"\" for action list_functions, describe_function or reference.",
+        description: "EYG source. The last expression is the value; use Exit or the record `script` field for a status. Pass \"\" for action list_functions, describe_function, config or reference.",
       }),
       action: Type.Optional(
         Type.String({
           description:
-            "`run` (default, effects allowed by the policy), `eval` (pure, prints the value), `effects` (one probe per effect the CLI can name, answered by the policy in force), `reference` (every builtin the shipped guide lists, plus the effect surface), `list_functions` (the registry of re-usable functions) or `describe_function` (one of them by name).",
+            "`run` (default, effects allowed by the policy), `eval` (pure, prints the value), `effects` (one probe per effect the CLI can name, answered by the policy in force), `config` (what the next call would run under - runner, policy and the slot that chose it, roots and their source, grants in force, registry scopes, timeout; it spawns nothing and performs nothing), `reference` (every builtin the shipped guide lists, plus the effect surface), `list_functions` (the registry of re-usable functions) or `describe_function` (one of them by name).",
         }),
       ),
       function: Type.Optional(
@@ -798,6 +802,13 @@ export default function (pi: ExtensionAPI) {
         return refuseToRun(`policy module not found: ${policy}`);
       }
 
+      // The per-call timeout, resolved once for every action: `config` reports it, and
+      // the action that runs a program spawns with it. `timeout` is in seconds as the
+      // bash tool spells it; `EYG_CODEMODE_TIMEOUT` is still milliseconds.
+      const mode = action === "eval" ? "eval" : "run";
+      const wantedSeconds = params.timeout ?? Number(process.env.EYG_CODEMODE_TIMEOUT ?? DEFAULT_TIMEOUT_S * 1000) / 1000;
+      const timeout = Math.min(Math.max(Math.trunc(wantedSeconds * 1000), MIN_TIMEOUT_MS), MAX_TIMEOUT_S * 1000);
+
       // `reference` answers the two questions a session whose only channel is effects
       // keeps asking - which builtins exist, and what the effect surface is - from the one
       // surface file this package ships and generates. It spawns no process, performs no
@@ -841,6 +852,67 @@ export default function (pi: ExtensionAPI) {
       // roots on top of the result - `resolveRoots` holds that order. They reach the
       // policy as a value in the entry this package writes, not through the environment.
       const roots = resolveRoots({ grant: grants.roots, spawner: spawnerRoots(process.env, chain.depth), project: settings.roots, env: process.env.EYG_ALLOWED_ROOTS ?? null, cwd });
+
+      // `config` is the question a session asks the moment a call refuses and it cannot
+      // tell what it would have to change: which runner a call spawns, which policy is in
+      // force and which slot chose it (with the slots above it, so a session can see why
+      // its own `EYG_POLICY` had no effect), which roots it gets and from where, the grants
+      // still in force on this branch, the registry scopes that exist and the timeout. It
+      // spawns nothing, performs no effect and asks the policy nothing, so it costs one call
+      // and answers where no runner was found; what the policy decides for a given effect is
+      // the question it does not answer, and its last line names `action: effects`.
+      if (action === "config") {
+        const slots = policySlots({
+          grant: grants.policy,
+          spawner: spawnerPolicy(process.env, chain.depth),
+          project: projectPolicy,
+          env: process.env.EYG_POLICY ?? null,
+          packageDefault: defaultPolicy(),
+        });
+        const rootInfo = rootSlots({
+          spawner: spawnerRoots(process.env, chain.depth),
+          project: settings.roots,
+          env: process.env.EYG_ALLOWED_ROOTS ?? null,
+          cwd,
+        });
+        const lines = configLines({
+          runner,
+          runnerSource: (process.env.EYG_CODEMODE_RUNNER ?? "") !== "" ? "EYG_CODEMODE_RUNNER" : "the name `eyg` on PATH",
+          policy,
+          policySource,
+          slots,
+          roots: roots.split(",").map((root) => root.trim()).filter((root) => root !== ""),
+          rootSource: rootInfo.source,
+          rootSlotsList: rootInfo.slots,
+          grantRoots: grants.roots,
+          grants: grants.grants,
+          scopes: registryScopes(cwd, dir),
+          guard,
+          timeoutMs: timeout,
+          timeoutSource: params.timeout !== undefined ? "the call's own timeout argument" : (process.env.EYG_CODEMODE_TIMEOUT ?? "") !== "" ? "EYG_CODEMODE_TIMEOUT" : "the default",
+          timeoutCapMs: MAX_TIMEOUT_S * 1000,
+          shipped: shippedNames,
+          narrowest: NARROWEST_POLICY_FILE,
+        });
+        return {
+          content: [{ type: "text", text: lines.join("\n") }],
+          details: {
+            gated: true,
+            ran: true,
+            action,
+            policy,
+            policySource,
+            runner,
+            roots,
+            ...grantDetails,
+            slots,
+            rootSource: rootInfo.source,
+            scopes: registryScopes(cwd, dir),
+            timeoutMs: timeout,
+          },
+        };
+      }
+
       const ctxLiteral = contextLiteral({
         roots: roots.split(",").map((root) => root.trim()).filter((root) => root !== ""),
         cwd,
@@ -1066,10 +1138,6 @@ export default function (pi: ExtensionAPI) {
           },
         };
       }
-
-      const mode = action === "eval" ? "eval" : "run";
-      const wantedSeconds = params.timeout ?? Number(process.env.EYG_CODEMODE_TIMEOUT ?? DEFAULT_TIMEOUT_S * 1000) / 1000;
-      const timeout = Math.min(Math.max(Math.trunc(wantedSeconds * 1000), MIN_TIMEOUT_MS), MAX_TIMEOUT_S * 1000);
 
       // Libraries and registry functions bind the same way: an `import` of the
       // module's absolute path, bound as `<name>_lib`. A name that resolves in
