@@ -15,8 +15,8 @@ superseded_by: null
 A session's roots contain the two directories a call can leave code in for a later call: the
 function-registry scope `<cwd>/.pi/eyg-functions` (the scope list is `registryScopes`,
 `extensions/eyg-codemode.ts:261`) and the kept-binding scope `<cwd>/.pi/eyg-variables/`
-(`fileVariableBindings`, `extensions/eyg-codemode.ts:393`, whose prelude `keptBindings` builds at
-`:414`). Neither is in `ctx.protected`, which names the package's `host/` and `policies/` and a
+(`fileVariableBindings`, `extensions/eyg-codemode.ts:398`, whose prelude `keptBindings` builds at
+`:437`). Neither is in `ctx.protected`, which names the package's `host/` and `policies/` and a
 policy module outside them (`hostProtectedPaths`, `lib/render-helpers.mjs:330`). Measured
 2026-11-24: the plant lands, a later call lists it, binds it and runs it, and the run is decided
 again.
@@ -29,7 +29,7 @@ runs in its own scratch directory outside `$t`):
 | step | answer |
 | --- | --- |
 | `node bin/agent/refusal-probe.mjs --roots $t --program test/fixtures/registry-plant-probe.eyg` - the program performs `MakeDirectory` and `WriteFile` of a module carrying a `metadata` record, inside its own root | `PLANTED IN REGISTRY SCOPE`, `exit=0` |
-| `node bin/agent/registry-walk.mjs --cwd $t --home $h --no-package` - the tool's own `buildRegistry` (`lib/render-helpers.mjs:1891`) over the planted tree, reading nothing else | `entry persist_probe [workspace] <t>/.pi/eyg-functions/persist-probe.eyg persist_probe_lib.marker(path) -> Result(Binary, String) - planted by the probe: reads the path the caller names` |
+| `node bin/agent/registry-walk.mjs --cwd $t --home $h --no-package` - the tool's own `buildRegistry` (`lib/render-helpers.mjs:1926`) over the planted tree, reading nothing else | `entry persist_probe [workspace] <t>/.pi/eyg-functions/persist-probe.eyg persist_probe_lib.marker(path) -> Result(Binary, String) - planted by the probe: reads the path the caller names` |
 | `node bin/agent/refusal-probe.mjs --roots $t --program test/fixtures/registry-bind-probe.eyg` - a **later** call imports that module and calls `lib.marker` twice | `inside: landed` and `outside: read_file denied by policy: <scratch>/outside.txt`, `exit=0` |
 
 The same three steps run live through the `eyg` tool, under `policies/agent-roots.eyg` with this
@@ -52,7 +52,7 @@ one call wrote becomes text a later model reads as this tool's own documentation
 
 **A name clash resolves to the workspace, and the home scope reaches every workspace.** With both
 scopes planted, the walk prints the `[workspace]` entry and reports the other
-(`buildRegistry`, `lib/render-helpers.mjs:1891`, `:1899`):
+(`buildRegistry`, `lib/render-helpers.mjs:1926`, `:1934`):
 `shadow: <home>/.pi/eyg-functions/persist-probe.eyg: persist_probe is shadowed by <t>/.pi/eyg-functions/persist-probe.eyg`.
 With only the scratch home planted, the same walk prints `entry persist_probe [home]`. So a module
 planted under `$HOME/.pi/eyg-functions` is offered in every workspace on the machine, and who may

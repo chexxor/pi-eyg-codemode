@@ -16,7 +16,7 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
 import { surfaceDriftProblems } from "../bin/agent/gen-surface.mjs";
-import { argumentPolicyPath, bindingOrder, budgetRefusal, describeRefusal, entryCheckArguments, entryCheckMisshapeRows, grantStatusLine, externBindings, builtinErrors, misshapedAskRows, builtinHintRows, builtinRows, callBudget, callLines, checkDeclaredEffects, CHILD_TOOL_ALLOWLIST, classifyProbeOutput, COLLAPSED_SOURCE_LINES, childAnswer, childArgv, childCalls, childEnvOverrides, childRefusalRows, childTools, describeGrant, EFFECT_ALLOWLIST_ENV, effectFieldsFor, effectLine, effectsUsed, eygCallCount, eygSettings, findMetadata, fieldsOutside, formatDuration, grantEvents, GRANT_ENTRY, GENERATED_MARK, handledEffectLabels, handledEffectRefusal, parseArguments, VARIABLE_ENTRY, isUnder, LANGUAGE_DOCS, libraryAliases, MAX_CALLS_ENV, outsideRoot, prepareCallArguments, shippedPolicyPath, probeArguments, probeProgram, POLICY_FIELDS, referenceLines, refusalHints, replayGrants, replayVariables, resolvePolicy, resolveRoots, resultLines, ruleMappingEffects, rootsInside, runnerCandidates, runnerFailureLine, sessionDepth, spawnerPolicy, spawnerRoots, subagentCallLines, subagentResultRows, suggestGrant, surfaceFileLines, surfaceRows, SURFACE_FILE, eygStringLiteral, topLevelBindings, variableDir, variableEvents, variableImportProblems, variableModule, variableName, variablePrelude, VARIABLE_SCOPES, variableRows, variableWriteOutcomes, variableWriteProgram } from "../lib/render-helpers.mjs";
+import { argumentPolicyPath, bindingOrder, budgetRefusal, describeRefusal, entryCheckArguments, entryCheckMisshapeRows, grantStatusLine, externBindings, bindingLocation, builtinErrors, misshapedAskRows, builtinHintRows, builtinRows, callBudget, callLines, checkDeclaredEffects, CHILD_TOOL_ALLOWLIST, classifyProbeOutput, COLLAPSED_SOURCE_LINES, childAnswer, childArgv, childCalls, childEnvOverrides, childRefusalRows, childTools, describeGrant, EFFECT_ALLOWLIST_ENV, effectFieldsFor, effectLine, effectsUsed, effectfulBindingProblem, eygCallCount, eygSettings, findMetadata, fieldsOutside, formatDuration, grantEvents, GRANT_ENTRY, GENERATED_MARK, handledEffectLabels, handledEffectRefusal, parseArguments, VARIABLE_ENTRY, isUnder, LANGUAGE_DOCS, libraryAliases, MAX_CALLS_ENV, outsideRoot, prepareCallArguments, shippedPolicyPath, probeArguments, probeProgram, POLICY_FIELDS, referenceLines, refusalHints, replayGrants, replayVariables, resolvePolicy, resolveRoots, resultLines, ruleMappingEffects, rootsInside, runnerCandidates, runnerFailureLine, sessionDepth, spawnerPolicy, spawnerRoots, subagentCallLines, subagentResultRows, suggestGrant, surfaceFileLines, surfaceRows, SURFACE_FILE, eygStringLiteral, topLevelBindings, variableBindingPath, variableDir, variableEvents, variableImportProblems, variableModule, variableName, variablePrelude, VARIABLE_SCOPES, variableRows, variableWriteOutcomes, variableWriteProgram } from "../lib/render-helpers.mjs";
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
 
@@ -850,6 +850,24 @@ test("kept bindings: what an extern call refuses to keep, and why", () => {
   assert.match(circular.refused.map((refusal) => refusal.problem).join(" "), /refer to each other/, "two bindings that use each other cannot be modules");
 
   assert.deepEqual(externBindings({ source: "perform StandardOut(\"hi\\n\")", existing: [] }).problems, ["the program defines no top-level `let` binding to keep"], "a call with nothing to keep says so");
+});
+
+test("kept bindings: the effect-valued keep the old version wrote is refused, and an effectful module on disk is not read back", () => {
+  const planted = 'let noise = (_) -> { perform WriteFile({ path: "/tmp/x", contents: !string_to_binary("x") }) }\nnoise';
+  const wanted = externBindings({ source: planted, existing: [], scope: "workspace", cwd: "/work", home: "/elsewhere" });
+  assert.equal(wanted.keep.length, 0, "the effect-valued binding the old version wrote to disk is not kept");
+  assert.equal(wanted.refused.length, 1, "it is a named refusal, not one of the scan's problems");
+  assert.match(wanted.refused[0].problem, /it performs WriteFile/, "the refusal names the effect the value performs");
+  assert.match(wanted.refused[0].problem, /\/work\/\.pi\/eyg-variables\/noise\.eyg/, "the binding file it would have written");
+  assert.match(wanted.refused[0].problem, /eyg-functions\/noise\.eyg/, "and the function registry as the way out");
+  assert.equal(wanted.problems.filter((problem) => /effect|prelude/.test(problem)).length, 0, "the refusal is on the binding, so no extra problem row is needed");
+
+  assert.match(effectfulBindingProblem("probe", ["WriteFile"], "this session's own records"), /can keep a value instead/, "the same words name the session store, which is what the read side answers with");
+  assert.equal(variableBindingPath("session", "probe", { cwd: "/work" }), null, "a session binding has no file, so a reader deletes it by defining the name again");
+  assert.equal(bindingLocation("session", "probe", { cwd: "/work" }), "this session's own records", "and the refusal says so");
+
+  const pure = externBindings({ source: "let add = (a, b) -> !int_add(a, b)\nadd(20, 22)", existing: [], scope: "workspace", cwd: "/work" });
+  assert.deepEqual(pure.keep.map((binding) => binding.name), ["add"], "a binding whose value is a value still keeps");
 });
 
 test("kept bindings: one string literal, five escapes, and a round trip", () => {

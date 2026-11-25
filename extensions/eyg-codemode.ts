@@ -112,7 +112,9 @@ import {
   hostProtectedPaths,
   LANGUAGE_DOCS,
   MAX_CALLS_ENV,
+  bindingLocation,
   bindingOrder,
+  effectfulBindingProblem,
   entryProgram,
   externBindings,
   libraryAliases,
@@ -388,8 +390,11 @@ function variableScopeDirs(cwd: string): { scope: string; dir: string }[] {
 }
 
 /// The bindings the file scopes keep: the file's stem is its name, and its path is what
-/// a call's prelude imports. A file whose name EYG could not bind is reported rather
-/// than imported, because the program it would produce is one the model cannot fix.
+/// a call's prelude imports. A file whose name EYG could not bind is reported rather than
+/// imported, because the program it would produce is one the model cannot fix. So is a file
+/// whose source performs an effect, and that half closes the keep itself: a binding an older
+/// session wrote, or one an operator edited by hand, is read here rather than trusted, so a
+/// module that performs cannot be injected into this call's prelude.
 function fileVariableBindings(cwd: string): { bindings: VariableBinding[]; problems: string[] } {
   const bindings: VariableBinding[] = [];
   const problems: string[] = [];
@@ -401,7 +406,13 @@ function fileVariableBindings(cwd: string): { bindings: VariableBinding[]; probl
         problems.push(`${join(scope.dir, file)}: ${checked.problem}`);
         continue;
       }
-      bindings.push({ name, scope: scope.scope, path: join(scope.dir, file), source: "" });
+      const path = join(scope.dir, file);
+      const performed = effectsUsed(readFile(path));
+      if (performed.length > 0) {
+        problems.push(effectfulBindingProblem(name, performed, `the file ${path}`));
+        continue;
+      }
+      bindings.push({ name, scope: scope.scope, path, source: "" });
     }
   }
   return { bindings, problems };
@@ -413,7 +424,15 @@ function fileVariableBindings(cwd: string): { bindings: VariableBinding[]; probl
 /// which is the same rule the registry scopes follow.
 function keptBindings(ctx: { sessionManager?: { getBranch?: () => unknown[] } }, cwd: string) {
   const files = fileVariableBindings(cwd);
-  const session = replayVariables(variableEvents(sessionBranch(ctx)));
+  const replayed = replayVariables(variableEvents(sessionBranch(ctx)));
+  const session = replayed.filter((binding) => effectsUsed(binding.source).length === 0);
+  const effectful: string[] = [];
+  for (const binding of replayed) {
+    const performed = effectsUsed(binding.source);
+    if (performed.length > 0) {
+      effectful.push(`${binding.name} in this session's records: ${effectfulBindingProblem(binding.name, performed, "this session's own records")}`);
+    }
+  }
   const ordered: VariableBinding[] = [];
   const shadows: string[] = [];
   const byName = new Map<string, VariableBinding>();
@@ -438,7 +457,7 @@ function keptBindings(ctx: { sessionManager?: { getBranch?: () => unknown[] } },
   return {
     bindings: ordered.filter((binding) => byName.get(binding.name) === binding),
     shadows,
-    problems: files.problems,
+    problems: files.problems.concat(effectful),
     modulePaths: files.bindings.map((binding) => String(binding.path)),
   };
 }
@@ -1174,7 +1193,8 @@ export default function (pi: ExtensionAPI) {
           externRows.push(`nothing kept: the program exited ${result.code}${result.killed ? " (timed out)" : ""}, so its bindings were not written`);
         } else {
           const existing = fileVariableBindings(cwd).bindings.filter((binding) => binding.scope === extern).map((binding) => binding.name);
-          const wanted = externBindings({ source: params.code, existing });
+          const home = process.env.HOME === undefined ? null : process.env.HOME;
+          const wanted = externBindings({ source: params.code, existing, scope: extern, cwd, home });
           for (const refusal of wanted.refused) {
             externRows.push(`not kept: ${refusal.name} - ${refusal.problem}`);
           }
@@ -1187,7 +1207,7 @@ export default function (pi: ExtensionAPI) {
               outcomes.push({ name: binding.name, scope: extern, path: null, written: true, problem: null });
             }
           } else if (wanted.keep.length > 0) {
-            const target = variableDir(extern, { cwd, home: process.env.HOME === undefined ? null : process.env.HOME });
+            const target = variableDir(extern, { cwd, home });
             if (target === null) {
               externRows.push(`not kept: no home directory is set, so ${extern} scope has no directory to write in`);
             } else {

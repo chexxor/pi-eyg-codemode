@@ -11,10 +11,11 @@ The steps are:
 1. [Define it and keep it in one call](#define-it-and-keep-it-in-one-call)
 2. [Choose a scope](#choose-a-scope)
 3. [Name it the way EYG binds](#name-it-the-way-eyg-binds)
-4. [Read what the keep answered](#read-what-the-keep-answered)
-5. [Change a binding, or drop one](#change-a-binding-or-drop-one)
-6. [When a kept binding breaks the next call](#when-a-kept-binding-breaks-the-next-call)
-7. [How these shapes were checked](#how-these-shapes-were-checked)
+4. [An effect in a kept source is never kept](#an-effect-in-a-kept-source-is-never-kept)
+5. [Read what the keep answered](#read-what-the-keep-answered)
+6. [Change a binding, or drop one](#change-a-binding-or-drop-one)
+7. [When a kept binding breaks the next call](#when-a-kept-binding-breaks-the-next-call)
+8. [How these shapes were checked](#how-these-shapes-were-checked)
 
 ## Define it and keep it in one call
 
@@ -115,6 +116,32 @@ because the alias comes from the call's argument and is not in scope inside the 
 the module inside the source instead. A binding that names itself is refused, since a module
 cannot import itself and recursion in EYG goes through `!fix`; two bindings that name each other
 are refused with the cycle printed, because no order writes them.
+
+## An effect in a kept source is never kept
+
+A kept binding is source text, and the prelude evaluates it on the call that names the binding,
+before that call's own program. So an effect written into a kept source would happen on **every
+later call that can see the name**, including a call that only wanted a value. A binding whose
+source performs an effect is therefore not kept, and the answer names the record and the way out:
+
+```
+not kept: noise - it performs WriteFile: a kept binding is only source text, and a call that names it evaluates that text in its prelude, before the call's own program, so the effect would run on every later call that sees the name - a call after a value included. the module /abs/project/.pi/eyg-variables/noise.eyg can keep a value instead; a program that performs effects belongs in the function registry, at eyg-functions/noise.eyg, where the listing names the effects it uses and every call to it is decided again
+```
+
+Nothing is written for such a binding: the answer is the whole refusal, and the scope directory
+still holds no `noise.eyg`. The look is textual over the word `perform` and the effect names, so
+prose in the source that names an effect refuses a binding that only looks effectful - refusing on
+a look is the safe direction, and the binding can be kept again with the comment gone.
+
+A module **already on disk** whose source performs an effect is not read back either, but it does
+not stop the call: every call that can see it prints that same sentence once, naming the file, and
+leaves the name out of its prelude. A file an older session wrote, or one an operator edited, then
+costs one row per call rather than failing every call in the project. `DeleteFile` on the module,
+or a keep of the same name with a clean source, ends the row.
+
+For a program that has to perform effects, the function registry is the shape that works: its
+module names the effects it uses, and every call to it is decided again - see
+`guides/how-to-share-functions.md`.
 
 ## Read what the keep answered
 

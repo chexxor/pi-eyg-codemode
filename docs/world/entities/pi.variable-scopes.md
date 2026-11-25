@@ -4,7 +4,7 @@ type: entity
 owner: delegate
 status: current
 verified_at: 2026-11-25
-verify: "grep -q 'VARIABLE_SCOPES.includes(extern)' extensions/eyg-codemode.ts && grep -q variableWriteOutcomes extensions/eyg-codemode.ts && grep -q eyg-variable lib/render-helpers.mjs && node --test test/render-helpers.test.mjs"
+verify: "grep -q 'VARIABLE_SCOPES.includes(extern)' extensions/eyg-codemode.ts && grep -q variableWriteOutcomes extensions/eyg-codemode.ts && grep -q eyg-variable lib/render-helpers.mjs && grep -q effectfulBindingProblem lib/render-helpers.mjs && grep -q effectfulBindingProblem extensions/eyg-codemode.ts && node --test test/render-helpers.test.mjs"
 confidence: high
 sources: [extensions/eyg-codemode.ts, lib/render-helpers.mjs, test/render-helpers.test.mjs, guides/how-to-keep-bindings.md, bin/agent/check-variable-shapes.mjs, notes/pi-codemode-kept-bindings.md]
 supersedes: null
@@ -46,6 +46,15 @@ how-to is `guides/how-to-keep-bindings.md`.
   parser reserves (`let`, `handle`, `perform`, `match`, `import`), a `_lib` suffix, a source using a
   `<name>_lib` alias, a binding naming itself and a mutual-reference cycle are each refused with the
   reason; a destructuring `let` is reported rather than guessed at.
+- **A source that performs an effect is never kept and never read back** (`effectfulBindingProblem`,
+  used at the keep by `externBindings` and at the read by `fileVariableBindings`/`keptBindings`): the
+  keep answers `not kept: <name> - it performs <effects> ...` and writes nothing, and a module already
+  on disk that performs is reported once per call and left out of the prelude, so a file an older
+  session wrote costs a row instead of failing every call. The scan is `effectsUsed`, textual over
+  `perform`. Seen live 2026-11-25 (4 `eyg` calls, rows in `.ai-work/keep-proof/PROOF-keep-2026-11-25.md`):
+  a keep of `let noise = (_) -> { perform WriteFile(...) }` answered that row with `details.externProgram:
+  null` and `variables: []`, and each later call carried the row naming `the file <scratch>/.pi/eyg-variables/effectful_probe.eyg`
+  with `details.prelude: []` while the module stayed on disk and nothing landed at `/tmp`.
 - **A module that does not parse is answered with the fix** (`variableImportProblems`): the file,
   the runner's reason, and the two ways out - re-`extern` the name, or `DeleteFile` the module.
 
@@ -53,11 +62,10 @@ Measured 2026-11-22 by `node bin/agent/check-variable-shapes.mjs` (0.40 s, scrat
 `.ai-work/`, the officially installed CLI, **no policy module in that run**): the scan of a program
 carrying a comment bracket, a destructuring `let`, and a string with a quote, a backslash, a tab and
 a newline kept `signature, greet, greeting` in dependency order; the write program it generated
-type-checked, made `.pi/eyg-variables/` and wrote three modules; the prelude lines imported them
-back and `eval` answered `"a\"b\\c\td\ne!"` for `greet("!")`; the module for `greet` imported its
-sibling as `./signature.eyg` and carried no machine path; a write aimed at a directory that does not
-exist printed its reason and came back as not kept. `node --test 'test/*.mjs'` (43 tests, pass 43,
-fail 0) pins the refusal rows, the name refusals, the branch replay, and the two-half rule.
+type-checked and made three modules; the prelude lines imported them back and `eval` answered `"a\"b\\c\td\ne!"`
+for `greet("!")`; `greet`'s module imported its sibling as `./signature.eyg` and carried no machine
+path; a write aimed at a missing directory came back not kept. `node --test 'test/*.mjs'` pins the
+refusal rows, the name refusals, the branch replay, the two-half rule and the effectful keeps.
 
 Seen live 2026-11-22 in one fresh one-shot session (`pi --print --mode json --model <model> --tools
 eyg --offline --no-session --no-context-files`, 15.5 s, over a scratch project whose

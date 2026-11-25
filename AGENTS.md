@@ -58,7 +58,7 @@ host performs it.
   inside one `run` function) and `entry.eyg` (which imports the guard, the policy and the
   program, and writes the refusal record as its last line) into a scratch directory of its own and spawns
   `<binary> <mode> <entry.eyg>` - no shell in between, so quoting cannot be a route around
-  the checks (`runGuarded` in `extensions/eyg-codemode.ts:483`, its run spawn at
+  the checks (`runGuarded` in `extensions/eyg-codemode.ts:502`, its run spawn at
   `:534`).
 - The per-effect checks are a program this package ships: `host/guard.eyg` installs one
   `handle` clause per effect row of `guides/eyg-surface.tsv` and applies the policy around
@@ -66,7 +66,7 @@ host performs it.
   name has no host, so naming every effect is what makes the default a refusal (`build` in
   `host/guard.eyg:704`, `test/host-coverage.test.mjs`,
   `notes/pi-codemode-host-guard-contract.md`).
-- The model's own call type-checks that entry before the run starts: `<binary> check <entry.eyg>` on the same file, and only an `error: type mismatch` row stops the run (`entryCheckArguments` in `lib/render-helpers.mjs:448`, `ENTRY_CHECK_TIMEOUT_MS` in `extensions/eyg-codemode.ts:190`); a mis-shaped ask inside the guarded body otherwise spends the whole timeout printing nothing (`notes/pi-codemode-misshaped-ask.md`).
+- The model's own call type-checks that entry before the run starts: `<binary> check <entry.eyg>` on the same file, and only an `error: type mismatch` row stops the run (`entryCheckArguments` in `lib/render-helpers.mjs:448`, `ENTRY_CHECK_TIMEOUT_MS` in `extensions/eyg-codemode.ts:192`); a mis-shaped ask inside the guarded body otherwise spends the whole timeout printing nothing (`notes/pi-codemode-misshaped-ask.md`).
 - Policy resolution: the order is stated once, in the table "Which policy a call gets" in
   `guides/how-to-write-a-policy.md`, and it is one function - `resolvePolicy` in
   `lib/render-helpers.mjs:568`, used at `extensions/eyg-codemode.ts:717`. A slot that names no
@@ -74,7 +74,7 @@ host performs it.
   call's `policy` argument sits outside that chain: it is
   honoured only when it names the policy the chain already chose or `NARROWEST_POLICY_FILE`
   (`narrows` in `lib/render-helpers.mjs:587`, used at `:626`), and anything else comes back
-  `refusedArgument` (`extensions/eyg-codemode.ts:764`, and `:1407` for a child's policy).
+  `refusedArgument` (`extensions/eyg-codemode.ts:783`, and `:1427` for a child's policy).
 - The binary is chosen by name, not by asking it what it can do: `EYG_CODEMODE_RUNNER` (an
   absolute path), else `eyg` on PATH - two places, no third (`runnerCandidates` in
   `lib/render-helpers.mjs:503`, used at `extensions/eyg-codemode.ts:779` and `:1473`). Nothing
