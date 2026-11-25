@@ -3,7 +3,7 @@ id: host.guard-boundary
 type: entity
 owner: delegate
 status: current
-verified_at: 2026-11-24
+verified_at: 2026-11-25
 verify: "node --test test/host-coverage.test.mjs > /dev/null && grep -q '^let build = (policy, ctx, body) -> {' host/guard.eyg && node bin/agent/refusal-probe.mjs 2>&1 | grep -q 'write_file denied by policy: /tmp/' && node bin/agent/refusal-probe.mjs --program test/fixtures/secret-probe.eyg --inside-roots 2>&1 | grep -q 'read_file denied by policy: .*\\.env\\.eyg' && node bin/agent/refusal-probe.mjs --program test/fixtures/unnamed-effect.eyg 2>&1 | grep -q 'unhandled effect Foo' && node bin/agent/refusal-probe.mjs --program test/fixtures/inner-handler.eyg 2>&1 | grep -q 'what the program was answered: read_file denied by policy: /tmp/' && node bin/agent/refusal-probe.mjs --program test/fixtures/abort-probe.eyg 2>&1 | grep -q 'Aborted with reason' && test \"$(node bin/agent/refusal-probe.mjs --program test/fixtures/self-write-probe.eyg --inside-roots | grep -o 'denied by the host' | wc -l)\" = 4 && test ! -e policies/self-write-probe.eyg && test ! -e host/self-write-probe && node bin/agent/handler-scan.mjs test/fixtures/inner-handler.eyg | grep -qx ReadFile && test -z \"$(node bin/agent/handler-scan.mjs test/fixtures/refusal-probe.eyg)\""
 confidence: high
 sources: [host/guard.eyg, host/PURPOSE, lib/render-helpers.mjs, extensions/eyg-codemode.ts, test/host-coverage.test.mjs, test/fixtures/refusal-probe.eyg, test/fixtures/secret-probe.eyg, test/fixtures/unnamed-effect.eyg, test/fixtures/inner-handler.eyg, test/fixtures/abort-probe.eyg, test/fixtures/self-write-probe.eyg, bin/agent/handler-scan.mjs, guides/tool-reference.md, guides/what-a-call-does.md, notes/pi-codemode-host-guard-contract.md, notes/guard-self-protection.md]
@@ -42,7 +42,10 @@ files the tool builds.
    file that imports anything, and it is generated, not modelled.
 5. **An inner handler can only decline.** A clause the model writes inside the guarded body sees the
    effect first, and its re-perform reaches the outer guard, which decides; with the guard refusing,
-   the effect is never performed. The same holds for an effect raised inside a builtin's callback.
+   the effect is never performed. The same holds for an effect raised inside a builtin's callback,
+   and for a clause a program installs for a label the language does not offer: the one place "may
+   a program handle its own effects" is answered is `notes/one-host-per-call.md`, and the
+   invented-label case is `docs/world/entities/host.closed-effect-set.md`.
    Re-runnable: `node bin/agent/refusal-probe.mjs --program test/fixtures/inner-handler.eyg` - the
    model's own `handle ReadFile` clause re-performs the read, the answer the program gets is
    `read_file denied by policy: /tmp/eyg-inner-handler-probe.txt`, `exit=0`, and no file exists at
@@ -71,7 +74,8 @@ files the tool builds.
    prints something that is not JSON stops the call too, so a program whose effects were never
    listed is not run. A clause inside the guarded body could not widen what the policy allows (fact
    5), but it answers the program instead of asking the host, and answering-instead-of-asking is the
-   boundary. The question goes to the compiler's parser rather than a text scan, so `handle` in a
+   boundary; `notes/one-host-per-call.md` writes that answer out in full - what the rule is for, why
+   it goes to the parser, and what it cannot catch. The question goes to the compiler's parser rather than a text scan, so `handle` in a
    string or a function named `handle` is not a refusal. The check covers the text the tool
    assembles - the prelude of imports and the program - and not the body of a module that text
    imports, so a clause inside an imported module installs inside the guarded body unnamed

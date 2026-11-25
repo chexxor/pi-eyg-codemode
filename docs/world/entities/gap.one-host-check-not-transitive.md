@@ -3,7 +3,7 @@ id: gap.one-host-check-not-transitive
 type: entity
 owner: delegate
 status: current
-verified_at: 2026-11-24
+verified_at: 2026-11-25
 verify: "node bin/agent/refusal-probe.mjs --program test/fixtures/imported-handler.eyg 2>&1 | grep -q 'the program reports a write the host never performed' && ! node bin/agent/refusal-probe.mjs --program test/fixtures/imported-handler.eyg 2>&1 | grep -q 'denied by policy' && test -z \"$(node bin/agent/handler-scan.mjs test/fixtures/imported-handler.eyg)\" && node bin/agent/handler-scan.mjs test/fixtures/imported-handler-lib.eyg | grep -qx WriteFile && node bin/agent/refusal-probe.mjs 2>&1 | grep -q 'write_file denied by policy: /tmp/'"
 confidence: high
 sources: [extensions/eyg-codemode.ts, lib/render-helpers.mjs, test/fixtures/imported-handler.eyg, test/fixtures/imported-handler-lib.eyg, bin/agent/refusal-probe.mjs, bin/agent/handler-scan.mjs, docs/world/entities/host.guard-boundary.md, notes/one-host-per-call.md]
@@ -85,6 +85,9 @@ runs, and this record moves with the new evidence.
 - whether a clause can widen what the policy allows: boundary fact 5 of
   `docs/world/entities/host.guard-boundary.md`, which it cannot;
 - the rule that refuses a clause in the text a call passes in, and why that question goes to the
-  parser: boundary fact 7 of the same page and `notes/one-host-per-call.md`;
+  parser: boundary fact 7 of the same page, and `notes/one-host-per-call.md`, which is the one place
+  "may a program handle its own effects" is answered;
+- a clause written for a label the language does not offer, which can decline and cannot perform:
+  `docs/world/entities/host.closed-effect-set.md`;
 - which files a call may not change: boundary fact 6;
 - the effect surface and its policy fields: `docs/world/entities/codemode.effect-surface.md`.

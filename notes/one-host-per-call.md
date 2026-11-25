@@ -1,7 +1,7 @@
 ---
 name: one-host-per-call
-description: Why a program that handles its own effects is refused by parsing it before the run, why the check is the compiler's parse tree rather than a text scan or a type, and what the rule deliberately does not catch
-date: 2026-11-23
+description: The one answer to whether a program may handle its own effects - why the tool refuses that by parsing before the run, why the check is the compiler's parse tree rather than a text scan or a type, and what the rule deliberately does not catch
+date: 2026-11-24
 ---
 
 The operator asked for a check on "the type of the expression passed into the `eyg-codemode`
@@ -52,6 +52,17 @@ because the host only ever sees the effects that were performed. The rule remove
 escape hatch, which is the one that is checkable; the rest is a model lying in its output, which is a
 review question rather than a policy one. That is also why the limit above costs honesty and not
 reach: the fabrication an imported clause performs is one the model could type out itself.
+
+**The runs that show each half.** A clause the model writes in the program it passes in is refused
+before the run: `node bin/agent/handler-scan.mjs test/fixtures/inner-handler.eyg` prints `ReadFile`,
+and the tool refuses the call that names it. Run past the tool, the same clause cannot widen
+anything: `node bin/agent/refusal-probe.mjs --program test/fixtures/inner-handler.eyg` answers
+`what the program was answered: read_file denied by policy: ...` and reads nothing. A clause in a
+module the program imports is not seen by that parse and answers the program instead -
+`test/fixtures/imported-handler.eyg`, measured on `docs/world/entities/gap.one-host-check-not-transitive.md`.
+And a clause written for a label that has no host can only decline: `test/fixtures/invented-effect-handler.eyg`,
+measured on `docs/world/entities/host.closed-effect-set.md`. In all three cases the clause's own
+re-perform reaches a host that decides, which is the fact the rule rests on.
 
 **Rejected.** Letting the clause run and relying on fact 5, since the answer rather than the reach
 is the harm. A textual scan, for the false positives above. A type-level check, for the reason in
