@@ -95,7 +95,7 @@ nothing here reads it at run time, and this tree never writes outside itself.
 
 ## Where to look for a claim
 
-- entities: 40 · invariants: 4 · decisions: 7 · runbooks: 2 · traps: 88
-- suspect right now: doc-checks.citations
+- entities: 40 · invariants: 4 · decisions: 7 · runbooks: 2 · traps: 93
+- suspect right now: none
 - re-check everything: `npm run world` · checks: `npm run world:lint` · regenerate this index: `npm run world:map`
 <!-- END GENERATED -->
