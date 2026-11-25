@@ -7,7 +7,7 @@ date: 2026-11-23
 A session run inside this package gets this package as its roots, and the per-call entry
 imports `host/guard.eyg` and the policy module by absolute path inside that same tree. So
 before this note, a program in such a session could rewrite the module the *next* call
-imports: measured 2026-11-22 by hand-building the tool's own three files and running them
+imports: measured 2026-11-22 by hand-building the same files the tool writes and running them
 with the installed CLI, where a new file under `policies/`, a rewrite of
 `policies/deny-all.eyg` and a rewrite of `host/guard.eyg` were all performed (`git status`
 showed ` M host/guard.eyg`, restored with `git checkout --`). The fixture that re-runs the

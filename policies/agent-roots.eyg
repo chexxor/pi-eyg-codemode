@@ -62,10 +62,11 @@
 //     Fetch                               - the network
 //     StandardIn                          - the input meant for the chat
 //     CreateKey                           - a fresh opaque key
-//   ANSWERED AS UNSET, not refused
-//     Env                                 - Mock(None({})): Env returns Option, so the
-//                                            program cannot read the caller's
-//                                            environment (which holds the tokens)
+//   ANSWERED AS UNSET, never performed
+//     Env                                 - refuse("env"): the guard answers the program
+//                                            with None({}) because Env returns Option, so
+//                                            an unset variable is what the program sees
+//                                            - the caller's environment holds the tokens
 //
 // Anything outside `roots` gets `Error("<effect> denied by policy: <path>")`, and
 // a program that ignores that value carries on with what it got - a denial is a
@@ -203,7 +204,7 @@ let rules = (ctx) -> {
     create_key: refuse("create_key"),
     cwd: pass,
     delete_file: hide_secrets("delete_file", path_of_value, under("delete_file", roots, path_of_value)),
-    env: (_) -> { Mock(None({})) },
+    env: refuse("env"),
     exit: pass,
     fetch: refuse("fetch"),
     flip: pass,

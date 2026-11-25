@@ -28,7 +28,7 @@ the effect labels and the closed set of runtime-`Unchecked` ones, recorded in a 
   snapshot (`docs/world/entities/codemode.effect-surface.md`).
 - The checks are host-side, so a program cannot opt out of them by writing different code;
   the CLI hands a path **as written** - relative or not - and `host/guard.eyg` resolves it to an
-  absolute, lexically normalized path before a rule sees it (`absolute` there, used at `host/guard.eyg:349`), so
+  absolute, lexically normalized path before a rule sees it (`absolute` there, used at `host/guard.eyg:368`), so
   a policy compares resolved paths and the refusal names the resolved one.
 - The policy modules are written out in full inside this package: `policies/agent-roots.eyg` and
   `policies/deny-all.eyg` each export one `rules(ctx)` function - deny-by-default plus

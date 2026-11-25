@@ -20,8 +20,8 @@ per `libraries` entry and one per kept binding - followed by the program
 text, so a clause written inside an imported module installs inside the guarded body and the check
 never sees it.
 
-Measured 2026-11-23 with two fixtures, through `node bin/agent/refusal-probe.mjs`, which writes the
-same three files the tool writes and starts the installed CLI:
+Measured 2026-11-23 with two fixtures, through `node bin/agent/refusal-probe.mjs`, which writes
+the same files the tool writes and starts the installed CLI:
 
 | run | answer |
 | --- | --- |

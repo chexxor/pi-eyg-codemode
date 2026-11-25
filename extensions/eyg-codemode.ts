@@ -10,6 +10,13 @@
  * such as `write_file denied by policy: /abs/path`, which the model can act on; the
  * filesystem is unchanged because the host never performed the write.
  *
+ * A refusal is a value the program may ignore - `let _ = perform ReadFile(...)` prints
+ * nothing and exits 0 - so the guard also keeps the refusals it made as its own value and
+ * the entry writes them to a fourth file of the call, `refusals.txt`, as its last line. The
+ * write sits outside the guarded body, so no handler and no policy decides it, which is what
+ * makes the record survive the narrowest policy; the tool turns the refusals the program
+ * never reported into rows of the call's result.
+ *
  * The tool renders like the built-in `bash` tool: the collapsed row names the
  * effects the program performs and shows the first lines of its source, and
  * expanding it (pi's `Ctrl+O` toggle, or a click) shows the whole program and
@@ -111,8 +118,11 @@ import {
   probeProgram,
   programModule,
   PROGRAM_FILE,
+  RECORD_FILE,
   referenceLines,
   refusalHints,
+  refusalRecordLines,
+  recordedRefusalHint,
   replayGrants,
   replayVariables,
   referencedNames,
@@ -130,6 +140,8 @@ import {
   subagentResultRows,
   suggestGrant,
   surfaceRows,
+  swallowedRefusals,
+  swallowedRows,
   SURFACE_FILE,
   topLevelBindings,
   variableDir,
@@ -483,14 +495,21 @@ async function runGuarded(
   const programPath = join(scratch, PROGRAM_FILE);
   const entryPath = join(scratch, ENTRY_FILE);
   writeFileSync(programPath, programModule(source));
-  writeFileSync(entryPath, entryProgram({ guard, policy, ctx, program: programPath }));
+  // The record of the guard's refusals. `eval` gets no record file: eval mode has no host
+  // for any effect, so a trailer write there would answer `unhandled effect` and buy nothing.
+  const recordPath = join(scratch, RECORD_FILE);
+  writeFileSync(entryPath, entryProgram({ guard, policy, ctx, program: programPath, record: mode === "eval" ? null : recordPath }));
   const startedAt = Date.now();
   try {
     const result = await pi.exec(runner, [mode, entryPath], { signal, timeout: timeoutMs, cwd });
+    // Read the record before the `finally` removes the scratch directory it lives in.
+    const recordText = existsSync(recordPath) ? readFileSync(recordPath, "utf8") : "";
     return {
       result,
       entryPath,
       programPath,
+      recordPath,
+      recordText,
       out: [result.stdout, result.stderr].filter((text) => text !== "").join("\n"),
       durationMs: Date.now() - startedAt,
     };
@@ -1070,6 +1089,13 @@ export default function (pi: ExtensionAPI) {
           if (!asks.includes(line)) asks.push(line);
         }
       }
+      // What the guard refused, whether or not the program showed it: the entry wrote the
+      // record file after the guarded body, so a program that bound a refusal to `_` and
+      // printed nothing still gets these refusals named back. Only the ones the program
+      // never reported become rows, so a program that printed its own refusal is not asked
+      // about twice.
+      const recorded = refusalRecordLines(spawnResult.recordText).map((row) => recordedRefusalHint(row));
+      const swallowed = swallowedRefusals(recorded, refusals);
       // An invented builtin is the other failure this tool can answer: the runner's own
       // hint says "check the builtin name against the builtins reference" and names no
       // path, which a session that cannot read outside its roots cannot act on.
@@ -1157,6 +1183,7 @@ export default function (pi: ExtensionAPI) {
         evalHint === null ? "" : evalHint,
         broken.join("\n"),
         kept.problems.concat(kept.shadows).join("\n"),
+        swallowedRows(swallowed, { roots, policy }).join("\n"),
         asks.join("\n"),
         hints.join("\n"),
         externRows.join("\n"),
@@ -1182,6 +1209,8 @@ export default function (pi: ExtensionAPI) {
           roots,
           ...grantDetails,
           refusals,
+          swallowed,
+          refusalRecord: spawnResult.recordText,
           builtins: invented,
           prelude: prelude.map((line) => line.trim()),
           kept: kept.bindings.map((binding) => `${binding.name} (${binding.scope})`),

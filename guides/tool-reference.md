@@ -31,7 +31,7 @@ The sections:
 | runner | `EYG_CODEMODE_RUNNER` (an absolute path) when set, else `eyg` on PATH | `lib/render-helpers.mjs` (`runnerCandidates`), used by `extensions/eyg-codemode.ts`; a binary that is missing, or that reads the mode word as a file name, gets one line naming the install and quoting the command that was run (`runnerFailureLine`) |
 | mode | `run`; `eval` is pure and prints the value | `extensions/eyg-codemode.ts`. `action` selects what the call does - `run`, `eval`, `effects`, `reference`, `list_functions`, `describe_function` (`ACTIONS`) - and `prepareCallArguments` in `lib/render-helpers.mjs` maps `mode` from sessions resumed before the rename |
 | timeout | 30 s default, 120 s cap; the parameter is `timeout` in **seconds** | `extensions/eyg-codemode.ts` |
-| argv | `[mode, entryPath]`: the entry this package wrote in a scratch directory of its own, which imports the guard, the policy and the model's program; the directory is removed when the run ends | `runGuarded` in `extensions/eyg-codemode.ts`; the three files come from `entryProgram`, `programModule` and `contextLiteral` in `lib/render-helpers.mjs` |
+| argv | `[mode, entryPath]`: the entry this package wrote in a scratch directory of its own, which imports the guard, the policy and the model's program, and writes the refusal record as its last line; the directory is removed when the run ends | `runGuarded` in `extensions/eyg-codemode.ts`; the two files come from `entryProgram` and `programModule`, and the record path the entry writes last from `RECORD_FILE`, all in `lib/render-helpers.mjs` |
 | a parse of the program | always, before the run, for `run` and `eval` | `[parse, -c, code]` through the same binary (`parseArguments` in `lib/render-helpers.mjs`); a program that names a `handle` clause is refused with its labels, and a binary that cannot answer the parse stops the call rather than running an unchecked program |
 
 | environment | meaning |
@@ -61,8 +61,9 @@ own `host/` and `policies/`, plus the policy module resolved for the call when i
 the package (`hostProtectedPaths`) - and the guard refuses the four change effects under them
 before any rule runs (`shield` in `host/guard.eyg`), so a session whose roots are this package
 cannot rewrite the rules of its next call. What a *program* gets when it asks for the environment
-is the answer the policy chooses - `env: (_) -> { Mock(None({})) }` under `policies/agent-roots.eyg`
-- which is why a token belongs in a policy the operator wrote and never in a program.
+is what the policy chooses - `env: refuse("env")` under `policies/agent-roots.eyg`, and the guard
+hands the program `None({})` - which is why a token belongs in a policy the operator wrote
+and never in a program.
 
 ## Who decides an effect: one host per call
 

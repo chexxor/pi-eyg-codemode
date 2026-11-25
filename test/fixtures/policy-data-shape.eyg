@@ -124,7 +124,7 @@ let rules = (ctx) -> {
     create_key: refuse("create_key"),
     cwd: always,
     delete_file: path_rule("delete_file", path_of_value),
-    env: (_) -> { Mock(None({})) },
+    env: refuse("env"),
     exit: always,
     fetch: refuse("fetch"),
     flip: always,

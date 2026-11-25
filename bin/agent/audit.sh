@@ -149,6 +149,17 @@ policy_shape() {
   return 0
 }
 
+# A refusal the program never printed still reaches the call: `build` returns the refusals the
+# guard answered as its own value, the entry writes them to the call's fourth file after the guarded
+# body, and the tool reads that file. The probe runs ONE guarded run of a program that binds the
+# refusal to `_` and prints nothing - stdout 0 bytes, exit 0, nothing landed - and prints the rows
+# the tool builds; it exits non-zero when the record stops naming the refusal, which is what a run
+# with `--no-record` shows (`notes/pi-codemode-refusal-record.md`).
+swallowed_refusal() {
+  node bin/agent/swallowed-refusal-probe.mjs | tail -1 | grep -q '1 swallowed refusal(s) named by the guard' || return 1
+  return 0
+}
+
 echo "audit in $pkg"
 run_check "surface file current" node bin/agent/gen-surface.mjs --check
 run_check "unit test and drift guard" node --test 'test/*.mjs'
@@ -159,6 +170,7 @@ run_check "a program that handles an effect is named" handler_scan
 run_check "an invented effect reaches nothing" invented_effect
 run_check "the hidden-name rule refuses in every direction" secret_rule
 run_check "the alternative policy shape decides the same rows" policy_shape
+run_check "a swallowed refusal still gets named" swallowed_refusal
 run_check "kept binding shapes" node bin/agent/check-variable-shapes.mjs
 run_check "world lint" node pi-simple-world-model/bin/world_lint.mjs
 run_check "world verify $verify_args" node pi-simple-world-model/bin/world_verify.mjs $verify_args

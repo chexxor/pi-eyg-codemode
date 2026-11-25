@@ -1,9 +1,12 @@
 #!/usr/bin/env node
 // One guarded program, run the way the eyg tool runs every call, from a shell.
 //
-// It writes the same three files the tool writes (the program module, the entry that puts
+// It writes the same files the tool writes (the program module, the entry that puts
 // `host/guard.eyg` around it, and the `ctx` the policy reads) under the system temporary
-// directory, starts the installed CLI with `<mode> <entry>`, and prints what came back.
+// directory, starts the installed CLI with `<mode> <entry>`, and prints what came back:
+// the program's own output and, on its own line, the record of every refusal the guard
+// answered - the entry wrote it to `refusals.txt` as its last line, outside the guard, so
+// it holds a refusal the program bound to `_` and never printed.
 // Nothing is written in this tree and the scratch directory is removed on the way out, so
 // the refusal you see is the refusal a session sees, and the command costs a fifth of a
 // second.
@@ -18,13 +21,16 @@
 //   node bin/agent/refusal-probe.mjs --roots /tmp/a --protected /tmp/b --program test/fixtures/symlink-write-probe.eyg
 //   node bin/agent/refusal-probe.mjs --port 45678 --program test/fixtures/fetch-probe.eyg   # the fixture names its port {{port}}
 //
+//   node bin/agent/refusal-probe.mjs --record-only --program test/fixtures/self-write-probe.eyg --inside-roots
+//   `--record-only` prints the record rows and nothing else, so a check can count them.
+//
 // The program runs with its working directory outside the roots unless `--inside-roots`
 // says otherwise, which is what makes the write probe's relative path land outside them.
 // `--roots` moves the roots somewhere other than this package, and `--protected` replaces
 // the paths the host shields with one path: a probe that needs a link, or a shielded
 // directory, gets one in the system temporary directory instead of one in this tree.
 import { execFileSync } from "node:child_process";
-import { mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
+import { existsSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
@@ -44,11 +50,13 @@ const insideRoots = argv.includes("--inside-roots");
 const roots = [resolve(flag("roots", packageDir))];
 const shielded = flag("protected", "");
 const port = flag("port", "8077");
+const recordOnly = argv.includes("--record-only");
 
 const scratch = mkdtempSync(join(tmpdir(), "eyg-refusal-probe-"));
 const cwd = insideRoots ? roots[0] : scratch;
 const programPath = join(scratch, "program.eyg");
 const entryPath = join(scratch, "entry.eyg");
+const recordPath = join(scratch, "refusals.txt");
 const guard = join(packageDir, "host/guard.eyg");
 const policy = policyName.startsWith("/") ? resolve(policyName) : join(packageDir, "policies", `${policyName}.eyg`);
 const protectedPaths = shielded === "" ? hostProtectedPaths({ packageDir, policyPath: policy }) : [resolve(shielded)];
@@ -56,6 +64,7 @@ const ctx = contextLiteral({ roots, cwd, fields, protected: protectedPaths });
 
 let code = 0;
 let out = "";
+let record = "";
 try {
   writeFileSync(programPath, programModule(
     readFileSync(programFile, "utf8")
@@ -64,20 +73,26 @@ try {
       .replaceAll("{{outside}}", scratch)
       .replaceAll("{{port}}", port),
   ));
-  writeFileSync(entryPath, entryProgram({ guard, policy, ctx, program: programPath }));
+  writeFileSync(entryPath, entryProgram({ guard, policy, ctx, program: programPath, record: recordPath }));
   try {
     out = execFileSync("eyg", ["run", entryPath], { cwd, encoding: "utf8", stdio: ["ignore", "pipe", "pipe"] });
   } catch (error) {
     code = error.status === undefined ? -1 : error.status;
     out = `${error.stdout ?? ""}${error.stderr ?? ""}`;
   }
+  record = existsSync(recordPath) ? readFileSync(recordPath, "utf8") : "";
 } finally {
   rmSync(scratch, { recursive: true, force: true });
 }
 
+if (recordOnly) {
+  for (const line of record.trim().split("\n")) if (line !== "") console.log(line);
+  process.exit(0);
+}
 console.log(`argv: eyg run ${entryPath}`);
 console.log(`policy: ${policy}  roots: ${roots.join(",")}  cwd: ${cwd}  fields: ${fields.join(",") || "(none)"}`);
 console.log(out.trimEnd());
+console.log(`refusals the guard answered: ${record.trim() === "" ? "(none recorded)" : record.trim()}`);
 console.log(`exit=${code}`);
 // The caller's verdict comes from what it greps for, not from this script's status.
 process.exit(0);

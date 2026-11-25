@@ -8,8 +8,8 @@ can see from a shell names the command that shows it.*
 
 Why the sequence deserves its own page: "a program reaches the host only through effects, and a
 policy decides every effect" is not a property of the EYG language, and it is not a rule the
-model agrees to follow. It is built, out of three files written for one call and deleted when the
-call ends. Once you know the order those files are written in, you can predict what a call will
+model agrees to follow. It is built, out of two files written for one call plus the one record the
+entry writes last, and deleted when the call ends. Once you know the order those files are written in, you can predict what a call will
 do before you send it, and you can see what a program would have to do to get outside the checks.
 The answer is: nothing, as long as the entry is the one the tool wrote - and the eighth section
 prints what a call looks like when there is no entry.
@@ -20,7 +20,7 @@ The steps, in the order the tool does them:
 2. [The policy, the guard, the roots and the binary are resolved](#the-policy-the-guard-the-roots-and-the-binary-are-resolved)
 3. [A prelude is prepended to the program](#a-prelude-is-prepended-to-the-program)
 4. [The program is parsed before it is run](#the-program-is-parsed-before-it-is-run)
-5. [Three files go into a directory of their own](#three-files-go-into-a-directory-of-their-own)
+5. [The files go into a directory of their own](#the-files-go-into-a-directory-of-their-own)
 6. [The guard decides every effect of the run](#the-guard-decides-every-effect-of-the-run)
 7. [The tool prints what came back](#the-tool-prints-what-came-back)
 8. [Run one call from a shell](#run-one-call-from-a-shell)
@@ -132,10 +132,11 @@ node bin/agent/handler-scan.mjs test/fixtures/inner-handler.eyg   # prints ReadF
 node bin/agent/handler-scan.mjs test/fixtures/refusal-probe.eyg   # prints nothing
 ```
 
-## Three files go into a directory of their own
+## The files go into a directory of their own
 
 The run gets a scratch directory named for the process, the moment and the call number, under
-`$TMPDIR/pi-eyg-codemode/`. It holds exactly three files, and it is removed when the run ends, so
+`$TMPDIR/pi-eyg-codemode/`. It holds the two files the tool writes and one more, `refusals.txt`,
+that the entry writes after the guarded body; it is removed when the run ends, so
 a call leaves nothing a later call could read.
 
 `program.eyg` is the model's source inside one function, with nothing else added:
@@ -159,16 +160,25 @@ trailing `{run}` is not decoration - a file that ends in a `let` aborts the run 
 let guard = import "/<package>/host/guard.eyg"
 let policy = import "/<package>/policies/agent-roots.eyg"
 let ctx = {roots: ["/<package>"], cwd: "/<package>", fields: [], protected: ["/<package>/host", "/<package>/policies"]}
-guard.build(policy.rules(ctx), ctx, (_) -> {
+let refusal_record = guard.build(policy.rules(ctx), ctx, (_) -> {
   let program = import "/<scratch>/program.eyg"
   program.run({})
 })
+let record_text = !list_fold(refusal_record, "", (line, acc) -> {
+  !string_append(acc, !string_append(line, "\\n"))
+})
+perform WriteFile({path: "/<scratch>/refusals.txt", contents: !string_to_binary(record_text)})
 ```
+
+The last three lines are the record. `guard.build` hands back every refusal its handlers answered,
+as `label|reason` lines; the entry writes them to a file outside every root, after the guarded
+body, where no handler and no policy decides that write. The tool reads it before removing the
+directory and names the refusals the program never printed.
 
 Print that text yourself with the same functions the tool calls:
 
 ```sh
-node -e 'import("./lib/render-helpers.mjs").then(m=>process.stdout.write(m.entryProgram({guard:"/pkg/host/guard.eyg",policy:"/pkg/policies/agent-roots.eyg",ctx:m.contextLiteral({roots:["/pkg"],cwd:"/pkg",fields:[],protected:m.hostProtectedPaths({packageDir:"/pkg",policyPath:"/pkg/policies/agent-roots.eyg"})}),program:"/tmp/scratch/program.eyg"})))'
+node -e 'import("./lib/render-helpers.mjs").then(m=>process.stdout.write(m.entryProgram({guard:"/pkg/host/guard.eyg",policy:"/pkg/policies/agent-roots.eyg",ctx:m.contextLiteral({roots:["/pkg"],cwd:"/pkg",fields:[],protected:m.hostProtectedPaths({packageDir:"/pkg",policyPath:"/pkg/policies/agent-roots.eyg"})}),program:"/tmp/scratch/program.eyg",record:"/tmp/scratch/refusals.txt"})))'
 ```
 
 Then one process: `<binary> <mode> <entry.eyg>`, started through argv with no shell in between, in
@@ -236,6 +246,10 @@ several values puts `\n` in its own strings if it wants them on separate lines. 
   fact about one value, the operator is asked only when one blocks the task, and the ask names the
   addition, the reason for it and the intended use. A `denied by the host` refusal gets no such
   row, because no grant opens those paths.
+- **the refusals the program did not print**, read from that record: a program that swallows an
+  effect - `let _ = perform ReadFile({path: "/etc/passwd", offset: 0, limit: 10})` and prints something
+  else - still gets the row naming what was refused, with the same grant ask the printed refusals
+  get. The record names refusals the guard answered, so a run that aborts leaves no record at all.
 - **the builtin list**, when the program named a builtin the runtime does not have - the runner's
   hint for that names no path, and a session whose only channel is effects cannot go and look.
 - **the install line**, when the binary was missing or read the mode word as a file name, since

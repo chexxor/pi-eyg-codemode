@@ -14,10 +14,10 @@ superseded_by: null
 
 A session's roots contain the two directories a call can leave code in for a later call: the
 function-registry scope `<cwd>/.pi/eyg-functions` (the scope list is `registryScopes`,
-`extensions/eyg-codemode.ts:247`) and the kept-binding scope `<cwd>/.pi/eyg-variables/`
-(`fileVariableBindings`, `extensions/eyg-codemode.ts:377`, whose prelude `keptBindings` builds at
-`:396`). Neither is in `ctx.protected`, which names the package's `host/` and `policies/` and a
-policy module outside them (`hostProtectedPaths`, `lib/render-helpers.mjs:326`). Measured
+`extensions/eyg-codemode.ts:261`) and the kept-binding scope `<cwd>/.pi/eyg-variables/`
+(`fileVariableBindings`, `extensions/eyg-codemode.ts:389`, whose prelude `keptBindings` builds at
+`:410`). Neither is in `ctx.protected`, which names the package's `host/` and `policies/` and a
+policy module outside them (`hostProtectedPaths`, `lib/render-helpers.mjs:330`). Measured
 2026-11-24: the plant lands, a later call lists it, binds it and runs it, and the run is decided
 again.
 
@@ -29,7 +29,7 @@ runs in its own scratch directory outside `$t`):
 | step | answer |
 | --- | --- |
 | `node bin/agent/refusal-probe.mjs --roots $t --program test/fixtures/registry-plant-probe.eyg` - the program performs `MakeDirectory` and `WriteFile` of a module carrying a `metadata` record, inside its own root | `PLANTED IN REGISTRY SCOPE`, `exit=0` |
-| `node bin/agent/registry-walk.mjs --cwd $t --home $h --no-package` - the tool's own `buildRegistry` (`lib/render-helpers.mjs:1772`) over the planted tree, reading nothing else | `entry persist_probe [workspace] <t>/.pi/eyg-functions/persist-probe.eyg persist_probe_lib.marker(path) -> Result(Binary, String) - planted by the probe: reads the path the caller names` |
+| `node bin/agent/registry-walk.mjs --cwd $t --home $h --no-package` - the tool's own `buildRegistry` (`lib/render-helpers.mjs:1850`) over the planted tree, reading nothing else | `entry persist_probe [workspace] <t>/.pi/eyg-functions/persist-probe.eyg persist_probe_lib.marker(path) -> Result(Binary, String) - planted by the probe: reads the path the caller names` |
 | `node bin/agent/refusal-probe.mjs --roots $t --program test/fixtures/registry-bind-probe.eyg` - a **later** call imports that module and calls `lib.marker` twice | `inside: landed` and `outside: read_file denied by policy: <scratch>/outside.txt`, `exit=0` |
 
 The same three steps run live through the `eyg` tool, under `policies/agent-roots.eyg` with this
@@ -41,7 +41,7 @@ root, `outside: read_file denied by policy: /tmp/live-persistence-outside.txt` w
 for the one outside it.
 
 **Planted code runs inside the guard.** The entry imports the program module *inside* the guarded
-body (`entryProgram`, `lib/render-helpers.mjs:403`), so every effect a planted function performs
+body (`entryProgram`, `lib/render-helpers.mjs:409`), so every effect a planted function performs
 goes through `host/guard.eyg` and the policy in force for the call that binds it. Persistence plants
 code, a name, and listing text; it adds no reach. `docs/world/entities/gap.one-host-check-not-transitive.md`
 is the record of the route where a planted module hosts its own effects instead, and what that costs.
@@ -52,7 +52,7 @@ one call wrote becomes text a later model reads as this tool's own documentation
 
 **A name clash resolves to the workspace, and the home scope reaches every workspace.** With both
 scopes planted, the walk prints the `[workspace]` entry and reports the other
-(`buildRegistry`, `lib/render-helpers.mjs:1772`, `:1780`):
+(`buildRegistry`, `lib/render-helpers.mjs:1850`, `:1858`):
 `shadow: <home>/.pi/eyg-functions/persist-probe.eyg: persist_probe is shadowed by <t>/.pi/eyg-functions/persist-probe.eyg`.
 With only the scratch home planted, the same walk prints `entry persist_probe [home]`. So a module
 planted under `$HOME/.pi/eyg-functions` is offered in every workspace on the machine, and who may
@@ -72,7 +72,7 @@ in that workspace then died before its own program ran: `error: unhandled effect
 StandardOut("kept-binding leg planted: the tool writes this source into a scope file")`, `exit=1`,
 0.24 s, at `let {out1} = import "<pkg>/.pi/eyg-variables/out1.eyg` (`program.eyg:2`). The prelude
 line is an `import` at the top of the program module, outside the guarded body the entry wraps
-(`entryProgram`, `lib/render-helpers.mjs:403`), so a top-level effect in a scope file answers
+(`entryProgram`, `lib/render-helpers.mjs:409`), so a top-level effect in a scope file answers
 `unhandled effect` exactly as boundary fact 4 of `docs/world/entities/host.guard-boundary.md` says:
 fail-closed, nothing performed. What it costs is the workspace - the tool prepends the import of
 every visible binding to every call, so the call that would `DeleteFile` the module dies on the same

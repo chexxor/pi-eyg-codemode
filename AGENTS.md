@@ -7,7 +7,7 @@ rules, not the argument.
 
 The package is one directory deep. Everything it loads at run time is inside it:
 the extension resolves its own `policies/` and `libraries/` from `import.meta.url`
-(`extensions/eyg-codemode.ts:185-204`, `packageDir()` then
+(`extensions/eyg-codemode.ts:233-251`, `packageDir()` then
 `join(dir, "policies", "agent-roots.eyg")`), and the policy modules import nothing
 outside the package (`invariant.policy-self-contained`). **Nothing in this tree reads
 another workspace at run time.**
@@ -54,32 +54,32 @@ A program reaches the host only through effects, and this package has no effect 
 shell commands; the guard this package ships puts a policy rule in front of each effect before the
 host performs it.
 
-- A call is three files and one argv: the tool writes `program.eyg` (the model's source
+- A call is two files the tool writes, one file the entry writes last, and one argv: the tool writes `program.eyg` (the model's source
   inside one `run` function) and `entry.eyg` (which imports the guard, the policy and the
-  program) into a scratch directory of its own and spawns
+  program, and writes the refusal record as its last line) into a scratch directory of its own and spawns
   `<binary> <mode> <entry.eyg>` - no shell in between, so quoting cannot be a route around
-  the checks (`runGuarded` in `extensions/eyg-codemode.ts:467`, the one place it spawns at
-  `:489`).
+  the checks (`runGuarded` in `extensions/eyg-codemode.ts:479`, the one place it spawns at
+  `:504`).
 - The per-effect checks are a program this package ships: `host/guard.eyg` installs one
   `handle` clause per effect row of `guides/eyg-surface.tsv` and applies the policy around
   the model's code, which is imported inside the guarded body. A label the guard does not
   name has no host, so naming every effect is what makes the default a refusal (`build` in
-  `host/guard.eyg:570`, `test/host-coverage.test.mjs`,
+  `host/guard.eyg:704`, `test/host-coverage.test.mjs`,
   `notes/pi-codemode-host-guard-contract.md`).
 - Policy resolution: the order is stated once, in the table "Which policy a call gets" in
   `guides/how-to-write-a-policy.md`, and it is one function - `resolvePolicy` in
-  `lib/render-helpers.mjs:428`, used at `extensions/eyg-codemode.ts:687`. A slot that names no
+  `lib/render-helpers.mjs:568`, used at `extensions/eyg-codemode.ts:717`. A slot that names no
   module is skipped, and when none names one the tool refuses rather than running unchecked. The
   call's `policy` argument sits outside that chain: it is
   honoured only when it names the policy the chain already chose or `NARROWEST_POLICY_FILE`
-  (`narrows` in `lib/render-helpers.mjs:468`, used at `:507`), and anything else comes back
-  `refusedArgument` (`extensions/eyg-codemode.ts:713`, and `:1333` for a child's policy).
+  (`narrows` in `lib/render-helpers.mjs:546`, used at `:585`), and anything else comes back
+  `refusedArgument` (`extensions/eyg-codemode.ts:732`, and `:1362` for a child's policy).
 - The binary is chosen by name, not by asking it what it can do: `EYG_CODEMODE_RUNNER` (an
   absolute path), else `eyg` on PATH - two places, no third (`runnerCandidates` in
-  `lib/render-helpers.mjs:363`, used at `extensions/eyg-codemode.ts:749` and `:1408`). Nothing
+  `lib/render-helpers.mjs:503`, used at `extensions/eyg-codemode.ts:779` and `:1473`). Nothing
   is asked of it but the mode word and a file this package wrote; a missing binary, or one with
   no such mode command, ends the call with one line naming the install and quoting the command
-  that was run (`runnerFailureLine` in `lib/render-helpers.mjs:699`).
+  that was run (`runnerFailureLine` in `lib/render-helpers.mjs:777`).
 - **Nothing here waits on a build of the language.** The installed CLI runs every call:
   `eyg --version` answers `eyg v0.1.0` and `eyg run <the entry this package writes>` runs the
   guard (`@measured 2026-11-22`), so what a shipped policy decides at runtime is re-runnable

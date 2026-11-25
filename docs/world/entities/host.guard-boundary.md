@@ -4,7 +4,7 @@ type: entity
 owner: delegate
 status: current
 verified_at: 2026-11-25
-verify: "node --test test/host-coverage.test.mjs > /dev/null && grep -q '^let build = (policy, ctx, body) -> {' host/guard.eyg && node bin/agent/refusal-probe.mjs 2>&1 | grep -q 'write_file denied by policy: /tmp/' && node bin/agent/refusal-probe.mjs --program test/fixtures/secret-probe.eyg --inside-roots 2>&1 | grep -q 'read_file denied by policy: .*\\.env\\.eyg' && node bin/agent/refusal-probe.mjs --program test/fixtures/unnamed-effect.eyg 2>&1 | grep -q 'unhandled effect Foo' && node bin/agent/refusal-probe.mjs --program test/fixtures/inner-handler.eyg 2>&1 | grep -q 'what the program was answered: read_file denied by policy: /tmp/' && node bin/agent/refusal-probe.mjs --program test/fixtures/abort-probe.eyg 2>&1 | grep -q 'Aborted with reason' && test \"$(node bin/agent/refusal-probe.mjs --program test/fixtures/self-write-probe.eyg --inside-roots | grep -o 'denied by the host' | wc -l)\" = 4 && test ! -e policies/self-write-probe.eyg && test ! -e host/self-write-probe && node bin/agent/handler-scan.mjs test/fixtures/inner-handler.eyg | grep -qx ReadFile && test -z \"$(node bin/agent/handler-scan.mjs test/fixtures/refusal-probe.eyg)\""
+verify: "node --test test/host-coverage.test.mjs > /dev/null && grep -q '^let build = (policy, ctx, body) -> {' host/guard.eyg && node bin/agent/refusal-probe.mjs 2>&1 | grep -q 'write_file denied by policy: /tmp/' && node bin/agent/refusal-probe.mjs --program test/fixtures/secret-probe.eyg --inside-roots 2>&1 | grep -q 'read_file denied by policy: .*\\.env\\.eyg' && node bin/agent/refusal-probe.mjs --program test/fixtures/unnamed-effect.eyg 2>&1 | grep -q 'unhandled effect Foo' && node bin/agent/refusal-probe.mjs --program test/fixtures/inner-handler.eyg 2>&1 | grep -q 'what the program was answered: read_file denied by policy: /tmp/' && node bin/agent/refusal-probe.mjs --program test/fixtures/abort-probe.eyg 2>&1 | grep -q 'Aborted with reason' && test \"$(node bin/agent/refusal-probe.mjs --record-only --program test/fixtures/self-write-probe.eyg --inside-roots | grep -o 'denied by the host' | wc -l)\" = 4 && test ! -e policies/self-write-probe.eyg && test ! -e host/self-write-probe && node bin/agent/handler-scan.mjs test/fixtures/inner-handler.eyg | grep -qx ReadFile && test -z \"$(node bin/agent/handler-scan.mjs test/fixtures/refusal-probe.eyg)\""
 confidence: high
 sources: [host/guard.eyg, host/PURPOSE, lib/render-helpers.mjs, extensions/eyg-codemode.ts, test/host-coverage.test.mjs, test/fixtures/refusal-probe.eyg, test/fixtures/secret-probe.eyg, test/fixtures/unnamed-effect.eyg, test/fixtures/inner-handler.eyg, test/fixtures/abort-probe.eyg, test/fixtures/self-write-probe.eyg, bin/agent/handler-scan.mjs, guides/tool-reference.md, guides/what-a-call-does.md, notes/pi-codemode-host-guard-contract.md, notes/guard-self-protection.md]
 supersedes: null
@@ -15,8 +15,8 @@ superseded_by: null
 `host/guard.eyg` is an EYG program, run by the ordinary installed CLI with no flag, that decides
 every effect of a call. Seven boundary facts make it a boundary rather than a convention; each was
 probed on the installed CLI (`eyg v0.1.0`) on 2026-11-22 by running a probe file with `eyg run <file>`,
-and each is re-runnable here through `node bin/agent/refusal-probe.mjs`, which builds the same three
-files the tool builds.
+and each is re-runnable here through `node bin/agent/refusal-probe.mjs`, which builds the same four
+files the tool builds - the fourth is the record of refusals the entry writes after the guarded body.
 
 1. **A `handle` clause intercepts a host computer effect.** The clause receives the effect's record
    and a `resume`; the program's own `perform` never reaches the host unless the clause sends it
@@ -63,7 +63,9 @@ files the tool builds.
    program learns what it may ask for. Re-runnable: `node bin/agent/refusal-probe.mjs --program
    test/fixtures/self-write-probe.eyg --inside-roots` - four `denied by the host` answers, one
    `read_file guard: allowed`, `exit=0`, and no file at either target path (`@measured 2026-11-23`,
-   0.4 s). The targets are names that do not exist, so a run that ever performed them leaves a stray
+   0.4 s). The record names the same four (`@measured 2026-11-25`), and `--record-only` prints the
+   record and nothing else, so a check can count what the guard answered rather than what a program
+   chose to print. The targets are names that do not exist, so a run that ever performed them leaves a stray
    file instead of damaging a tracked one. This holds against path text and not against what the text
    is: a symlink standing inside a root is decided by the link's own path and the host follows it, so
    a write reaches `policies/` that way (`docs/world/entities/gap.symlinks-escape-the-roots.md`).
@@ -109,7 +111,7 @@ exists to install.
 
 - which policy a call gets and what it decides: `docs/world/entities/pi.policy-config.md`,
   `docs/world/entities/codemode.effect-surface.md`;
-- the tool's argv and the three files it writes: `docs/world/entities/pi.codemode-tool.md`;
+- the tool's argv and the four files it writes: `docs/world/entities/pi.codemode-tool.md`;
 - why this seam was chosen over the runner flag: `docs/world/decisions/ADR-006-guard-in-package.md`;
 - how to point the tool at a binary: `guides/how-to-point-the-tool-at-your-runner.md`.
 

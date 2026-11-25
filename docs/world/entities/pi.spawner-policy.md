@@ -30,7 +30,8 @@ in it is the agent-roots rule or a refusal, never a rule agent-roots does not ha
   other, and `read_file` keeps hiding `.env.eyg` through the narrowing.
 - **What an allowlist cannot grant.** `fetch`, `standard_in` and `create_key` stay refused allowlist
   or not, because the base policy refuses them and an allowlist removes reach rather than adding it;
-  `env` is answered `Mock(None({}))` in both, which is the only answer `Env`'s own type allows; the
+  `env` is refused in both, and the guard hands the program `None({})`, which is the only refusal
+  `Env`'s own type allows; the
   four unchecked effects (`DecodeJSON`, `EYGParse`, `Hash`, `Sign`) carry no field, so naming them
   changes nothing. The tool refuses the first group where it is asked and reports the other two as
   no-ops, instead of spending a child's calls on a refusal it could not act on

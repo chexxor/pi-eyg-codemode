@@ -20,8 +20,9 @@ JavaScript codemode is disabled, and `defaultTools` names only `read`, `edit`, `
 `bash`, `codemode`, `grep`, so the model's channel to the outside world is an EYG
 program whose every effect is decided by the policy in force before the host performs it.
 
-- `extensions/eyg-codemode.ts` writes three files into a scratch directory of its own - the
-  program module, the entry that imports guard, policy and program, and the `ctx` literal - and
+- `extensions/eyg-codemode.ts` writes two files into a scratch directory of its own - the
+  program module and the entry that imports guard, policy and program and writes the refusal record
+  as its last line - and
   spawns argv `[mode, entryPath]` with `pi.exec`, which has no shell, so no quoting can smuggle a
   second command past the checks; the directory is removed when the run ends, and with no policy
   configured the tool refuses to run anything.

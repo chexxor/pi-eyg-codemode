@@ -107,7 +107,26 @@
 // Reads are not covered: reading the guard and the policies is how a program
 // learns what it may ask for, and a read changes nothing. A program that needs
 // different rules asks the operator, who changes the policy outside a call.
-
+//
+// # The refusal record
+//
+// A refusal is a value the program may ignore: `let _ = perform ReadFile(...)`
+// prints nothing and the call still exits 0. So the guard keeps the refusals it
+// made as its own value - `build` returns a `List(String)` of record lines, one per
+// refusal, in the order they happened, and the entry writes them to a file of the
+// call as the last thing it does. Each line is `<label>|<reason>`, split at the first
+// `|`, so a reason may hold `|`. A refusal that the program never printed still has a
+// line, and the tool turns the ones it cannot find in the program's own output into
+// rows in the call's result.
+//
+// Two bounds on that record. An aborted run has none: a refusal of `now`, `random`,
+// `flip` or `exit`, or the program's own `Abort`, stops the program before the entry
+// gets to its last line, so only the CLI's own `Aborted with reason:` survives. And
+// the record file is in the call's scratch directory, outside every root, written by
+// the entry after the guarded body, so no policy decides that write and no policy can
+// refuse it - but a program cannot read or overwrite it either, and it gains no reach
+// from its presence.
+//
 // ---------------------------------------------------------------- strings, paths
 
 let append = (a, b) -> {
@@ -353,7 +372,10 @@ let with_read_file = (policy, ctx, cont) -> {
         let reply = perform ReadFile({path: request2.path, offset: request2.offset, limit: request2.limit})
         resume(reply)
       }
-      Mock(reason) -> { resume(Error(reason)) }
+      Mock(reason) -> {
+        let rest = resume(Error(reason))
+        [!string_append("read_file|", reason), ..rest]
+      }
     }
   }, cont)
 }
@@ -366,7 +388,10 @@ let with_read_directory = (policy, ctx, cont) -> {
         let reply = perform ReadDirectory(path2)
         resume(reply)
       }
-      Mock(reason) -> { resume(Error(reason)) }
+      Mock(reason) -> {
+        let rest = resume(Error(reason))
+        [!string_append("read_directory|", reason), ..rest]
+      }
     }
   }, cont)
 }
@@ -380,7 +405,10 @@ let with_search = (policy, ctx, cont) -> {
         let found = walk(request2.path, request2.pattern, request2.limit)
         resume(Ok(found))
       }
-      Mock(reason) -> { resume(Error(reason)) }
+      Mock(reason) -> {
+        let rest = resume(Error(reason))
+        [!string_append("search|", reason), ..rest]
+      }
     }
   }, cont)
 }
@@ -394,7 +422,10 @@ let with_write_file = (policy, ctx, cont) -> {
         let reply = perform WriteFile({path: request2.path, contents: request2.contents})
         resume(reply)
       }
-      Mock(reason) -> { resume(Error(reason)) }
+      Mock(reason) -> {
+        let rest = resume(Error(reason))
+        [!string_append("write_file|", reason), ..rest]
+      }
     }
   }, cont)
 }
@@ -408,7 +439,10 @@ let with_append_file = (policy, ctx, cont) -> {
         let reply = perform AppendFile({path: request2.path, contents: request2.contents})
         resume(reply)
       }
-      Mock(reason) -> { resume(Error(reason)) }
+      Mock(reason) -> {
+        let rest = resume(Error(reason))
+        [!string_append("append_file|", reason), ..rest]
+      }
     }
   }, cont)
 }
@@ -422,7 +456,10 @@ let with_delete_file = (policy, ctx, cont) -> {
         let reply = perform DeleteFile(path2)
         resume(reply)
       }
-      Mock(reason) -> { resume(Error(reason)) }
+      Mock(reason) -> {
+        let rest = resume(Error(reason))
+        [!string_append("delete_file|", reason), ..rest]
+      }
     }
   }, cont)
 }
@@ -436,7 +473,10 @@ let with_make_directory = (policy, ctx, cont) -> {
         let reply = perform MakeDirectory(path2)
         resume(reply)
       }
-      Mock(reason) -> { resume(Error(reason)) }
+      Mock(reason) -> {
+        let rest = resume(Error(reason))
+        [!string_append("make_directory|", reason), ..rest]
+      }
     }
   }, cont)
 }
@@ -449,7 +489,10 @@ let with_cwd = (policy, ctx, cont) -> {
         let reply = perform CWD(value)
         resume(reply)
       }
-      Mock(_) -> { resume(Error({})) }
+      Mock(reason) -> {
+        let rest = resume(Error({}))
+        [!string_append("cwd|", reason), ..rest]
+      }
     }
   }, cont)
 }
@@ -462,7 +505,10 @@ let with_env = (policy, ctx, cont) -> {
         let reply = perform Env(name2)
         resume(reply)
       }
-      Mock(_) -> { resume(None({})) }
+      Mock(reason) -> {
+        let rest = resume(None({}))
+        [!string_append("env|", reason), ..rest]
+      }
     }
   }, cont)
 }
@@ -475,7 +521,10 @@ let with_fetch = (policy, ctx, cont) -> {
         let reply = perform Fetch(request2)
         resume(reply)
       }
-      Mock(reason) -> { resume(Error(reason)) }
+      Mock(reason) -> {
+        let rest = resume(Error(reason))
+        [!string_append("fetch|", reason), ..rest]
+      }
     }
   }, cont)
 }
@@ -488,7 +537,10 @@ let with_standard_in = (policy, ctx, cont) -> {
         let reply = perform StandardIn(value)
         resume(reply)
       }
-      Mock(reason) -> { resume(Error(reason)) }
+      Mock(reason) -> {
+        let rest = resume(Error(reason))
+        [!string_append("standard_in|", reason), ..rest]
+      }
     }
   }, cont)
 }
@@ -501,7 +553,10 @@ let with_create_key = (policy, ctx, cont) -> {
         let reply = perform CreateKey(value)
         resume(reply)
       }
-      Mock(reason) -> { resume(Error(reason)) }
+      Mock(reason) -> {
+        let rest = resume(Error(reason))
+        [!string_append("create_key|", reason), ..rest]
+      }
     }
   }, cont)
 }
@@ -516,6 +571,9 @@ let with_now = (policy, ctx, cont) -> {
         let reply = perform Now(value)
         resume(reply)
       }
+      // An abort ends the program here, so the entry never reaches its last line and
+      // this refusal gets no record line - the CLI's own `Aborted with reason:` is all
+      // that survives of it.
       Mock(reason) -> { resume(!never(perform Abort(reason))) }
     }
   }, cont)
@@ -557,7 +615,10 @@ let with_sleep = (policy, ctx, cont) -> {
         let reply = perform Sleep(value)
         resume(reply)
       }
-      Mock(_) -> { resume({}) }
+      Mock(reason) -> {
+        let rest = resume({})
+        [!string_append("sleep|", reason), ..rest]
+      }
     }
   }, cont)
 }
@@ -570,7 +631,10 @@ let with_standard_out = (policy, ctx, cont) -> {
         let reply = perform StandardOut(text2)
         resume(reply)
       }
-      Mock(_) -> { resume({}) }
+      Mock(reason) -> {
+        let rest = resume({})
+        [!string_append("standard_out|", reason), ..rest]
+      }
     }
   }, cont)
 }
@@ -583,7 +647,10 @@ let with_standard_error = (policy, ctx, cont) -> {
         let reply = perform StandardError(text2)
         resume(reply)
       }
-      Mock(_) -> { resume({}) }
+      Mock(reason) -> {
+        let rest = resume({})
+        [!string_append("standard_error|", reason), ..rest]
+      }
     }
   }, cont)
 }
@@ -657,7 +724,10 @@ let build = (policy, ctx, body) -> {
                                         with_decode_json((_) -> {
                                           with_eyg_parse((_) -> {
                                             with_hash((_) -> {
-                                              with_sign(body)
+                                              with_sign((k) -> {
+                                        let _ = body(k)
+                                        []
+                                      })
                                             })
                                           })
                                         })
