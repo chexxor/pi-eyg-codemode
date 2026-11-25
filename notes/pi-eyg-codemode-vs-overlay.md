@@ -46,7 +46,7 @@ fails by a single `Search` row, which reads as a broken package and is not
 
 # What this package still cannot show
 
-The language's checked one-shot run - `eyg run --policy <module>` - is still not in a release and
+The language's run command that loads a policy module is still not in a release and
 still not in the language's `main` (`gap.runner-release-lacks-policy`,
 `gap.policy-runner-not-on-main`), and this package no longer waits for it: the checks live in
 `host/guard.eyg`, an EYG program the installed release runs with no flag, so a refusal is re-runnable

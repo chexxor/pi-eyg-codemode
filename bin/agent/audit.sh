@@ -140,10 +140,10 @@ invented_effect() {
 }
 
 # The alternative policy shape - the decision content in named lists, the rules composed from
-derivations - decides the same rows as the shipped one: `test/fixtures/policy-data-shape.eyg`
-through the same probe. The row fails when the alternative loosens a rule, and a copy of that
-fixture with `hidden` returning `False({})` shows it: 12 `DRIFT` rows, exit 1, two of them a
-file that landed on disk.
+# derivations - decides the same rows as the shipped one: `test/fixtures/policy-data-shape.eyg`
+# through the same probe. The row fails when the alternative loosens a rule, and a copy of that
+# fixture with `hidden` returning `False({})` shows it: 12 `DRIFT` rows, exit 1, two of them a
+# file that landed on disk.
 policy_shape() {
   node bin/agent/secret-rule-probe.mjs --policy "$pkg/test/fixtures/policy-data-shape.eyg" | tail -1 | grep -q '16/16 rows hold' || return 1
   return 0
@@ -174,6 +174,11 @@ run_check "doc check: citations" node bin/agent/doc-checks.mjs citations
 run_check "doc check: headings" node bin/agent/doc-checks.mjs headings
 run_check "doc check: mirrors" node bin/agent/doc-checks.mjs mirrors
 run_check "doc check: dated prose" node bin/agent/doc-checks.mjs dated-prose
+# A mechanism that was replaced has to stay replaced in the prose nobody else reads: `notes/` is
+# outside the doc checks and outside the world-model lint, so the only check over it is this one.
+# The sweep reports a retired command line that a reader could run today; a mention under a dated
+# heading is history and passes (notes/retired-mechanism-sweep.md).
+run_check "the retired CLI flag stays retired" node bin/agent/policy-flag-sweep.mjs
 
 moved=$(git status --porcelain docs/world | head -5)
 if [[ -n "$moved" ]]; then

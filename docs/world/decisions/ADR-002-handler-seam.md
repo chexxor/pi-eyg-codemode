@@ -71,9 +71,9 @@ to act.
 + A refusal names the effect and the path, so the model can read the permission it was refused
   rather than infer it.
 - Simulating an effect is untyped-safe here: a `Mock` whose value is not the effect's type is a
-  runtime error, not a refusal, and whether the runner checks that before performing is
-  UNVERIFIED (no build that loads a policy module was reachable from this host when this line was
-  written; the guard shapes the answer itself today - `docs/world/entities/host.guard-boundary.md`).
+  runtime error, not a refusal, and whether the host checks it before performing is
+  UNVERIFIED - `host/guard.eyg` applies a rule and performs with the value the rule hands back, so
+  a mock's value reaches that host untyped (`docs/world/entities/host.guard-boundary.md`).
 - A staged session is two calls, so two runner start-ups and two rendered rows - fine at
   0.06-0.07 s each, and small next to a 44-142 s live session.
 - The plan run and the act run can disagree if the roots changed between them; the expanded row

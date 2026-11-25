@@ -18,7 +18,8 @@ about the interpreter changes that, and no EYG source can fix it.
 The restriction therefore lives on the runner side:
 `packages/gleam_cli/src/eyg/cli/policy_runner.gleam` evaluates the program through
 the Pass/Mock loop that `packages/gleam_cli/src/eyg/cli/overlay.gleam` already binds
-(`rule_mapping`, `overlay.setup`, `decide`), reached from `eyg run --policy <module.eyg>`.
+(`rule_mapping`, `overlay.setup`, `decide`), reached from the CLI's own run command with the
+module on its command line (`eyg run --policy <module.eyg>`, retired here on 2026-11-22).
 `eyg_packages/codemode_policy/` states which policies of that vocabulary are safe for
 an agent, and `pi-eyg-codemode/` puts a pi agent in front of that runner.
 

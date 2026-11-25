@@ -197,7 +197,7 @@ it has.
   left in the README are inside such a block. `AGENTS.md` and `docs/world/` keep the absolute
   path on their own terms - they are this workspace's facts, not a new user's instructions.
 
-### What the probes proved, and did not prove
+### What the probes proved, and did not prove (the transcript captured 2026-11-18)
 
 The EYG CLI on PATH is available, so the probes were run rather than assumed:
 
