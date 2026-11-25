@@ -69,6 +69,7 @@ nothing here reads it at run time, and this tree never writes outside itself.
 | pi.config-action | `action: "config"` (`code: ""`) prints the configuration of the call that would come next: the runner candidate and ... | delegate | 2026-11-25 |
 | pi.fetch-and-injection-exfiltration | `fetch` is a checked effect whose policy field is `fetch`, and both shipped policies refuse it by name: `fetch: ... | delegate | 2026-11-25 |
 | pi.first-draft | `README.md` opens with a status line calling the package a first draft that has not been proved in extended use, and ... | delegate | 2026-11-25 |
+| pi.onboarding-scaffold | `bin/agent/new-project.mjs <absolute project directory>` writes the one file a project needs to load this package - ... | delegate | 2026-11-25 |
 | pi.policy-config | Two questions the operator asked, answered in the tree: which policy the package uses if you set nothing, and where to ... | delegate | 2026-11-25 |
 | pi.reference-action | `action: "reference"` (`code: ""`) prints the language surface the session is writing against: `eyg reference: 29 ... | delegate | 2026-11-25 |
 | pi.registry-scope-persistence | A session's roots contain the two directories a call can leave code in for a later call: the function-registry scope ... | delegate | 2026-11-25 |
@@ -96,7 +97,7 @@ nothing here reads it at run time, and this tree never writes outside itself.
 
 ## Where to look for a claim
 
-- entities: 41 · invariants: 4 · decisions: 7 · runbooks: 2 · traps: 95
+- entities: 42 · invariants: 4 · decisions: 7 · runbooks: 2 · traps: 96
 - suspect right now: none
 - re-check everything: `npm run world` · checks: `npm run world:lint` · regenerate this index: `npm run world:map`
 <!-- END GENERATED -->
