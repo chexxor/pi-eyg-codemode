@@ -92,7 +92,7 @@ the effects it decides.
   never contents, and a listed name is not permission to read that path
   (`guides/eyg-surface.tsv` names the effect and its policy field).
 - A read you expected and did not get is the policy's decision, not the file's: see
-  `guides/how-to-write-a-policy.md`, where a path ending `.env.eyg` is refused by every policy this
-  package ships.
+  `guides/how-to-write-a-policy.md`, where the hidden-name rule refuses a path through a named
+  secret directory or ending `.env.eyg`, and a search reports a name the read of it would not reach.
 - A whole file at once is one `ReadFile` with a `limit` above the size. Slicing is about the
   row you read back, not about a file too big to exist.

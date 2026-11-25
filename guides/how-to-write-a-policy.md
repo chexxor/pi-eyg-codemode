@@ -84,7 +84,7 @@ before it decides, which is what a path check and a host check are.
 
 | policy | what it allows |
 | --- | --- |
-| `policies/agent-roots.eyg` | file effects under the roots the call was given; `CWD`, `Now`, `Random`, `Sleep`, `Flip`, `StandardOut`, `StandardError`, `Exit` performed; `Fetch`, `StandardIn`, `CreateKey` refused; `Env` answered as unset; a path ending `.env.eyg` never readable, even under a root |
+| `policies/agent-roots.eyg` | file effects under the roots the call was given; `CWD`, `Now`, `Random`, `Sleep`, `Flip`, `StandardOut`, `StandardError`, `Exit` performed; `Fetch`, `StandardIn`, `CreateKey` refused; `Env` answered as unset; no path effect at all for a path passing through a directory named in `secret_directory_names` or ending in `secret_file_suffix`, even under a root |
 | `policies/deny-all.eyg` | values and output only; every file, network and environment effect refused |
 | `policies/spawner-effects.eyg` | the agent-roots rules, but only for the fields named in `EYG_SUBAGENT_EFFECTS`; unset names nothing and refuses every gateable effect. `eyg_subagent` installs it for a child session whose spawner named `effects`, and an allowlist there cannot add reach (`docs/world/entities/pi.spawner-policy.md`) |
 
@@ -180,7 +180,9 @@ node bin/agent/refusal-probe.mjs --with-policy <name> --fields <field,field> --p
 ```
 
 `--inside-roots` moves the program's working directory inside the roots, which is what makes
-`test/fixtures/secret-probe.eyg` a test of the `.env.eyg` rule rather than of the roots.
+`test/fixtures/secret-probe.eyg` a test of the hidden-name rule rather than of the roots, and
+`node bin/agent/secret-rule-probe.mjs` the same rule asked of all seven path effects, one printed
+row per ask, against a root it builds in the system temporary directory.
 
 ## Not this
 

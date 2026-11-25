@@ -117,8 +117,9 @@ things, and a third shape is what a rule is built out of:
   reason for `Now`, `Random`, `Flip` and `Exit`, whose replies carry no place for a refusal. The
   table is written out at the top of `host/guard.eyg`.
 - **a wrapper** - a function that takes a rule and returns one, for example
-  `hide_secrets(under("read_file", roots, request_path))`, which refuses `.env.eyg` before the
-  roots are consulted. Rules compose by application, and the composed rule is still one field.
+  `hide_secrets("read_file", request_path, under("read_file", roots, request_path))`, which refuses
+  a hidden name before the roots are consulted. Rules compose by application, and the composed rule
+  is still one field.
 
 The path a rule inspects differs by effect: `read_directory`, `delete_file` and `make_directory`
 carry a bare path string; `read_file`, `write_file` and `append_file` carry a record with a
@@ -212,8 +213,8 @@ as `search_lib` by the `libraries` parameter, walks with `ReadDirectory` and is 
 one directory at a time. Both report **names** under an allowed root, including the name of a file
 a read of that path would be refused for, and contents never come through. So a secret is not
 readable through a search, but its existence and name are; hide names by rooting searches
-narrower, or by wrapping the `search` rule the way `hide_secrets` wraps `read_file` in
-`policies/agent-roots.eyg`. Pattern semantics - one `*` per segment, a whole `**` segment spans
+narrower; `policies/agent-roots.eyg` already wraps the `search` rule with the same hidden-name test
+it wraps `read_file` with, so a hidden directory is not searchable under a root either. Pattern semantics - one `*` per segment, a whole `**` segment spans
 depths, `limit` is a budget spent while walking, 32 directories deep - are in the `Search`
 section of <https://eyg.run/guides/cli-effects-reference>.
 
@@ -293,7 +294,8 @@ Nothing exists at that path, and the scratch directory the probe ran in is remov
 
 `test/fixtures/secret-probe.eyg` - a `ReadFile` of a `.env.eyg` path inside the root, run with
 `--inside-roots`. The path is masked, because the rule answers before the host is asked and no such
-file is in this tree:
+file is in this tree. `node bin/agent/secret-rule-probe.mjs` asks the same rule of all seven path
+effects at once and prints `holds` or `DRIFT` per ask:
 
 ```
 read_file denied by policy: <this tree>/.env.eyg

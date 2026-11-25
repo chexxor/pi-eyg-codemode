@@ -71,6 +71,7 @@ nothing here reads it at run time, and this tree never writes outside itself.
 | pi.policy-config | Two questions the operator asked, answered in the tree: which policy the package uses if you set nothing, and where to ... | delegate | 2026-11-25 |
 | pi.reference-action | `action: "reference"` (`code: ""`) prints the language surface the session is writing against: `eyg reference: 29 ... | delegate | 2026-11-25 |
 | pi.registry-scope-persistence | A session's roots contain the two directories a call can leave code in for a later call: the function-registry scope ... | delegate | 2026-11-25 |
+| pi.secret-directory-rule | `policies/agent-roots.eyg` decides a path in two steps. | delegate | 2026-11-25 |
 | pi.session-grants | A refused effect is a value the program gets back, not a report the model owes the operator: the tool description, the ... | delegate | 2026-11-25 |
 | pi.spawner-policy | `policies/spawner-effects.eyg` is the third policy this package ships: `agent-roots.eyg` with an allowlist check over ... | delegate | 2026-11-25 |
 | pi.subagent-spawn | `eyg_subagent`, registered by `extensions/eyg-codemode.ts`, starts a second pi session in the same working directory ... | delegate | 2026-11-25 |
@@ -94,7 +95,7 @@ nothing here reads it at run time, and this tree never writes outside itself.
 
 ## Where to look for a claim
 
-- entities: 39 · invariants: 4 · decisions: 7 · runbooks: 2 · traps: 87
-- suspect right now: none
+- entities: 40 · invariants: 4 · decisions: 7 · runbooks: 2 · traps: 87
+- suspect right now: doc-checks.citations
 - re-check everything: `npm run world` · checks: `npm run world:lint` · regenerate this index: `npm run world:map`
 <!-- END GENERATED -->

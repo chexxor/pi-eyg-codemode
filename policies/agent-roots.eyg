@@ -20,7 +20,17 @@
 //           a rule that does not care where the program was can ignore this.
 //   fields  not used by this policy; `spawner-effects.eyg` reads it.
 //
-// Secret files (`.env.eyg` by convention) are never readable, even under a root.
+// A name in `secret_directory_names`, and the conventional secret file name
+// `.env.eyg`, are unreachable in every direction: not readable, not listable, not
+// searchable, not writable, not deletable, even under a root. That is a narrowing of
+// the roots rule, not a change of it - the roots decision below is the same one it
+// always was, and these paths are refused on top of it. The reason it is a directory
+// test and not only a name test is measured on `notes/pi-codemode-threat-model.md`:
+// a suffix test on one extension is beaten by the spelling of a name (`.ENV.EYG`,
+// `.env.eyg.`, `.env.eyg ` all landed against the rule that only asked whether the
+// path ended in `.env.eyg`), while a directory name a path has to pass through is
+// not something a file's own name can dodge.
+//
 // Network access is refused here: `fetch` and the header rules are the fields
 // another policy of yours would set to open a host or inject a token.
 //
@@ -33,14 +43,15 @@
 // in `guides/eyg-surface.tsv` less the 4 no rule can forbid). Paths arrive
 // absolute, with no `.` or `..` segment: the guard resolves them first.
 //
-//   UNDER THE ROOTS (path checked against `roots`)
+//   UNDER THE ROOTS (path checked against `roots`), and never a hidden name
 //     ReadFile, ReadDirectory, WriteFile, AppendFile, MakeDirectory, DeleteFile,
 //     Search                              - a search is one decision for the root
 //                                            it starts in, and the guard lists
 //                                            each directory it walks through the
 //                                            `read_directory` rule as it goes
-//   READ, but never a secret file
-//     read_file also rejects anything ending `.env.eyg`, under a root or not
+//   HIDDEN NAME, refused under a root or not
+//     every path effect, for a path with a segment in `secret_directory_names` or
+//     ending `.env.eyg`                   - see `hidden` below
 //   PERFORMED
 //     CWD                                 - where the program is, it changes nothing
 //     Now, Random, Sleep, Flip            - values the program already could have
@@ -58,7 +69,8 @@
 //
 // Anything outside `roots` gets `Error("<effect> denied by policy: <path>")`, and
 // a program that ignores that value carries on with what it got - a denial is a
-// value, not a crash.
+// value, not a crash. A hidden name gets the same text with why: the program can
+// tell a refused path from a refused name.
 
 // Perform the effect with the value the program asked for, unchanged.
 let pass = (value) -> {
@@ -105,6 +117,12 @@ let denied = (effect, path) -> {
   append(effect, append(" denied by policy: ", path))
 }
 
+// A hidden name gets the why as well as the where, so a program can tell that its
+// path was under a root and the name is what the call refused.
+let hidden_denied = (effect, path) -> {
+  append(denied(effect, path), " (a name this policy hides)")
+}
+
 // Allow a file effect only for paths under one of the absolute roots.
 // `path_of` takes the path out of the effect's value, which differs by effect.
 let under = (effect, roots, path_of) -> {
@@ -127,17 +145,53 @@ let request_path = (request) -> {
   request.path
 }
 
-// Files that hold secrets, by convention `.env.eyg`, are never readable.
-let is_secret = (path) -> {
-  !string_ends_with(path, ".env.eyg")
+// The directory names a call never reaches. They are data, not code: an operator who
+// wants one of them open, or another one closed, copies this policy and edits this
+// list and nothing else.
+let secret_directory_names = [".ssh", ".gnupg", ".aws", "credentials", "secrets"]
+
+// The file name that carries credentials by convention in this ecosystem.
+let secret_file_suffix = ".env.eyg"
+
+// Is this path segment one of the hidden directory names.
+let hidden_name = (segment) -> {
+  !list_fold(secret_directory_names, False({}), (name, found) -> {
+    match found {
+      True(_) -> { True({}) }
+      False(_) -> { !equal(name, segment) }
+    }
+  })
 }
 
-// Wrap a read_file rule so a secret file is refused before the root is consulted.
-let hide_secrets = (read_file) -> {
-  (request) -> {
-    match is_secret(request.path) {
-      True(_) -> { Mock(denied("read_file", request.path)) }
-      False(_) -> { read_file(request) }
+// Does the absolute path pass through a hidden directory, or end in the secret file
+// name. The segments come from splitting on `/`: a path arrives absolute, so the
+// first segment is empty and the last is the file's own name. The test is on
+// segments, so a hidden name hides that directory and everything under it - and a
+// *file* named `secrets` is hidden too, which is the cost of a rule that never looks
+// inside a path.
+let hidden = (path) -> {
+  let parts = !string_split(path, "/")
+  let in_hidden_directory = !list_fold(parts.tail, hidden_name(parts.head), (segment, found) -> {
+    match found {
+      True(_) -> { True({}) }
+      False(_) -> { hidden_name(segment) }
+    }
+  })
+  match in_hidden_directory {
+    True(_) -> { True({}) }
+    False(_) -> { !string_ends_with(path, secret_file_suffix) }
+  }
+}
+
+// Wrap a rule so a hidden name is refused before the roots are consulted: the name
+// is refused under a root and outside one alike, which is what makes the wrapped
+// rule narrower than the rule it wraps rather than a different decision.
+let hide_secrets = (effect, path_of, rule) -> {
+  (value) -> {
+    let path = path_of(value)
+    match hidden(path) {
+      True(_) -> { Mock(hidden_denied(effect, path)) }
+      False(_) -> { rule(value) }
     }
   }
 }
@@ -145,25 +199,25 @@ let hide_secrets = (read_file) -> {
 let rules = (ctx) -> {
   let roots = ctx.roots
   {
-    append_file: under("append_file", roots, request_path),
+    append_file: hide_secrets("append_file", request_path, under("append_file", roots, request_path)),
     create_key: refuse("create_key"),
     cwd: pass,
-    delete_file: under("delete_file", roots, path_of_value),
+    delete_file: hide_secrets("delete_file", path_of_value, under("delete_file", roots, path_of_value)),
     env: (_) -> { Mock(None({})) },
     exit: pass,
     fetch: refuse("fetch"),
     flip: pass,
-    make_directory: under("make_directory", roots, path_of_value),
+    make_directory: hide_secrets("make_directory", path_of_value, under("make_directory", roots, path_of_value)),
     now: pass,
     random: pass,
-    read_directory: under("read_directory", roots, path_of_value),
-    read_file: hide_secrets(under("read_file", roots, request_path)),
-    search: under("search", roots, request_path),
+    read_directory: hide_secrets("read_directory", path_of_value, under("read_directory", roots, path_of_value)),
+    read_file: hide_secrets("read_file", request_path, under("read_file", roots, request_path)),
+    search: hide_secrets("search", request_path, under("search", roots, request_path)),
     sleep: pass,
     standard_error: pass,
     standard_in: refuse("standard_in"),
     standard_out: pass,
-    write_file: under("write_file", roots, request_path)
+    write_file: hide_secrets("write_file", request_path, under("write_file", roots, request_path))
   }
 }
 

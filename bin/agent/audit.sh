@@ -120,6 +120,15 @@ handler_scan() {
   return 0
 }
 
+# The hidden-name rule in `policies/agent-roots.eyg` refuses a path that passes through a named
+# secret directory, for all seven path effects. The probe builds its own root in the system
+# temporary directory, prints one row per ask, and exits non-zero when a refusal stops happening -
+# which it does when `--policy` points at a copy whose `hidden` answers False, so the row can fail.
+secret_rule() {
+  node bin/agent/secret-rule-probe.mjs | tail -1 | grep -q '16/16 rows hold' || return 1
+  return 0
+}
+
 # The effect set is closed: a label the language does not have - `Bash`, say - reaches no
 # command line at any of the five places a program can try it. The probe prints one row per
 # wall and exits non-zero when a wall stops holding, so the row needs no grep; it is written
@@ -138,6 +147,7 @@ run_check "guard covers every effect row" node --test test/host-coverage.test.mj
 run_check "refusals the shipped policies owe" refusal_probe
 run_check "a program that handles an effect is named" handler_scan
 run_check "an invented effect reaches nothing" invented_effect
+run_check "the hidden-name rule refuses in every direction" secret_rule
 run_check "kept binding shapes" node bin/agent/check-variable-shapes.mjs
 run_check "world lint" node pi-simple-world-model/bin/world_lint.mjs
 run_check "world verify $verify_args" node pi-simple-world-model/bin/world_verify.mjs $verify_args

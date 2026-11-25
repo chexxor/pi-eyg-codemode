@@ -14,8 +14,8 @@ superseded_by: null
 
 `absolute` (`host/guard.eyg:165`) normalizes a path **lexically**: split it into segments, collapse
 `.` and `..`, prepend the working directory. Nothing in the guard or in the shipped policy asks what
-that path *is*, and both comparisons - `is_under` (`host/guard.eyg:177`, `policies/agent-roots.eyg:82`,
-reached from `under` at `policies/agent-roots.eyg:110`) and `shield` (`host/guard.eyg:200`) - are made
+that path *is*, and both comparisons - `is_under` (`host/guard.eyg:177`, `policies/agent-roots.eyg:94`,
+reached from `under` at `policies/agent-roots.eyg:128`) and `shield` (`host/guard.eyg:200`) - are made
 against that text. The guard then re-performs with it and the host follows symlinks. A link standing
 inside a root is therefore decided as a path inside the root, and its effect lands wherever the link
 points: outside every root, or inside a path the host shields.
