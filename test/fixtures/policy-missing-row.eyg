@@ -1,0 +1,19 @@
+// Fixture for the policy-shape question, third half: what does a policy that names FEWER
+// fields do? The guard reads one field per effect and has no default of its own, so a
+// record that carries two of the nineteen fields is asked for fields it does not have.
+//
+// Ask it for an effect the record HAS and the effect is performed; ask it for one the
+// record does not have and the run produces nothing at all - the guarded run sits in the
+// guard for as long as you let it, which is why a policy is written out with a row per
+// effect rather than completed by a missing one.
+//
+//   node bin/agent/refusal-probe.mjs --with-policy "$PWD/test/fixtures/policy-missing-row.eyg" --program test/fixtures/refusal-probe.eyg
+//   timeout 25 node bin/agent/refusal-probe.mjs --with-policy "$PWD/test/fixtures/policy-missing-row.eyg" --program test/fixtures/search-walk.eyg --inside-roots
+let rules = (ctx) -> {
+  {
+    write_file: (value) -> { Mock("write_file denied by policy") },
+    standard_out: (text) -> { Pass(text) }
+  }
+}
+
+{rules}

@@ -139,6 +139,16 @@ invented_effect() {
   return 0
 }
 
+# The alternative policy shape - the decision content in named lists, the rules composed from
+derivations - decides the same rows as the shipped one: `test/fixtures/policy-data-shape.eyg`
+through the same probe. The row fails when the alternative loosens a rule, and a copy of that
+fixture with `hidden` returning `False({})` shows it: 12 `DRIFT` rows, exit 1, two of them a
+file that landed on disk.
+policy_shape() {
+  node bin/agent/secret-rule-probe.mjs --policy "$pkg/test/fixtures/policy-data-shape.eyg" | tail -1 | grep -q '16/16 rows hold' || return 1
+  return 0
+}
+
 echo "audit in $pkg"
 run_check "surface file current" node bin/agent/gen-surface.mjs --check
 run_check "unit test and drift guard" node --test 'test/*.mjs'
@@ -148,6 +158,7 @@ run_check "refusals the shipped policies owe" refusal_probe
 run_check "a program that handles an effect is named" handler_scan
 run_check "an invented effect reaches nothing" invented_effect
 run_check "the hidden-name rule refuses in every direction" secret_rule
+run_check "the alternative policy shape decides the same rows" policy_shape
 run_check "kept binding shapes" node bin/agent/check-variable-shapes.mjs
 run_check "world lint" node pi-simple-world-model/bin/world_lint.mjs
 run_check "world verify $verify_args" node pi-simple-world-model/bin/world_verify.mjs $verify_args

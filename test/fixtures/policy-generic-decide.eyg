@@ -1,0 +1,18 @@
+// Fixture for the policy-shape question: one field that decides every effect, by name.
+// The guard reads one field per effect (`policy.read_file(value)`); the alternative asks
+// it to read `policy.decide("read_file", value)` instead, so the policy could be data.
+//
+// THIS FIXTURE IS NOT MEANT TO CHECK. Its point is the answer `eyg check` gives for it:
+// a rule for every effect would have to take the value of any effect, and the effects'
+// values differ in type - `DeleteFile`'s is a String, `ReadFile`'s is a record with a
+// `path` row - so one function over both is what the compiler refuses.
+//
+//   eyg check test/fixtures/policy-generic-decide.eyg
+let path_of = (name, value) -> {
+  match !equal(name, "delete_file") {
+    True(_) -> { value }
+    False(_) -> { value.path }
+  }
+}
+
+{path_of}

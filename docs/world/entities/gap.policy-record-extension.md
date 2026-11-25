@@ -21,6 +21,14 @@ verbatim in `policies/spawner-effects.eyg` - `verify` counts them - so every rul
 edits, and the drift between the copies is a cost already named in
 `notes/spawner-effect-allowlist.md`.
 
+The alternative shape was measured and does not lower that number: a policy written as named
+lists plus derivations (`test/fixtures/policy-data-shape.eyg`, 114 non-comment lines of 145)
+shares 84 lines with `policies/agent-roots.eyg` and decides the same 16 probe rows
+(`node bin/agent/secret-rule-probe.mjs --policy "$PWD/test/fixtures/policy-data-shape.eyg"`), and
+one generic `decide(effect, value)` field does not type-check at all
+(`test/fixtures/policy-generic-decide.eyg`). `notes/pi-codemode-policy-shape.md` carries that
+decision and its costs.
+
 What is missing is a way to extend or override **the record the host loaded**: in the operator's
 spelling, `{ WebSearch: my_search } \ existing_policy`, register a handler for a field the
 loaded policy does not carry, or replace one it does, without owning its file. EYG has record

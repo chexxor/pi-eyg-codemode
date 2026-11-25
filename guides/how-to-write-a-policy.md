@@ -80,6 +80,18 @@ text names the field and the path, `env` gets `None({})`, an output effect gets 
 `Now`, `Random`, `Flip` and `Exit` end the program with the reason. A rule may read the value
 before it decides, which is what a path check and a host check are.
 
+The record is the interface and the decision inside it is data: `policies/agent-roots.eyg` names
+the hidden directory names and the secret file name as lists (`:151`, `:154`) and keeps one
+composed rule per effect. The other shapes were measured, not assumed
+(`notes/pi-codemode-policy-shape.md`): one field called with the effect's name does not type-check
+(`eyg check test/fixtures/policy-generic-decide.eyg` answers `error: Recursive`, because
+`DeleteFile`'s value is a String and `ReadFile`'s is a record, and
+`test/fixtures/policy-named-decide.eyg` answers `unexpected "delete_file"`, because a string is
+not a match pattern), and a record with fewer fields is not completed by a default - asked for
+`Search` with no `search` row the guarded run prints nothing for 25 s and the shell says `exit=124`
+(`test/fixtures/policy-missing-row.eyg`). Write a row per effect, and put the lists an operator
+edits at the top of your module.
+
 ## Copy the shipped policy closest to what you need
 
 | policy | what it allows |

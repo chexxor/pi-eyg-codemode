@@ -1,0 +1,17 @@
+// Fixture for the policy-shape question, second half: can the effect's NAME drive the
+// rule? A rule written as `match name { "read_file" -> ... }` is what this tries.
+//
+// THIS FIXTURE IS NOT MEANT TO CHECK. A string is not a match pattern in this language,
+// so the name cannot drive a lookup by matching on it; `!equal` can compare it, but then
+// the value it reads has to be the value of every effect at once, which is the other
+// fixture's problem (test/fixtures/policy-generic-decide.eyg).
+//
+//   eyg check test/fixtures/policy-named-decide.eyg
+let path_of = (name, value) -> {
+  match name {
+    "delete_file" -> { value }
+    _ -> { value.path }
+  }
+}
+
+{path_of}

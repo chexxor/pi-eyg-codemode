@@ -1,0 +1,145 @@
+// The same decisions `policies/agent-roots.eyg` makes, written as named data plus
+// derivations instead of a hand-written rule per effect: five named lists decide which
+// effect gets which rule, and the record rows are one call each. This fixture is the
+// alternative policy shape checked against the shipped one, not a policy the tool can
+// select by name (`policies/` holds the shipped three).
+//
+// Run: node bin/agent/secret-rule-probe.mjs --policy test/fixtures/policy-data-shape.eyg
+// and: node bin/agent/refusal-probe.mjs --with-policy <absolute path to this file>
+let path_effects = ["read_file", "write_file", "append_file", "delete_file", "make_directory", "read_directory", "search"]
+
+let performed_effects = ["cwd", "now", "random", "sleep", "flip", "standard_out", "standard_error", "exit"]
+
+let refused_effects = ["fetch", "standard_in", "create_key"]
+
+let secret_directory_names = [".ssh", ".gnupg", ".aws", "credentials", "secrets"]
+
+let secret_file_suffix = ".env.eyg"
+
+let append = (a, b) -> {
+  !string_append(a, b)
+}
+
+let denied = (effect, path) -> {
+  append(effect, append(" denied by policy: ", path))
+}
+
+let hidden_denied = (effect, path) -> {
+  append(denied(effect, path), " (a name this policy hides)")
+}
+
+let is_under = (root, path) -> {
+  let root2 = match !string_ends_with(root, "/") {
+    True(_) -> { root }
+    False(_) -> { append(root, "/") }
+  }
+  match !equal(append(path, "/"), root2) {
+    True(_) -> { True({}) }
+    False(_) -> { !string_starts_with(path, root2) }
+  }
+}
+
+let any_under = (roots, path) -> {
+  !list_fold(roots, False({}), (root, found) -> {
+    match found {
+      True(_) -> { True({}) }
+      False(_) -> { is_under(root, path) }
+    }
+  })
+}
+
+let in_list = (name, names) -> {
+  !list_fold(names, False({}), (item, found) -> {
+    match found {
+      True(_) -> { True({}) }
+      False(_) -> { !equal(item, name) }
+    }
+  })
+}
+
+let hidden_name = (segment) -> {
+  in_list(segment, secret_directory_names)
+}
+
+let hidden = (path) -> {
+  let parts = !string_split(path, "/")
+  let in_hidden_directory = !list_fold(parts.tail, hidden_name(parts.head), (segment, found) -> {
+    match found {
+      True(_) -> { True({}) }
+      False(_) -> { hidden_name(segment) }
+    }
+  })
+  match in_hidden_directory {
+    True(_) -> { True({}) }
+    False(_) -> { !string_ends_with(path, secret_file_suffix) }
+  }
+}
+
+// One derivation for every effect the data calls a path effect: the row named here is
+// refused when its path is not under a root, and the effect name is only the text of
+// the refusal. The value shape stays per effect, so `path_of` is still named per row.
+let under = (effect, roots, path_of) -> {
+  (value) -> {
+    let path = path_of(value)
+    match any_under(roots, path) {
+      True(_) -> { Pass(value) }
+      False(_) -> { Mock(denied(effect, path)) }
+    }
+  }
+}
+
+let hide_secrets = (effect, path_of, rule) -> {
+  (value) -> {
+    let path = path_of(value)
+    match hidden(path) {
+      True(_) -> { Mock(hidden_denied(effect, path)) }
+      False(_) -> { rule(value) }
+    }
+  }
+}
+
+let path_of_value = (path) -> {
+  path
+}
+
+let request_path = (request) -> {
+  request.path
+}
+
+let refuse = (effect) -> {
+  (_) -> { Mock(denied(effect, "this effect")) }
+}
+
+let always = (_) -> {
+  Pass(_)
+}
+
+let rules = (ctx) -> {
+  let roots = ctx.roots
+  let path_rule = (effect, path_of) -> {
+    hide_secrets(effect, path_of, under(effect, roots, path_of))
+  }
+  {
+    append_file: path_rule("append_file", request_path),
+    create_key: refuse("create_key"),
+    cwd: always,
+    delete_file: path_rule("delete_file", path_of_value),
+    env: (_) -> { Mock(None({})) },
+    exit: always,
+    fetch: refuse("fetch"),
+    flip: always,
+    make_directory: path_rule("make_directory", path_of_value),
+    now: always,
+    random: always,
+    read_directory: path_rule("read_directory", path_of_value),
+    read_file: path_rule("read_file", request_path),
+    search: path_rule("search", request_path),
+    sleep: always,
+    standard_error: always,
+    standard_in: refuse("standard_in"),
+    standard_out: always,
+    write_file: path_rule("write_file", request_path)
+  }
+}
+
+{rules}
