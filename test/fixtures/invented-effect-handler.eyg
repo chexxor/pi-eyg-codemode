@@ -1,0 +1,19 @@
+// A program that installs its OWN handler for a label the language does not offer. The parse
+// accepts it (`node bin/agent/handler-scan.mjs test/fixtures/invented-effect-handler.eyg` prints
+// `Bash`), so the clause exists - but a handler only answers an ask, and the only ask of `Bash`
+// this program can make is its own re-perform, which has no host either. The clause can decline;
+// it cannot perform. Run: eyg run test/fixtures/invented-effect-handler.eyg
+let outcome = handle Bash((request, resume) -> {
+  let inner = perform Bash(request)
+  match inner {
+    Ok(value) -> { resume(Ok(value)) }
+    Error(why) -> { resume(Error(why)) }
+  }
+}, (_) -> {
+  let ask = perform Bash({ command: "id" })
+  match ask {
+    Ok(value) -> { !string_to_binary("the host ran a command") }
+    Error(why) -> { !string_append("the invented handler answered: ", why) }
+  }
+})
+perform StandardOut(outcome)

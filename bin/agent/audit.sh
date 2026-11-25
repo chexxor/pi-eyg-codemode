@@ -120,6 +120,16 @@ handler_scan() {
   return 0
 }
 
+# The effect set is closed: a label the language does not have - `Bash`, say - reaches no
+# command line at any of the five places a program can try it. The probe prints one row per
+# wall and exits non-zero when a wall stops holding, so the row needs no grep; it is written
+# so that planting a real effect in its fixture makes it fail (docs/world/entities/
+# host.closed-effect-set.md).
+invented_effect() {
+  node bin/agent/invented-effect-probe.mjs | tail -1 | grep -q 'all 5 walls hold' || return 1
+  return 0
+}
+
 echo "audit in $pkg"
 run_check "surface file current" node bin/agent/gen-surface.mjs --check
 run_check "unit test and drift guard" node --test 'test/*.mjs'
@@ -127,6 +137,7 @@ run_check "shipped EYG modules check" eyg_modules
 run_check "guard covers every effect row" node --test test/host-coverage.test.mjs
 run_check "refusals the shipped policies owe" refusal_probe
 run_check "a program that handles an effect is named" handler_scan
+run_check "an invented effect reaches nothing" invented_effect
 run_check "kept binding shapes" node bin/agent/check-variable-shapes.mjs
 run_check "world lint" node pi-simple-world-model/bin/world_lint.mjs
 run_check "world verify $verify_args" node pi-simple-world-model/bin/world_verify.mjs $verify_args

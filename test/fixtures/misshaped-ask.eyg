@@ -1,0 +1,7 @@
+// A mis-shaped ask: `MakeDirectory` takes a `String`, not a record. Outside the guard this
+// errors at once - `unexpected term, expected: String got: {path: ...}`, 0.085 s - and creates
+// nothing. Inside the guarded entry the same line prints nothing and runs to the tool's spawn
+// cap, which is why a call answers "timed out after N s" for a mistake the CLI can name.
+// Run: eyg run test/fixtures/misshaped-ask.eyg              (errors in 0.09 s)
+// Run: node bin/agent/refusal-probe.mjs --program test/fixtures/misshaped-ask.eyg   (silent to the cap)
+perform MakeDirectory({ path: "eyg-misshaped-ask" })

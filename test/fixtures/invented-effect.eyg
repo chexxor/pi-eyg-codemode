@@ -1,0 +1,8 @@
+// A label the language does not offer, named as an effect. Two answers, in this order:
+// `eyg check` refuses the text before anything runs (`missing row 'Bash'`), and `eyg run` of
+// the same text stops with `unhandled effect Bash` because no host has that label - the same
+// answer inside a guarded call. Naming an effect is not the same as giving one a host.
+// Run: eyg check test/fixtures/invented-effect.eyg
+// Run: eyg run test/fixtures/invented-effect.eyg
+// Run: node bin/agent/refusal-probe.mjs --program test/fixtures/invented-effect.eyg
+perform Bash({ command: "id" })
