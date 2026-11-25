@@ -3,7 +3,7 @@ id: ADR-001-world-model-import
 type: adr
 owner: delegate
 status: accepted
-verified_at: 2026-11-24
+verified_at: 2026-11-25
 verify: "test -f pi-simple-world-model/package.json && grep -q pi-simple-world-model .pi/settings.json"
 confidence: high
 sources: [pi-simple-world-model/package.json, .pi/settings.json, pi-simple-world-model/CHANGELOG.md]

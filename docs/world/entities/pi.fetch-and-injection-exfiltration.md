@@ -3,7 +3,7 @@ id: pi.fetch-and-injection-exfiltration
 type: entity
 owner: delegate
 status: current
-verified_at: 2026-11-24
+verified_at: 2026-11-25
 verify: "d=$(mktemp -d) && node test/fixtures/fetch-operator-policy.mjs open > $d/open.eyg && node test/fixtures/fetch-operator-policy.mjs pin > $d/pin.eyg && node bin/agent/refusal-probe.mjs --program test/fixtures/fetch-probe.eyg 2>&1 | grep -q 'fetch denied by policy' && ( node test/fixtures/fetch-listener.mjs $d/log 0 > $d/port 2>&1 & sleep 1; p=$(cut -d' ' -f2 $d/port); node bin/agent/refusal-probe.mjs --port $p --with-policy $d/open.eyg --program test/fixtures/fetch-probe.eyg 2>&1 | grep -q 'FETCH LANDED' && grep -q 'GET /sent' $d/log && node bin/agent/refusal-probe.mjs --port $p --with-policy $d/pin.eyg --program test/fixtures/fetch-probe.eyg 2>&1 | grep -q 'fetch denied by policy: 127.0.0.1'; kill $! ) && rm -rf $d"
 confidence: high
 sources: [test/fixtures/fetch-probe.eyg, test/fixtures/fetch-post-probe.eyg, test/fixtures/fetch-listener.mjs, test/fixtures/fetch-operator-policy.mjs, test/fixtures/fetch-host-pin.eyg, test/fixtures/fetch-attach-token.eyg, bin/agent/refusal-probe.mjs, policies/agent-roots.eyg, policies/deny-all.eyg, host/guard.eyg, guides/how-to-write-a-policy.md, notes/pi-codemode-threat-model.md, docs/world/entities/host.guard-boundary.md, docs/world/entities/pi.session-grants.md]

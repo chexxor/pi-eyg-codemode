@@ -3,7 +3,7 @@ id: cli.prebuilt-binary
 type: entity
 owner: delegate
 status: current
-verified_at: 2026-11-24
+verified_at: 2026-11-25
 verify: "test -x $HOME/.local/bin/eyg && $HOME/.local/bin/eyg --version 2>&1 | grep -q 'v0\\.1\\.0' && node bin/agent/refusal-probe.mjs 2>&1 | grep -q 'write_file denied by policy: /tmp/' && node bin/agent/refusal-probe.mjs --program test/fixtures/unnamed-effect.eyg 2>&1 | grep -q 'unhandled effect Foo'"
 confidence: high
 sources: [notes/pi_codemode_runner_probe.md, docs/world/entities/cli.checked-runner-on-this-host.md, docs/world/entities/gap.install-guides-name-no-policy.md, host/guard.eyg, bin/agent/refusal-probe.mjs]

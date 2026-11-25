@@ -3,7 +3,7 @@ id: pi.session-grants
 type: entity
 owner: delegate
 status: current
-verified_at: 2026-11-24
+verified_at: 2026-11-25
 verify: "grep -q 'Ask the operator for a grant only when' extensions/eyg-codemode.ts && grep -q 'why the task needs it, and what you would use it for' lib/render-helpers.mjs && grep -q 'only when the refusal blocks the task' skills/eyg-codemode/SKILL.md && grep -q GRANT_ENTRY lib/render-helpers.mjs && grep -q argumentPolicyPath extensions/eyg-codemode.ts && grep -q 'notes/pi-codemode-ask-last-resort' docs/world/entities/pi.session-grants.md && grep -q 'tokens\\[0\\] === \"status\"' extensions/eyg-codemode.ts && node --test test/render-helpers.test.mjs && node -e 'import(\"./lib/render-helpers.mjs\").then(m=>{const rows=m.suggestGrant({field:\"write_file\",value:\"/tmp/x\"},{roots:\"/work\",policy:\"/p\"});const byRule=m.suggestGrant({field:\"fetch\",value:null},{roots:\"/work\",policy:\"/p\"});const scanned=m.refusalHints(\"write_file denied by policy: /tmp/x\").length===1&&m.refusalHints(\"REFUSED-BY-GUARD\").length===0&&m.refusalHints(\"fetch denied by policy\")[0].value===null;process.exit(rows.length===4&&rows[1].includes(\"/eyg-grant\")&&rows[3].includes(\"why the task needs it\")&&byRule[1].includes(\"no roots addition covers it\")&&scanned?0:1)})'"
 confidence: high
 sources: [extensions/eyg-codemode.ts, lib/render-helpers.mjs, test/render-helpers.test.mjs, notes/pi-codemode-session-grants.md, notes/pi-codemode-ask-last-resort.md, guides/how-to-write-a-policy.md, guides/tool-reference.md, guides/what-a-call-does.md]

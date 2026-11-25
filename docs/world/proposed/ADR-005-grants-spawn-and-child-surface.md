@@ -3,7 +3,7 @@ id: ADR-005-grants-spawn-and-child-surface
 type: adr
 owner: delegate
 status: proposed
-verified_at: 2026-11-24
+verified_at: 2026-11-25
 verify: "grep -q 'eyg-grant' extensions/eyg-codemode.ts && grep -q 'replayGrants' lib/render-helpers.mjs && grep -q childTools extensions/eyg-codemode.ts && grep -q callBudget extensions/eyg-codemode.ts && grep -q getActiveTools extensions/eyg-codemode.ts && test -f policies/spawner-effects.eyg && test -f docs/world/proposed/ADR-005-grants-spawn-and-child-surface.md"
 confidence: high
 sources: [extensions/eyg-codemode.ts, lib/render-helpers.mjs, policies/spawner-effects.eyg, docs/world/entities/pi.session-grants.md, docs/world/entities/pi.subagent-spawn.md, docs/world/entities/pi.spawner-policy.md, notes/pi-codemode-session-grants.md, notes/pi-codemode-subagent-spawn.md, notes/spawner-effect-allowlist.md, docs/world/decisions/ADR-002-handler-seam.md]

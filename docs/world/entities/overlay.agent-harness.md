@@ -3,7 +3,7 @@ id: overlay.agent-harness
 type: entity
 owner: delegate
 status: current
-verified_at: 2026-11-24
+verified_at: 2026-11-25
 verify: "grep -q 'policy_runner.gleam' notes/pi_codemode_host_gate.md && grep -qF '[mode, entryPath]' extensions/eyg-codemode.ts && grep -q 'action === \"effects\"' extensions/eyg-codemode.ts && grep -q 'eyg-functions' extensions/eyg-codemode.ts && grep -q 'eyg_packages/overlay/policy.eyg' notes/pi-codemode-policy-inlining.md && test -f notes/pi-eyg-codemode-vs-overlay.md"
 confidence: high
 sources: [notes/pi_codemode_host_gate.md, notes/pi-codemode-policy-inlining.md, notes/pi-eyg-codemode-vs-overlay.md, extensions/eyg-codemode.ts, test/fixtures/rule_mapping.gleam, docs/world/entities/overlay.policy-rules.md, docs/world/entities/gap.policy-runner-not-on-main.md, README.md]

@@ -3,7 +3,7 @@ id: pi.registry-scope-persistence
 type: entity
 owner: delegate
 status: current
-verified_at: 2026-11-24
+verified_at: 2026-11-25
 verify: "t=$(mktemp -d) && h=$(mktemp -d) && printf inside > $t/inside.txt && node bin/agent/refusal-probe.mjs --roots $t --program test/fixtures/registry-plant-probe.eyg 2>&1 | grep -q 'PLANTED IN REGISTRY SCOPE' && node bin/agent/registry-walk.mjs --cwd $t --home $h --no-package 2>&1 | grep -qF 'persist_probe [workspace]' && node bin/agent/refusal-probe.mjs --roots $t --program test/fixtures/registry-bind-probe.eyg 2>&1 | grep -q 'outside: read_file denied by policy' && rm -rf $t $h"
 confidence: high
 sources: [extensions/eyg-codemode.ts, lib/render-helpers.mjs, bin/agent/refusal-probe.mjs, bin/agent/registry-walk.mjs, test/fixtures/registry-plant-probe.eyg, test/fixtures/registry-bind-probe.eyg, host/guard.eyg, policies/agent-roots.eyg, docs/world/entities/pi.variable-scopes.md, docs/world/entities/host.guard-boundary.md, notes/pi-codemode-threat-model.md]

@@ -3,7 +3,7 @@ id: ADR-004-doc-shape-for-two-readers
 type: adr
 owner: human
 status: accepted
-verified_at: 2026-11-24
+verified_at: 2026-11-25
 verify: "grep -q 'diataxis.fr' docs/world/decisions/ADR-004-doc-shape-for-two-readers.md && grep -q 'fuchsia.dev/fuchsia-src/contribute/docs/documentation-style-guide' docs/world/decisions/ADR-004-doc-shape-for-two-readers.md && grep -q '## Alternatives rejected' docs/world/decisions/ADR-004-doc-shape-for-two-readers.md && test -f skills/eyg-codemode/SKILL.md"
 confidence: high
 sources: [README.md, AGENTS.md, skills/eyg-codemode/SKILL.md, .agents/skills/eyg-run/SKILL.md, docs/world/decisions/ADR-003-doc-delegation.md, docs/world/runbooks/runbook.check-a-change.md, guides/eyg-surface.tsv, guides/tool-reference.md]

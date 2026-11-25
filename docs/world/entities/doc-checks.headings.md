@@ -3,7 +3,7 @@ id: doc-checks.headings
 type: entity
 owner: delegate
 status: current
-verified_at: 2026-11-24
+verified_at: 2026-11-25
 verify: "node bin/agent/doc-checks.mjs headings | grep -qx 'headings: ok'"
 confidence: medium
 sources: [bin/agent/doc-checks.mjs, test/doc-checks.test.mjs, README.md, guides/first-session.md]

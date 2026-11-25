@@ -3,7 +3,7 @@ id: usability.without-language-skill
 type: entity
 owner: delegate
 status: current
-verified_at: 2026-11-24
+verified_at: 2026-11-25
 verify: "grep -q 'eyg-surface.tsv' skills/eyg-codemode/SKILL.md && grep -q 'mapping values are not allowed' docs/world/traps.md && grep -q 'do not vendor' notes/pi-codemode-language-skill-packaging.md"
 confidence: medium
 sources: [skills/eyg-codemode/SKILL.md, notes/pi-codemode-language-skill-packaging.md, notes/pi-codemode-language-reference-reachability.md, docs/world/traps.md, .pi/settings.json, docs/world/entities/pi.reference-action.md, guides/eyg-surface.tsv]

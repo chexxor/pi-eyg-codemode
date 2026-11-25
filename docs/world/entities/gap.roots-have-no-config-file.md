@@ -3,7 +3,7 @@ id: gap.roots-have-no-config-file
 type: entity
 owner: delegate
 status: superseded
-verified_at: 2026-11-24
+verified_at: 2026-11-25
 verify: "grep -q agent-roots .pi/settings.json && grep -q resolveRoots extensions/eyg-codemode.ts"
 confidence: high
 sources: [extensions/eyg-codemode.ts, lib/render-helpers.mjs, .pi/settings.json, guides/how-to-write-a-policy.md, notes/pi-codemode-project-settings-key.md, docs/world/entities/pi.policy-config.md]
