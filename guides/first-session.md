@@ -1,13 +1,14 @@
 # First session: perform one effect, and read one refusal
 
 You installed this package and want proof it does what it claims, in the smallest
-steps. Five of them, each with what you should see. If you only want the answer to
-"why did my call never run", go to step 2 and the last section.
+steps. Six of them, each with what you should see. If you only want the answer to
+"why did my call never run", go to step 3 and the last section.
 
 The steps are:
 
 1. [Install the CLI](#install-the-cli)
-2. [Check that the tool can start it](#check-that-the-tool-can-start-it)
+2. [Start a project that loads this package](#start-a-project-that-loads-this-package)
+3. [Check that the tool can start it](#check-that-the-tool-can-start-it)
 3. [Ask what the policy allows](#ask-what-the-policy-allows)
 4. [Read a file, and print what you got](#read-a-file-and-print-what-you-got)
 5. [Write outside the roots, and read the refusal](#write-outside-the-roots-and-read-the-refusal)
@@ -23,7 +24,35 @@ eyg eval -c '!int_add(1, 1)'
 ```
 
 and it prints `2`. That proves the binary runs; it does not prove this package can use
-it, which is step 2.
+it, which is step 3.
+
+## Start a project that loads this package
+
+Run the first session somewhere that is not the package's own tree, so what it writes cannot
+land in the files you are reading. One script writes the one file a project needs:
+
+```sh
+node bin/agent/new-project.mjs /tmp/try-eyg
+```
+
+It writes `/tmp/try-eyg/.pi/settings.json`, which declares this package by absolute path and
+drops pi's built-in coding tool, so the session has exactly one coding tool - this package's
+`eyg`. The script prints what it wrote and the command that starts the session, and it refuses
+a relative directory or a project that already has a `.pi/settings.json`, because that file
+belongs to a project someone already configured. The check that the declaration resolves:
+
+```sh
+cd /tmp/try-eyg && pi list --approve
+```
+
+That names the package under `Project packages:`, twice - the declaration and the path it
+resolved to. `--approve` is there because pi reads a project's `.pi` files only after project
+trust: on a directory whose trust was never granted, plain `pi list` answers with no
+`Project packages:` section at all, which looks like a project that declares nothing. A session
+started in the new directory asks for trust instead, and answering it once is enough.
+
+A directory with no such file declares no package, so the tool is not there to call - the
+declaration above is the whole difference.
 
 ## Check that the tool can start it
 

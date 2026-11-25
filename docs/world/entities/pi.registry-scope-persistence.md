@@ -4,9 +4,9 @@ type: entity
 owner: delegate
 status: current
 verified_at: 2026-11-25
-verify: "t=$(mktemp -d) && h=$(mktemp -d) && printf inside > $t/inside.txt && node bin/agent/refusal-probe.mjs --roots $t --program test/fixtures/registry-plant-probe.eyg 2>&1 | grep -q 'PLANTED IN REGISTRY SCOPE' && node bin/agent/registry-walk.mjs --cwd $t --home $h --no-package 2>&1 | grep -qF 'persist_probe [workspace]' && node bin/agent/refusal-probe.mjs --roots $t --program test/fixtures/registry-bind-probe.eyg 2>&1 | grep -q 'outside: read_file denied by policy' && rm -rf $t $h"
+verify: "t=$(mktemp -d) && h=$(mktemp -d) && printf inside > $t/inside.txt && node bin/agent/refusal-probe.mjs --roots $t --program test/fixtures/registry-plant-probe.eyg 2>&1 | grep -q 'PLANTED IN REGISTRY SCOPE' && node bin/agent/registry-walk.mjs --cwd $t --home $h --no-package 2>&1 | grep -qF 'persist_probe [workspace]' && node bin/agent/refusal-probe.mjs --roots $t --program test/fixtures/registry-bind-probe.eyg 2>&1 | grep -q 'outside: read_file denied by policy' && node bin/agent/registry-walk.mjs --cwd $t --home $h --no-package 2>&1 | grep -qF 'entry persist_probe [workspace] this project wrote it' && grep -q 'export function scopeOwner' lib/render-helpers.mjs && grep -q 'export function registryScopeLegend' lib/render-helpers.mjs && grep -q 'owner: ' extensions/eyg-codemode.ts && grep -q 'registryScopeLegend' extensions/eyg-codemode.ts && grep -q 'the registry labels: whose module an entry is' test/render-helpers.test.mjs && rm -rf $t $h"
 confidence: high
-sources: [extensions/eyg-codemode.ts, lib/render-helpers.mjs, bin/agent/refusal-probe.mjs, bin/agent/registry-walk.mjs, test/fixtures/registry-plant-probe.eyg, test/fixtures/registry-bind-probe.eyg, host/guard.eyg, policies/agent-roots.eyg, docs/world/entities/pi.variable-scopes.md, docs/world/entities/host.guard-boundary.md, notes/pi-codemode-threat-model.md]
+sources: [extensions/eyg-codemode.ts, lib/render-helpers.mjs, bin/agent/refusal-probe.mjs, bin/agent/registry-walk.mjs, guides/how-to-share-functions.md, test/fixtures/registry-plant-probe.eyg, test/fixtures/registry-bind-probe.eyg, host/guard.eyg, policies/agent-roots.eyg, docs/world/entities/pi.variable-scopes.md, docs/world/entities/host.guard-boundary.md, notes/pi-codemode-threat-model.md]
 supersedes: null
 superseded_by: null
 ---
@@ -15,8 +15,8 @@ superseded_by: null
 A session's roots contain the two directories a call can leave code in for a later call: the
 function-registry scope `<cwd>/.pi/eyg-functions` (the scope list is `registryScopes`,
 `extensions/eyg-codemode.ts:261`) and the kept-binding scope `<cwd>/.pi/eyg-variables/`
-(`fileVariableBindings`, `extensions/eyg-codemode.ts:401`, whose prelude `keptBindings` builds at
-`:428`). Neither is in `ctx.protected`, which names the package's `host/` and `policies/` and a
+(`fileVariableBindings`, `extensions/eyg-codemode.ts:403`, whose prelude `keptBindings` builds at
+`:430`). Neither is in `ctx.protected`, which names the package's `host/` and `policies/` and a
 policy module outside them (`hostProtectedPaths`, `lib/render-helpers.mjs:379`). Measured
 2026-11-24: the plant lands, a later call lists it, binds it and runs it, and the run is decided
 again.
@@ -29,7 +29,7 @@ runs in its own scratch directory outside `$t`):
 | step | answer |
 | --- | --- |
 | `node bin/agent/refusal-probe.mjs --roots $t --program test/fixtures/registry-plant-probe.eyg` - the program performs `MakeDirectory` and `WriteFile` of a module carrying a `metadata` record, inside its own root | `PLANTED IN REGISTRY SCOPE`, `exit=0` |
-| `node bin/agent/registry-walk.mjs --cwd $t --home $h --no-package` - the tool's own `buildRegistry` (`lib/render-helpers.mjs:2001`) over the planted tree, reading nothing else | `entry persist_probe [workspace] <t>/.pi/eyg-functions/persist-probe.eyg persist_probe_lib.marker(path) -> Result(Binary, String) - planted by the probe: reads the path the caller names` |
+| `node bin/agent/registry-walk.mjs --cwd $t --home $h --no-package` - the tool's own `buildRegistry` (`lib/render-helpers.mjs:2023`) over the planted tree, reading nothing else | `entry persist_probe [workspace] <t>/.pi/eyg-functions/persist-probe.eyg persist_probe_lib.marker(path) -> Result(Binary, String) - planted by the probe: reads the path the caller names` |
 | `node bin/agent/refusal-probe.mjs --roots $t --program test/fixtures/registry-bind-probe.eyg` - a **later** call imports that module and calls `lib.marker` twice | `inside: landed` and `outside: read_file denied by policy: <scratch>/outside.txt`, `exit=0` |
 
 The same three steps run live through the `eyg` tool, under `policies/agent-roots.eyg` with this
@@ -49,10 +49,15 @@ is the record of the route where a planted module hosts its own effects instead,
 **The listing is a channel into a later session's context.** `action: list_functions` and
 `action: describe_function` print the planted module's `description` and `signature` verbatim: what
 one call wrote becomes text a later model reads as this tool's own documentation of a function.
+The listing labels whose module each entry is, so the channel is at least attributed: `scopeOwner`
+and `registryScopeLegend` (`lib/render-helpers.mjs`) feed one line per entry whose scope is not
+`package` and three header lines, and the offline walk prints the same strings:
+`entry persist_probe [workspace] this project wrote it: not shipped with this package`. The live
+rows are quoted in the section below.
 
 **A name clash resolves to the workspace, and the home scope reaches every workspace.** With both
 scopes planted, the walk prints the `[workspace]` entry and reports the other
-(`buildRegistry`, `lib/render-helpers.mjs:2001`, `:2009`):
+(`buildRegistry`, `lib/render-helpers.mjs:2023`, `:2031`):
 `shadow: <home>/.pi/eyg-functions/persist-probe.eyg: persist_probe is shadowed by <t>/.pi/eyg-functions/persist-probe.eyg`.
 With only the scratch home planted, the same walk prints `entry persist_probe [home]`. So a module
 planted under `$HOME/.pi/eyg-functions` is offered in every workspace on the machine, and who may
@@ -63,6 +68,29 @@ plant one is decided by that session's roots alone. UNVERIFIED for the real home
 answers nothing (`exit=1`) and `git ls-files .pi` answers only `.pi/eyg-variables/PURPOSE` and
 `.pi/settings.json` (`@measured 2026-11-24`): a planted module is a committable artifact of the
 tree, so it outlives the session that wrote it and travels with the repository.
+
+## The listing names whose module each entry is
+
+A fresh one-shot session in a scratch project that declares this package (`pi --print --mode json
+--tools eyg`, one session, two calls - `list_functions` and `describe_function` on a module planted
+in that project's workspace scope), whose rows the session printed verbatim:
+
+```
+onboarding_probe  [workspace] <project>/.pi/eyg-functions/onboarding-probe.eyg
+  owner: this project wrote it: not shipped with this package
+
+scopes read in order, first match wins: workspace <project>/.pi/eyg-functions, package <pkg>/libraries
+a tag other than [package] is not this package's module: [workspace] is this project's
+and [home] is $HOME's, read by every project on this machine - read the module before
+binding a name that resolves to either.
+```
+
+The shipped `search` entry under `[package]` carries no owner line; `describe_function` prints the
+line for every scope, including `owner: this machine wrote it: every project here reads it` for a
+`[home]` entry (that string is pinned by the unit group `the registry labels: whose module an entry
+is` in `test/render-helpers.test.mjs`, not by a plant in the operator's home). The running session
+cannot show these rows: pi resolved the extension at session start, so a session sees the listing
+shape it started with (`docs/world/traps.md`).
 
 ## A kept binding whose value is an effect stops every later call in the workspace
 

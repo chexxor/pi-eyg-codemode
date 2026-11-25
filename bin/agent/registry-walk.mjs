@@ -12,7 +12,7 @@
 //   node bin/agent/registry-walk.mjs                      # this workspace, this HOME
 //   node bin/agent/registry-walk.mjs --cwd /tmp/probe-root --home /tmp/probe-home
 //   node bin/agent/registry-walk.mjs --no-package         # skip <pkg>/libraries
-import { buildRegistry } from "../../lib/render-helpers.mjs";
+import { buildRegistry, registryScopeLegend, scopeOwner } from "../../lib/render-helpers.mjs";
 import { existsSync, readdirSync, readFileSync } from "node:fs";
 import { join } from "node:path";
 import { fileURLToPath } from "node:url";
@@ -51,11 +51,14 @@ const registry = buildRegistry(scopeFiles, (path) => {
   }
 });
 
+for (const line of registryScopeLegend()) {
+  console.log(`legend: ${line}`);
+}
 for (const scope of scopeFiles) {
   console.log(`scope ${scope.name}: ${scope.dir} (${scope.files.length} module(s))`);
 }
 for (const entry of registry.entries) {
-  console.log(`entry ${entry.name} [${entry.scope}] ${entry.path} ${entry.signature} - ${entry.description}`);
+  console.log(`entry ${entry.name} [${entry.scope}] ${scopeOwner(entry.scope)} ${entry.path} ${entry.signature} - ${entry.description}`);
 }
 for (const error of registry.errors) {
   console.log(`shadow: ${error}`);

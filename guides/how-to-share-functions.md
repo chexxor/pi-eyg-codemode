@@ -24,15 +24,23 @@ search  [package] <the installed package>/libraries/search.eyg
   effects: ReadDirectory (available)
 ```
 
+The header names the three scopes and then three legend lines saying that a tag other than
+`[package]` is not this package's module. A set that resolves outside the package carries one
+more line, `owner:`, naming whose module it is: `this project wrote it: not shipped with this
+package` for a `[workspace]` set, `this machine wrote it: every project here reads it` for a
+`[home]` one. The tag is not decoration - a name you bind may be a module someone planted, and
+the home scope reaches every project on this machine, so read the module at the path the entry
+names before calling it.
+
 This package ships one set, `search`, so a listing that names none means the tool read no
 scope that exists - the package scope is missing when the installed package has no
 `libraries/` directory.
 
 ## Read one function-set
 
-`action: "describe_function"` with `function: "<name>"` prints the scope, the module path,
-the signature, the description and `body performs:` - the effects the module's own text
-performs. A name the registry does not have answers
+`action: "describe_function"` with `function: "<name>"` prints the scope, the `owner:` line,
+the module path, the signature, the description and `body performs:` - the effects the module's
+own text performs. A name the registry does not have answers
 
 ```
 eyg describe_function: <name> is not in the registry in <scopes>

@@ -125,6 +125,7 @@ import {
   PROGRAM_FILE,
   RECORD_FILE,
   referenceLines,
+  registryScopeLegend,
   refusalHints,
   refusalRecordLines,
   recordedRefusalHint,
@@ -135,6 +136,7 @@ import {
   resolvePolicy,
   resolveRoots,
   rootSlots,
+  scopeOwner,
   policySlots,
   configLines,
   runnerCandidates,
@@ -1046,6 +1048,7 @@ export default function (pi: ExtensionAPI) {
           const lines = [
             `eyg describe_function: ${entry.name} in ${formatDuration(Date.now() - startedAt)} wall`,
             `  scope: ${entry.scope}`,
+            `  owner: ${scopeOwner(entry.scope)}`,
             `  module: ${entry.path}`,
             `  signature: ${entry.signature ?? "(not declared)"}`,
             `  description: ${entry.description ?? "(not declared)"}`,
@@ -1090,10 +1093,14 @@ export default function (pi: ExtensionAPI) {
             "this tool never writes a registry scope; a function-set is one .eyg module with a",
             "`let metadata = {name, description, signature, effects}` record, written by whoever",
             "needs it with ordinary effects.",
+            ...registryScopeLegend(),
             "",
           );
           for (const entry of registry.entries) {
             lines.push(`${entry.name}  [${entry.scope}] ${entry.path}`);
+            if (entry.scope !== "package") {
+              lines.push(`  owner: ${scopeOwner(entry.scope)}`);
+            }
             lines.push(`  signature: ${entry.signature ?? "(not declared)"}`);
             lines.push(`  description: ${entry.description ?? "(not declared)"}`);
             lines.push(`  effects: ${effectText(entry) || "(none)"}`);

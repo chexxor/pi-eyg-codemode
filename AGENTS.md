@@ -58,15 +58,15 @@ host performs it.
   inside one `run` function) and `entry.eyg` (which imports the guard, the policy and the
   program, and writes the refusal record as its last line) into a scratch directory of its own and spawns
   `<binary> <mode> <entry.eyg>` - no shell in between, so quoting cannot be a route around
-  the checks (`runGuarded` in `extensions/eyg-codemode.ts:505`, its run spawn at
-  `:556`).
+  the checks (`runGuarded` in `extensions/eyg-codemode.ts:507`, its run spawn at
+  `:558`).
 - The per-effect checks are a program this package ships: `host/guard.eyg` installs one
   `handle` clause per effect row of `guides/eyg-surface.tsv` and applies the policy around
   the model's code, which is imported inside the guarded body. A label the guard does not
   name has no host, so naming every effect is what makes the default a refusal (`build` in
   `host/guard.eyg:704`, `test/host-coverage.test.mjs`,
   `notes/pi-codemode-host-guard-contract.md`).
-- The model's own call type-checks that entry before the run starts: `<binary> check <entry.eyg>` on the same file, and only an `error: type mismatch` row stops the run (`entryCheckArguments` in `lib/render-helpers.mjs:497`, `ENTRY_CHECK_TIMEOUT_MS` in `extensions/eyg-codemode.ts:195`); a mis-shaped ask inside the guarded body otherwise spends the whole timeout printing nothing (`notes/pi-codemode-misshaped-ask.md`).
+- The model's own call type-checks that entry before the run starts: `<binary> check <entry.eyg>` on the same file, and only an `error: type mismatch` row stops the run (`entryCheckArguments` in `lib/render-helpers.mjs:497`, `ENTRY_CHECK_TIMEOUT_MS` in `extensions/eyg-codemode.ts:197`); a mis-shaped ask inside the guarded body otherwise spends the whole timeout printing nothing (`notes/pi-codemode-misshaped-ask.md`).
 - Policy resolution: the order is stated once, in the table "Which policy a call gets" in
   `guides/how-to-write-a-policy.md`, and it is one function - `resolvePolicy` in
   `lib/render-helpers.mjs:672`, used at `extensions/eyg-codemode.ts:772`. A slot that names no
@@ -74,7 +74,7 @@ host performs it.
   call's `policy` argument sits outside that chain: it is
   honoured only when it names the policy the chain already chose or `NARROWEST_POLICY_FILE`
   (`narrows` in `lib/render-helpers.mjs:636`, used at `:684`), and anything else comes back
-  `refusedArgument` (`extensions/eyg-codemode.ts:787`, and `:1497` for a child's policy).
+  `refusedArgument` (`extensions/eyg-codemode.ts:789`, and `:1502` for a child's policy).
 - The binary is chosen by name, not by asking it what it can do: `EYG_CODEMODE_RUNNER` (an
   absolute path), else `eyg` on PATH - two places, no third (`runnerCandidates` in
   `lib/render-helpers.mjs:592`, used at `extensions/eyg-codemode.ts:840` and `:1546`). Nothing
@@ -108,7 +108,10 @@ host performs it.
   refusal). Rules wrap each other (`hide_secrets(under(...))`), which is why one record is one
   composed decision (`policies/agent-roots.eyg`, read 2026-11-18; `ADR-006-guard-in-package`).
 - The tool's registry reads three scopes and never writes: `<cwd>/.pi/eyg-functions`
-  (workspace), `$HOME/.pi/eyg-functions` (home), `<package>/libraries` (package).
+  (workspace), `$HOME/.pi/eyg-functions` (home), `<package>/libraries` (package). The listing
+  says whose module each entry is (`scopeOwner` and `registryScopeLegend` in
+  `lib/render-helpers.mjs`, printed per entry in `extensions/eyg-codemode.ts`), because a name
+  in the home scope reaches every project on the machine.
 
 ## The commands a session runs here, and what each costs
 
@@ -122,6 +125,7 @@ host performs it.
 | `node bin/agent/misshape-probe.mjs` (the entry check alone: `eyg check <the entry this package writes>`, never the run; `--program` names a fixture) | 0.25 s wall on the shipped mis-shape, 0.407 s on a well-shaped fixture | 2026-11-25 |
 | `node --test test/host-coverage.test.mjs` (the guard names every effect row of the surface file) | 0.09 s wall | 2026-11-22 |
 | `node bin/agent/check-variable-shapes.mjs` (generates a kept binding's text and runs it through the CLI on PATH, with no policy module loaded) | 0.40 s wall, eleven rows | 2026-11-22 |
+| `node bin/agent/new-project.mjs /abs/dir` (writes the one `.pi/settings.json` a scratch project needs; refuses a relative directory and a project that already has one) | 0.04 s wall | 2026-11-25 |
 | `pi --print --mode json --tools eyg <prompt>` (one fresh session) | 440 s wall for three `eyg` calls - the wall is the model's generation, not the calls, so budget for the task's calls and run it in the background; needs `--model`, and it must be the model the server serves (`$PI_MODEL`) - `pi --list-models` also lists names the server answers 404 for, and the default model hangs | 2026-11-23 |
 | `for f in policies/*.eyg libraries/*.eyg host/*.eyg; do eyg check "$f"; done` (the audit's `shipped EYG modules check` row) | 0.65 s wall | 2026-11-22 |
 | `node pi-simple-world-model/bin/world_lint.mjs` | 0.06 s wall | 2026-11-18 |

@@ -16,7 +16,7 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
 import { surfaceDriftProblems } from "../bin/agent/gen-surface.mjs";
-import { argumentPolicyPath, bindingOrder, budgetRefusal, describeRefusal, entryCheckArguments, entryCheckMisshapeRows, grantStatusLine, configLines, policySlots, rootSlots, externBindings, bindingLocation, builtinErrors, misshapedAskRows, builtinHintRows, builtinRows, callBudget, callLines, checkDeclaredEffects, CHILD_TOOL_ALLOWLIST, classifyProbeOutput, COLLAPSED_SOURCE_LINES, childAnswer, childArgv, childCalls, childEnvOverrides, childRefusalRows, childTools, describeGrant, EFFECT_ALLOWLIST_ENV, effectFieldsFor, effectLine, effectsUsed, effectfulBindingProblem, eygCallCount, eygSettings, findMetadata, fieldsOutside, formatDuration, grantEvents, GRANT_ENTRY, GENERATED_MARK, handledEffectLabels, handledEffectRefusal, parseArguments, VARIABLE_ENTRY, isUnder, LANGUAGE_DOCS, libraryAliases, MAX_CALLS_ENV, outsideRoot, prepareCallArguments, shippedPolicyPath, probeArguments, probeProgram, POLICY_FIELDS, referenceLines, refusalHints, replayGrants, replayVariables, resolvePolicy, resolveRoots, resultLines, ruleMappingEffects, rootsInside, runnerCandidates, runnerFailureLine, sessionDepth, spawnerPolicy, spawnerRoots, subagentCallLines, subagentResultRows, suggestGrant, surfaceFileLines, surfaceRows, SURFACE_FILE, eygStringLiteral, topLevelBindings, variableBindingPath, variableDir, variableEvents, variableImportProblems, variableModule, variableName, variablePrelude, VARIABLE_SCOPES, variableRows, variableWriteOutcomes, variableWriteProgram } from "../lib/render-helpers.mjs";
+import { argumentPolicyPath, bindingOrder, budgetRefusal, describeRefusal, entryCheckArguments, entryCheckMisshapeRows, grantStatusLine, configLines, policySlots, rootSlots, externBindings, bindingLocation, builtinErrors, misshapedAskRows, builtinHintRows, builtinRows, buildRegistry, callBudget, callLines, checkDeclaredEffects, CHILD_TOOL_ALLOWLIST, classifyProbeOutput, COLLAPSED_SOURCE_LINES, childAnswer, childArgv, childCalls, childEnvOverrides, childRefusalRows, childTools, describeGrant, EFFECT_ALLOWLIST_ENV, effectFieldsFor, effectLine, effectsUsed, effectfulBindingProblem, eygCallCount, eygSettings, findMetadata, fieldsOutside, formatDuration, grantEvents, GRANT_ENTRY, GENERATED_MARK, handledEffectLabels, handledEffectRefusal, parseArguments, VARIABLE_ENTRY, isUnder, LANGUAGE_DOCS, libraryAliases, MAX_CALLS_ENV, outsideRoot, prepareCallArguments, shippedPolicyPath, probeArguments, probeProgram, POLICY_FIELDS, referenceLines, refusalHints, replayGrants, replayVariables, resolvePolicy, resolveRoots, resultLines, ruleMappingEffects, rootsInside, runnerCandidates, runnerFailureLine, registryScopeLegend, scopeOwner, sessionDepth, spawnerPolicy, spawnerRoots, subagentCallLines, subagentResultRows, suggestGrant, surfaceFileLines, surfaceRows, SURFACE_FILE, eygStringLiteral, topLevelBindings, variableBindingPath, variableDir, variableEvents, variableImportProblems, variableModule, variableName, variablePrelude, VARIABLE_SCOPES, variableRows, variableWriteOutcomes, variableWriteProgram } from "../lib/render-helpers.mjs";
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
 
@@ -124,6 +124,26 @@ let metadata = {
   assert.equal(brokenCheck.unperformed.join(","), "ReadFile", "and so is a stale annotation");
   assert.equal(findMetadata(broken).found, true, "the record itself is still read");
   assert.equal(findMetadata("let x = 1\n{x}").found, false, "a module with no record is reported as such");
+});
+
+test("the registry labels: whose module an entry is", () => {
+  assert.equal(scopeOwner("package"), "shipped with this package", "the package's own entry says so plainly");
+  assert.match(scopeOwner("workspace"), /not shipped with this package/, "a workspace entry is this project's, not the package's");
+  assert.match(scopeOwner("home"), /every project here reads it/, "a home entry reaches every workspace on this machine");
+  assert.match(scopeOwner("something-else"), /not shipped with this package/, "an unrecognised tag is still not the package's");
+  assert.doesNotMatch(scopeOwner("package"), /not shipped/, "the package's own entry is never called third-party");
+  const legend = registryScopeLegend();
+  assert.equal(legend.length, 3, "the legend is the three lines of the listing's header block");
+  assert.match(legend.join(" "), /\[workspace\][\s\S]*\[home\]/, "it names both non-package tags");
+  assert.match(legend.join(" "), /read the module before/, "and says to read the module before binding it");
+  const entries = buildRegistry(
+    [{ name: "workspace", files: ["/work/.pi/eyg-functions/search.eyg"] }, { name: "package", files: ["<pkg>/libraries/search.eyg"] }],
+    () => `let metadata = {name: "search", description: "scans a tree with the effects the policy decides", signature: "search({root, pattern, limit})", effects: ["ReadDirectory"]}`,
+  );
+  assert.equal(entries.entries.length, 1, "a name defined in two scopes resolves once");
+  assert.equal(entries.entries[0].scope, "workspace", "the nearer scope wins, so the owner line printed is the workspace one");
+  assert.equal(entries.errors.length, 1, "the shadowed module is reported, not dropped silently");
+  assert.match(entries.errors[0], /is shadowed by/, "and the report says the package's own module is the one shadowed");
 });
 
 test("probe programs: what the availability probe asks, and how the answer is read", () => {
