@@ -61,3 +61,20 @@ false` - their programs are this package's own and their shapes are unit-tested 
 that per-site flag, never a widening of what the check reports. `bin/agent/misshape-probe.mjs` is the
 re-runnable record: it runs the check of an entry and never starts the run, so a mis-shape costs it a
 named row and a well-shaped entry costs it `0 mis-shaped ask(s)`.
+
+**The before and after, from the same program.** `test/fixtures/misshaped-ask.eyg`'s line, sent to
+the `eyg` tool as `{code: "perform MakeDirectory({ path: \"eyg-misshaped-ask\" })", mode: "run"}`:
+
+- in the session that had loaded the package **before** this fix: `eyg run: timed out after 30 s
+  in 30.80 s wall`, and `test ! -e eyg-misshaped-ask` afterwards - the whole cap, nothing performed;
+- in a fresh one-shot session (`pi --print --mode json --tools eyg --provider strata-server --model
+  "$PI_MODEL"`) started **after** the commit: `durationMs: 307`, `details: {gated: true, ran: false}`
+  (the transcript is at `/tmp/misshape-session.json` on that machine), and the directory still does
+  not exist.
+
+So the call went from the whole 30 s cap to 307 ms, which is the check's 240 ms plus the tool's own
+work, and the answer names the CLI's line, the surface row to read, and that nothing ran.
+
+An edit to `extensions/eyg-codemode.ts` does not change the `eyg` tool a running session is already
+using - the two rows above are the same session pair that shows it - so a new tool behaviour is
+proven by a fresh session, not by the session the edit was made from.
