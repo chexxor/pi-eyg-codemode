@@ -4,7 +4,7 @@ type: entity
 owner: delegate
 status: current
 verified_at: 2026-11-25
-verify: "test -f extensions/eyg-codemode.ts && grep -qF '[mode, entryPath]' extensions/eyg-codemode.ts && grep -q 'join(dir, \"policies\", \"agent-roots.eyg\")' extensions/eyg-codemode.ts && grep -q 'renderCall:' extensions/eyg-codemode.ts && grep -q 'prepareArguments' extensions/eyg-codemode.ts && grep -q 'DEFAULT_TIMEOUT_S' extensions/eyg-codemode.ts && grep -q 'list_functions' extensions/eyg-codemode.ts && grep -q '\"reference\", \"list_functions\"' extensions/eyg-codemode.ts && grep -q 'buildRegistry' extensions/eyg-codemode.ts && grep -qF 'rmSync(scratch' extensions/eyg-codemode.ts && test -f lib/render-helpers.mjs && grep -q 'export function callLines' lib/render-helpers.mjs && grep -q 'defaultTools' .pi/settings.json && grep -q '\"-builtin:codemode\"' .pi/settings.json && test -f libraries/search.eyg && test -f notes/pi_codemode_registry_probe.md && ! grep -q 'import \"' policies/agent-roots.eyg"
+verify: "test -f extensions/eyg-codemode.ts && grep -qF '[mode, entryPath]' extensions/eyg-codemode.ts && grep -q 'entryCheckArguments' extensions/eyg-codemode.ts && grep -q 'join(dir, \"policies\", \"agent-roots.eyg\")' extensions/eyg-codemode.ts && grep -q 'renderCall:' extensions/eyg-codemode.ts && grep -q 'prepareArguments' extensions/eyg-codemode.ts && grep -q 'DEFAULT_TIMEOUT_S' extensions/eyg-codemode.ts && grep -q 'list_functions' extensions/eyg-codemode.ts && grep -q '\"reference\", \"list_functions\"' extensions/eyg-codemode.ts && grep -q 'buildRegistry' extensions/eyg-codemode.ts && grep -qF 'rmSync(scratch' extensions/eyg-codemode.ts && test -f lib/render-helpers.mjs && grep -q 'export function callLines' lib/render-helpers.mjs && grep -q 'defaultTools' .pi/settings.json && grep -q '\"-builtin:codemode\"' .pi/settings.json && test -f libraries/search.eyg && test -f notes/pi_codemode_registry_probe.md && ! grep -q 'import \"' policies/agent-roots.eyg"
 confidence: high
 sources: [extensions/eyg-codemode.ts, policies/agent-roots.eyg, policies/deny-all.eyg, package.json, lib/render-helpers.mjs, README.md, .pi/settings.json, notes/pi_codemode_host_gate.md, notes/pi_codemode_registry_probe.md, notes/pi-codemode-policy-inlining.md, notes/pi-codemode-host-guard-contract.md, guides/tool-reference.md, host/guard.eyg]
 supersedes: null
@@ -26,6 +26,13 @@ program whose every effect is decided by the policy in force before the host per
   spawns argv `[mode, entryPath]` with `pi.exec`, which has no shell, so no quoting can smuggle a
   second command past the checks; the directory is removed when the run ends, and with no policy
   configured the tool refuses to run anything.
+- Before that run, the model's own call type-checks the entry it wrote: `entryCheckArguments` names
+  the argv `[check, entryPath]`, run with 5 s of its own, and only the lines that start
+  `error: type mismatch` are reported back - every well-shaped entry answers one other line, `missing
+  row 'Abort'`, and a parse failure answers `missing reference`, both of which the run names cheaply
+  itself. A mis-shaped ask otherwise prints nothing for the whole spawn cap: the CLI's error report
+  inspects the interpreter state, and the guarded body's source text is in it
+  (`notes/pi-codemode-misshaped-ask.md`). The probe programs and the keep-writing program skip it.
 - The defaults come from inside the installed package, so a first session configures
   nothing: `packageDir()` resolves the package directory from `import.meta.url` (the
   module file the extension was loaded from), `defaultPolicy()` is

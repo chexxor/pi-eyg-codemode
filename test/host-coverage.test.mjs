@@ -225,9 +225,13 @@ test("a call parses its program before it runs it", () => {
   const tool = read("extensions", "eyg-codemode.ts");
   assert.ok(tool.includes("pi.exec(runner, parseArguments(code)"), "the parse question is asked through argv, like the run");
   assert.ok(
-    tool.indexOf("parseArguments(code)") < tool.indexOf("await spawn(mode, code, timeout)"),
+    tool.indexOf("parseArguments(code)") < tool.indexOf("await spawn(mode, code, timeout"),
     "the program is parsed before anything of it runs",
   );
-  assert.equal((tool.match(/pi\.exec\(runner,/g) ?? []).length, 2, "a call starts the binary twice: the parse and the guarded run");
+  assert.equal((tool.match(/pi\.exec\(runner,/g) ?? []).length, 3, "a call starts the binary three times: the parse, the check of the entry, and the guarded run");
+  assert.ok(
+    tool.indexOf("entryCheckArguments(entryPath)") < tool.indexOf("pi.exec(runner, [mode, entryPath]"),
+    "the entry is checked before the run argv is built",
+  );
   assert.equal(/parseArguments\([^)]*--/.test(tool), false, "the parse argv carries no flag");
 });

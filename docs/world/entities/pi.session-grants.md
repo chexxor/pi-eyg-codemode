@@ -101,7 +101,7 @@ in a real session was not driven, only the replay over the recorded session file
 a time bound on a grant are owed work, carried as
 `docs/world/entities/gap.grant-polish-undecided.md` with a row in
 `docs/world/runbooks/runbook.next-milestone.md`. What landed instead is the operator's view: `/eyg-grant
-status` answers the line `grantStatusLine` builds (`lib/render-helpers.mjs:595`), the same line the
+status` answers the line `grantStatusLine` builds (`lib/render-helpers.mjs:714`), the same line the
 command's own errors already carried, and every row of `details.refusals` now names the value the
 policy was given rather than pretending it is always a path.
 

@@ -160,6 +160,18 @@ swallowed_refusal() {
   return 0
 }
 
+# A mis-shaped ask costs a named answer, not the spawn cap: the tool checks the entry it wrote
+# before it starts the run (`entryCheckArguments`, `entryCheckMisshapeRows`, `misshapedAskRows`
+# in `lib/render-helpers.mjs`, used by `runGuarded` in `extensions/eyg-codemode.ts`). The probe runs
+# that check of the same fixture whose guarded RUN prints 0 bytes for 20 s (`notes/pi-codemode-misshaped-ask.md`
+# carries that figure and the mechanism); the row fails when the check stops naming the type mismatch.
+misshaped_ask() {
+  node bin/agent/misshape-probe.mjs | tail -1 | grep -q '1 mis-shaped ask(s) named by the check' || return 1
+  node bin/agent/misshape-probe.mjs --program test/fixtures/refusal-probe.eyg | tail -1 |
+    grep -q '0 mis-shaped ask(s) named by the check' || return 1
+  return 0
+}
+
 echo "audit in $pkg"
 run_check "surface file current" node bin/agent/gen-surface.mjs --check
 run_check "unit test and drift guard" node --test 'test/*.mjs'
@@ -171,6 +183,7 @@ run_check "an invented effect reaches nothing" invented_effect
 run_check "the hidden-name rule refuses in every direction" secret_rule
 run_check "the alternative policy shape decides the same rows" policy_shape
 run_check "a swallowed refusal still gets named" swallowed_refusal
+run_check "a mis-shaped ask costs a named answer, not the spawn cap" misshaped_ask
 run_check "kept binding shapes" node bin/agent/check-variable-shapes.mjs
 run_check "world lint" node pi-simple-world-model/bin/world_lint.mjs
 run_check "world verify $verify_args" node pi-simple-world-model/bin/world_verify.mjs $verify_args

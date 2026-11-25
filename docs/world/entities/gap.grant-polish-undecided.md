@@ -35,8 +35,8 @@ asks for when it is not headless.
 
 **2. Nothing bounds a grant in time.** A grant ends by spend or by revoke:
 `grants.filter((grant) => grant.calls === null || grant.used < grant.calls)`
-(`lib/render-helpers.mjs:588`, read 2026-11-21), and `Date.now()` appears in the grant path only to
-name the id (`extensions/eyg-codemode.ts:1724`). A session grant therefore keeps widening an hour
+(`lib/render-helpers.mjs:707`, read 2026-11-21), and `Date.now()` appears in the grant path only to
+name the id (`extensions/eyg-codemode.ts:1798`). A session grant therefore keeps widening an hour
 later, and across any idle gap, until someone revokes it or cuts the branch. No field carries a
 deadline, and the shape is a decision rather than a patch: a wall-clock deadline per grant or an
 idle timeout; what the entry stores; and what a replayed branch does with a deadline that passed
@@ -48,17 +48,17 @@ force across a break by accident, or the first unattended run (`pi --print`) tha
 nobody is there to revoke.
 
 **3. Landed: the operator can see what is widened without starting a grant.** What exists now:
-`grantStatusLine` in `lib/render-helpers.mjs:595`, answering `no grant is in force now` or one line
+`grantStatusLine` in `lib/render-helpers.mjs:714`, answering `no grant is in force now` or one line
 per grant in force, oldest first, each with its spend and the id to revoke it with; `/eyg-grant
-status` (`extensions/eyg-codemode.ts:1629`) prints it as its own subcommand, before `revoke`
-(`:1633`), and the command's two error paths and its confirmation summary use the same function
+status` (`extensions/eyg-codemode.ts:1703`) prints it as its own subcommand, before `revoke`
+(`:1707`), and the command's two error paths and its confirmation summary use the same function
 rather than a second phrasing. The argument grammar is a row in `guides/tool-reference.md`.
 `/eyg-grant` with no arguments still opens the four dialogs, because the dialog flow is what the
 2026-11-20 measurement recorded on `pi.session-grants.md` and a listing must not replace it. Pinned
 by three asserts in "the grant store": one grant, two grants oldest first, and the empty answer.
 
 **4. Landed: the ask says what the refusal actually named.** `refusalHints` in
-`lib/render-helpers.mjs:616` matches `<field> denied by policy` with the value after the colon
+`lib/render-helpers.mjs:735` matches `<field> denied by policy` with the value after the colon
 optional, and answers `{field, value}` - `value: null` when the rule quoted nothing - where it used
 to require a path and invent one when the reason was a rule rather than a route: measured
 2026-11-22, a `standard_in` refusal whose reason was `EYG_SUBAGENT_EFFECTS=read_file,standard_out...`

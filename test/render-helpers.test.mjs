@@ -16,7 +16,7 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
 import { surfaceDriftProblems } from "../bin/agent/gen-surface.mjs";
-import { argumentPolicyPath, bindingOrder, budgetRefusal, describeRefusal, grantStatusLine, externBindings, builtinErrors, builtinHintRows, builtinRows, callBudget, callLines, checkDeclaredEffects, CHILD_TOOL_ALLOWLIST, classifyProbeOutput, COLLAPSED_SOURCE_LINES, childAnswer, childArgv, childCalls, childEnvOverrides, childRefusalRows, childTools, describeGrant, EFFECT_ALLOWLIST_ENV, effectFieldsFor, effectLine, effectsUsed, eygCallCount, eygSettings, findMetadata, fieldsOutside, formatDuration, grantEvents, GRANT_ENTRY, GENERATED_MARK, handledEffectLabels, handledEffectRefusal, parseArguments, VARIABLE_ENTRY, isUnder, LANGUAGE_DOCS, libraryAliases, MAX_CALLS_ENV, outsideRoot, prepareCallArguments, shippedPolicyPath, probeArguments, probeProgram, POLICY_FIELDS, referenceLines, refusalHints, replayGrants, replayVariables, resolvePolicy, resolveRoots, resultLines, ruleMappingEffects, rootsInside, runnerCandidates, runnerFailureLine, sessionDepth, spawnerPolicy, spawnerRoots, subagentCallLines, subagentResultRows, suggestGrant, surfaceFileLines, surfaceRows, SURFACE_FILE, eygStringLiteral, topLevelBindings, variableDir, variableEvents, variableImportProblems, variableModule, variableName, variablePrelude, VARIABLE_SCOPES, variableRows, variableWriteOutcomes, variableWriteProgram } from "../lib/render-helpers.mjs";
+import { argumentPolicyPath, bindingOrder, budgetRefusal, describeRefusal, entryCheckArguments, entryCheckMisshapeRows, grantStatusLine, externBindings, builtinErrors, misshapedAskRows, builtinHintRows, builtinRows, callBudget, callLines, checkDeclaredEffects, CHILD_TOOL_ALLOWLIST, classifyProbeOutput, COLLAPSED_SOURCE_LINES, childAnswer, childArgv, childCalls, childEnvOverrides, childRefusalRows, childTools, describeGrant, EFFECT_ALLOWLIST_ENV, effectFieldsFor, effectLine, effectsUsed, eygCallCount, eygSettings, findMetadata, fieldsOutside, formatDuration, grantEvents, GRANT_ENTRY, GENERATED_MARK, handledEffectLabels, handledEffectRefusal, parseArguments, VARIABLE_ENTRY, isUnder, LANGUAGE_DOCS, libraryAliases, MAX_CALLS_ENV, outsideRoot, prepareCallArguments, shippedPolicyPath, probeArguments, probeProgram, POLICY_FIELDS, referenceLines, refusalHints, replayGrants, replayVariables, resolvePolicy, resolveRoots, resultLines, ruleMappingEffects, rootsInside, runnerCandidates, runnerFailureLine, sessionDepth, spawnerPolicy, spawnerRoots, subagentCallLines, subagentResultRows, suggestGrant, surfaceFileLines, surfaceRows, SURFACE_FILE, eygStringLiteral, topLevelBindings, variableDir, variableEvents, variableImportProblems, variableModule, variableName, variablePrelude, VARIABLE_SCOPES, variableRows, variableWriteOutcomes, variableWriteProgram } from "../lib/render-helpers.mjs";
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
 
@@ -883,6 +883,26 @@ test("a program that handles an effect for itself is named, not run", () => {
   const twice = JSON.parse('{"0":"a","a":{"0":"h","l":"ReadFile"},"f":{"0":"h","l":"ReadFile"}}');
   assert.deepEqual(handledEffectLabels(twice), ["ReadFile"], "two clauses for one label are named once");
   assert.deepEqual(parseArguments("1"), ["parse", "-c", "1"], "the parse question goes through argv, with no flag that changes what is parsed");
+  assert.deepEqual(entryCheckArguments("/tmp/scratch/entry.eyg"), ["check", "/tmp/scratch/entry.eyg"], "the entry check goes through argv the same way");
+});
+
+test("a mis-shaped ask is named by the entry check, and the other check rows are not", () => {
+  const wellShaped = "type check passed\nerror: missing row 'Abort'";
+  assert.deepEqual(entryCheckMisshapeRows(wellShaped), [], "the guard's own `Abort` row is not a mis-shape, and every well-shaped entry answers it");
+  assert.deepEqual(entryCheckMisshapeRows("error: missing reference /tmp/scratch/program.eyg"), [], "a parse failure is left to the run, which names it in milliseconds");
+  assert.deepEqual(
+    entryCheckMisshapeRows("error: missing row 'Abort'\nerror: type mismatch given: String expected: {path: String}\nerror: type mismatch given: String expected: String\n"),
+    ["error: type mismatch given: String expected: {path: String}", "error: type mismatch given: String expected: String"],
+    "only the type-mismatch rows are problems, and the row that is a problem is kept verbatim",
+  );
+  const rows = misshapedAskRows(["error: type mismatch given: String expected: {path: String}"], { policy: "/pkg/policies/agent-roots.eyg" });
+  assert.equal(rows[0], "error: type mismatch given: String expected: {path: String}", "the CLI's own line comes through verbatim, so the value and the type the effect wants are both visible");
+  assert.ok(rows.some((line) => line.includes("guides/eyg-surface.tsv")), "the answer points at the row that states an effect's argument record");
+  assert.ok(rows.some((line) => line.includes("nothing ran")), "the answer says the run was not started, so nothing was decided");
+  assert.deepEqual(misshapedAskRows([], { policy: "/p" }), [], "a clean check adds nothing");
+});
+
+test("the refusal for a program that handles an effect names the labels and the way out", () => {
   const line = handledEffectRefusal(["ReadFile", "Fetch"]);
   assert.ok(!line.startsWith("eyg refused"), "the caller adds the refusal prefix, so the message must not repeat it");
   assert.ok(line.includes("ReadFile, Fetch"), "the refusal names the labels the program handled");

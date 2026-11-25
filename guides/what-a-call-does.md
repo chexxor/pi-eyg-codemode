@@ -181,6 +181,15 @@ Print that text yourself with the same functions the tool calls:
 node -e 'import("./lib/render-helpers.mjs").then(m=>process.stdout.write(m.entryProgram({guard:"/pkg/host/guard.eyg",policy:"/pkg/policies/agent-roots.eyg",ctx:m.contextLiteral({roots:["/pkg"],cwd:"/pkg",fields:[],protected:m.hostProtectedPaths({packageDir:"/pkg",policyPath:"/pkg/policies/agent-roots.eyg"})}),program:"/tmp/scratch/program.eyg",record:"/tmp/scratch/refusals.txt"})))'
 ```
 
+For the model's own call, one process comes first on that same file: `<binary> check <entry.eyg>`, five
+seconds of its own, and only an `error: type mismatch` row in its answer stops the call before the
+run starts. That check is the cheap answer to a mis-shaped ask - a `perform` whose argument does not
+match the effect's own record type errors in the entry, where the effect's type is in scope, and its
+*run* prints no report at all, because the CLI's report prints its whole interpreter state and that
+state is the guard and the policy the entry imports (`entryCheckMisshapeRows`, `misshapedAskRows`,
+`notes/pi-codemode-misshaped-ask.md`). The tool's own probe programs and the program that keeps a
+binding skip the check: their shapes are this package's, and unit-tested.
+
 Then one process: `<binary> <mode> <entry.eyg>`, started through argv with no shell in between, in
 the session's working directory, with the call's timeout. Quoting cannot be a route around the
 checks because there is no quoting: the entry path is one argument.

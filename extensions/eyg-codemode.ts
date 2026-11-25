@@ -88,6 +88,9 @@ import {
   checkDeclaredEffects,
   classifyProbeOutput,
   contextLiteral,
+  entryCheckArguments,
+  entryCheckMisshapeRows,
+  misshapedAskRows,
   DEPTH_ENV,
   describeGrant,
   describeRefusal,
@@ -184,6 +187,7 @@ const PROBE_TIMEOUT_MS = 5_000;
 // The handler check is one parse of the program text, which the binary answers in a tenth
 // of a second; it gets its own budget so a slow parse cannot eat the call's timeout.
 const PARSE_TIMEOUT_MS = 5_000;
+const ENTRY_CHECK_TIMEOUT_MS = 5_000;
 const ACTIONS = ["run", "eval", "effects", "reference", "list_functions", "describe_function"];
 /// The policy a spawner's effect allowlist is enforced by, and the policy it is a
 /// narrowing of. Both live inside this package, so the two paths are resolved here
@@ -478,7 +482,7 @@ let callSequence = 0;
 
 async function runGuarded(
   pi: ExtensionAPI,
-  { runner, mode, guard, policy, ctx, source, cwd, signal, timeoutMs }: {
+  { runner, mode, guard, policy, ctx, source, cwd, signal, timeoutMs, precheck = false }: {
     runner: string;
     mode: string;
     guard: string;
@@ -488,6 +492,7 @@ async function runGuarded(
     cwd: string;
     signal: AbortSignal | null;
     timeoutMs: number;
+    precheck?: boolean;
   },
 ) {
   const scratch = join(tmpdir(), "pi-eyg-codemode", `${process.pid}-${Date.now().toString(36)}-${(callSequence += 1)}`);
@@ -500,6 +505,31 @@ async function runGuarded(
   const recordPath = join(scratch, RECORD_FILE);
   writeFileSync(entryPath, entryProgram({ guard, policy, ctx, program: programPath, record: mode === "eval" ? null : recordPath }));
   const startedAt = Date.now();
+  // The entry, type-checked before the run starts. A mis-shaped ask inside the guarded body
+  // prints no report at all - the CLI's error printer walks its whole interpreter state, and on
+  // this entry that state is the guard and the policy imported in the body - so the run would
+  // spend its whole timeout answering nothing. The check of the same file answers that mis-shape
+  // in a quarter of a second (`entryCheckMisshapeRows`, `misshapedAskRows`), and it is the one
+  // `check` whose errors are about the arrangement the run will use: the entry is what imports
+  // the guard and the policy. Only the model's own call pays it; the probe programs and the
+  // extern write program are this package's own, and their shapes are unit-tested.
+  if (precheck) {
+    const checked = await pi.exec(runner, entryCheckArguments(entryPath), { signal, timeout: ENTRY_CHECK_TIMEOUT_MS, cwd });
+    const checkRows = entryCheckMisshapeRows([checked.stdout, checked.stderr].filter((text) => text !== "").join("\n"));
+    if (checkRows.length > 0) {
+      return {
+        result: { code: 0, killed: false, truncated: false, stdout: "", stderr: "" },
+        entryPath,
+        programPath,
+        recordPath,
+        recordText: "",
+        out: "",
+        durationMs: Date.now() - startedAt,
+        skipped: true,
+        checkProblem: misshapedAskRows(checkRows, { policy }),
+      };
+    }
+  }
   try {
     const result = await pi.exec(runner, [mode, entryPath], { signal, timeout: timeoutMs, cwd });
     // Read the record before the `finally` removes the scratch directory it lives in.
@@ -512,6 +542,8 @@ async function runGuarded(
       recordText,
       out: [result.stdout, result.stderr].filter((text) => text !== "").join("\n"),
       durationMs: Date.now() - startedAt,
+      skipped: false,
+      checkProblem: [],
     };
   } finally {
     rmSync(scratch, { recursive: true, force: true });
@@ -796,8 +828,8 @@ export default function (pi: ExtensionAPI) {
         fields: spawnerEffects(process.env, chain.depth),
         protected: hostProtectedPaths({ packageDir: dir, policyPath: policy }),
       });
-      const spawn = async (mode: string, source: string, timeoutMs: number) =>
-        runGuarded(pi, { runner, mode, guard, policy, ctx: ctxLiteral, source, cwd, signal, timeoutMs });
+      const spawn = async (mode: string, source: string, timeoutMs: number, precheck: boolean) =>
+        runGuarded(pi, { runner, mode, guard, policy, ctx: ctxLiteral, source, cwd, signal, timeoutMs, precheck });
 
       // `effects` is the capability question one session keeps asking: which effects
       // the policy in force will perform. Every probe is a whole spawned program, so
@@ -826,7 +858,7 @@ export default function (pi: ExtensionAPI) {
             rows.push(effectLine(name, field, "unknown (no probe argument is defined for this effect)"));
             continue;
           }
-          const outcome = await spawn("run", program, probeTimeoutMs);
+          const outcome = await spawn("run", program, probeTimeoutMs, false);
           probes = probes + 1;
           // One probe is enough to learn the binary cannot answer the question at all, in
           // which case the other rows would be the same sentence repeated.
@@ -889,7 +921,7 @@ export default function (pi: ExtensionAPI) {
             availability.set(name, "unknown (no probe argument is defined for this effect)");
             continue;
           }
-          const probed = await spawn("run", program, probeTimeoutMs);
+          const probed = await spawn("run", program, probeTimeoutMs, false);
           const verdict = classifyProbeOutput(probed.out);
           if (verdict === "refused") {
             availability.set(name, "refused by the policy in force");
@@ -1073,7 +1105,12 @@ export default function (pi: ExtensionAPI) {
         return refuseToRun(handledEffectRefusal(handled));
       }
 
-      const spawnResult = await spawn(mode, code, timeout);
+      const spawnResult = await spawn(mode, code, timeout, true);
+      // A mis-shaped ask never reaches the run, so it never spends the spawn cap answering
+      // nothing: the check of the entry this package wrote named the mis-shape instead.
+      if (spawnResult.skipped) {
+        return refuseToRun(spawnResult.checkProblem.join("\n"));
+      }
       const result = spawnResult.result;
       const out = spawnResult.out;
       const duration = formatDuration(spawnResult.durationMs);
@@ -1108,6 +1145,13 @@ export default function (pi: ExtensionAPI) {
       // so the guard's own re-perform of a permitted effect has no host under it.
       const evalHint = mode === "eval" && result.code !== 0 && /unhandled effect/.test(out)
         ? "eval performs nothing: the CLI's eval mode has no host for any effect, so a program that performs one gets this error. Use action run for a program that performs an effect."
+        : null;
+      // A run that hit the cap and printed nothing is the other shape of a silent call: the
+      // check of the entry already caught the type family, so what is left is a program that
+      // prints only when it ends. Both causes are named rather than guessed at, and the effect
+      // rows are the fix for one of them.
+      const silentTimeout = result.killed && out.trim() === ""
+        ? `the run answered nothing before the cap. Either it runs long and prints only when it ends, or its types do not line up and the CLI's error report prints nothing at all because it walks the whole interpreter state - re-check the ask against the effect row in ${SURFACE_FILE}`
         : null;
 
       // A kept binding whose module cannot be read aborts every later call that names
@@ -1149,7 +1193,7 @@ export default function (pi: ExtensionAPI) {
             } else {
               const files = wanted.keep.map((binding) => ({ path: join(target, `${binding.name}.eyg`), contents: variableModule(binding) }));
               externProgram = variableWriteProgram({ dir: target, files });
-              const wrote = await spawn("run", externProgram, timeout);
+              const wrote = await spawn("run", externProgram, timeout, false);
               externAnswer = wrote.out;
               const denied = refusalHints(wrote.out);
               for (const hint of denied) {
@@ -1181,6 +1225,7 @@ export default function (pi: ExtensionAPI) {
         out,
         cannotRun === null ? "" : cannotRun,
         evalHint === null ? "" : evalHint,
+        silentTimeout,
         broken.join("\n"),
         kept.problems.concat(kept.shadows).join("\n"),
         swallowedRows(swallowed, { roots, policy }).join("\n"),

@@ -4,4 +4,5 @@
 // cap, which is why a call answers "timed out after N s" for a mistake the CLI can name.
 // Run: eyg run test/fixtures/misshaped-ask.eyg              (errors in 0.09 s)
 // Run: node bin/agent/refusal-probe.mjs --program test/fixtures/misshaped-ask.eyg   (silent to the cap)
+// Run: node bin/agent/misshape-probe.mjs --program test/fixtures/misshaped-ask.eyg   (1 named mis-shape, no run)
 perform MakeDirectory({ path: "eyg-misshaped-ask" })
