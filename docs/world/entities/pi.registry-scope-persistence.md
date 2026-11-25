@@ -78,8 +78,11 @@ in that project's workspace scope), whose rows the session printed verbatim:
 ```
 onboarding_probe  [workspace] <project>/.pi/eyg-functions/onboarding-probe.eyg
   owner: this project wrote it: not shipped with this package
+```
 
-scopes read in order, first match wins: workspace <project>/.pi/eyg-functions, package <pkg>/libraries
+and the three legend lines the listing header prints before the entries:
+
+```
 a tag other than [package] is not this package's module: [workspace] is this project's
 and [home] is $HOME's, read by every project on this machine - read the module before
 binding a name that resolves to either.
