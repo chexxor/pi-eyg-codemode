@@ -16,8 +16,14 @@
 // into `DRIFT` and the exit code to 1. Nothing is written in this tree; the temporary
 // root is removed on the way out.
 //
+// `--fields <list>` names the policy FIELDS the call may perform, and the probe passes it
+// through to the entry: `policies/spawner-effects.eyg` refuses every field an allowlist
+// does not name, so asking it for the hidden rows means naming the seven path fields plus
+// `standard_out` - the same ask the audit makes against that policy.
+//
 //   node bin/agent/secret-rule-probe.mjs
 //   node bin/agent/secret-rule-probe.mjs --policy .ai-work/hidden-off.eyg
+//   node bin/agent/secret-rule-probe.mjs --policy policies/spawner-effects.eyg --fields read_file,write_file,append_file,delete_file,make_directory,read_directory,search,standard_out
 import { execFileSync } from "node:child_process";
 import { mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
@@ -31,6 +37,7 @@ const flag = (name, fallback) => {
   return at === -1 ? fallback : argv[at + 1];
 };
 const policy = flag("policy", join(packageDir, "policies", "agent-roots.eyg"));
+const fields = flag("fields", "");
 
 // Every ask the fixture makes, with what the shipped rule owes it: `hidden` for a path
 // the rule refuses, `open` for a path it must let through.
@@ -74,6 +81,7 @@ try {
         join(packageDir, "bin", "agent", "refusal-probe.mjs"),
         "--roots", root,
         "--with-policy", policy,
+        ...(fields === "" ? [] : ["--fields", fields]),
         "--program", join(packageDir, "test", "fixtures", "secret-directory-probe.eyg"),
       ],
       { cwd: packageDir, encoding: "utf8", stdio: ["ignore", "pipe", "pipe"] },

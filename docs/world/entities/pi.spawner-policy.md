@@ -4,7 +4,7 @@ type: entity
 owner: delegate
 status: current
 verified_at: 2026-11-26
-verify: "eyg check policies/spawner-effects.eyg > /dev/null && grep -q 'EFFECT_ALLOWLIST_ENV = \"EYG_SUBAGENT_EFFECTS\"' lib/render-helpers.mjs && grep -qF 'SPAWNER_POLICY_NEVER = [\"CreateKey\", \"Fetch\", \"StandardIn\"]' lib/render-helpers.mjs && grep -qF 'NARROWING_POLICY = \"spawner-effects\"' extensions/eyg-codemode.ts && node bin/agent/refusal-probe.mjs --with-policy spawner-effects --fields read_file,standard_out | grep -qF 'write_file denied by policy: EYG_SUBAGENT_EFFECTS=read_file,standard_out' && node bin/agent/refusal-probe.mjs --with-policy spawner-effects --program test/fixtures/refusal-abort.eyg | grep -qF 'EYG_SUBAGENT_EFFECTS=\"' && node bin/agent/refusal-probe.mjs --with-policy spawner-effects --fields write_file --program test/fixtures/refusal-abort.eyg | grep -qF 'write_file denied by policy: /tmp/' && node bin/agent/refusal-probe.mjs --with-policy spawner-effects --fields read_file,write_file,standard_out --program test/fixtures/secret-probe.eyg --inside-roots | grep -q 'read_file denied by policy: .*\\.env\\.eyg'"
+verify: "eyg check policies/spawner-effects.eyg > /dev/null && grep -q 'EFFECT_ALLOWLIST_ENV = \"EYG_SUBAGENT_EFFECTS\"' lib/render-helpers.mjs && grep -qF 'SPAWNER_POLICY_NEVER = [\"CreateKey\", \"Fetch\", \"StandardIn\"]' lib/render-helpers.mjs && grep -qF 'NARROWING_POLICY = \"spawner-effects\"' extensions/eyg-codemode.ts && node bin/agent/refusal-probe.mjs --with-policy spawner-effects --fields read_file,standard_out | grep -qF 'write_file denied by policy: EYG_SUBAGENT_EFFECTS=read_file,standard_out' && node bin/agent/refusal-probe.mjs --with-policy spawner-effects --program test/fixtures/refusal-abort.eyg | grep -qF 'EYG_SUBAGENT_EFFECTS=\"' && node bin/agent/refusal-probe.mjs --with-policy spawner-effects --fields write_file --program test/fixtures/refusal-abort.eyg | grep -qF 'write_file denied by policy: /tmp/' && node bin/agent/refusal-probe.mjs --with-policy spawner-effects --fields read_file,write_file,standard_out --program test/fixtures/secret-probe.eyg --inside-roots | grep -q 'read_file denied by policy: .*\\.env\\.eyg' && node bin/agent/secret-rule-probe.mjs --policy $PWD/policies/spawner-effects.eyg --fields read_file,write_file,append_file,delete_file,make_directory,read_directory,search,standard_out | tail -1 | grep -qF '16/16 rows hold'"
 confidence: high
 sources: [policies/spawner-effects.eyg, extensions/eyg-codemode.ts, lib/render-helpers.mjs, test/render-helpers.test.mjs, guides/how-to-spawn-a-subagent.md, notes/spawner-effect-allowlist.md, docs/world/entities/pi.subagent-spawn.md]
 supersedes: null
@@ -27,7 +27,9 @@ in it is the agent-roots rule or a refusal, never a rule agent-roots does not ha
   not have reads its own limits out of the answer rather than guessing them one effect at a time.
 - **Two independent cuts.** A field that *is* named is still decided by `EYG_ALLOWED_ROOTS`, and a
   path under a root is still refused when its field is not named - neither list can loosen the
-  other, and `read_file` keeps hiding `.env.eyg` through the narrowing.
+  other. The copy carries the base policy's hidden-name rule, so a path with a segment in
+  `secret_directory_names`, or ending `secret_file_suffix`, is refused for all seven path effects
+  even under a root the spawner handed over (`docs/world/entities/pi.secret-directory-rule.md`).
 - **What an allowlist cannot grant.** `fetch`, `standard_in` and `create_key` stay refused allowlist
   or not, because the base policy refuses them and an allowlist removes reach rather than adding it;
   `env` is refused in both, and the guard hands the program `None({})`, which is the only refusal
@@ -59,8 +61,24 @@ path, which lands outside the roots, which is the point of the row.
 | *(no `--fields`)* | the same write | **nothing printed, `exit=0`**: the write is refused and the probe's `StandardOut` is refused too, so a program cannot report its own refusal |
 | *(no `--fields`)*, `--program test/fixtures/refusal-abort.eyg` | the same write, aborted with | `error: Aborted with reason: "write_file denied by policy: EYG_SUBAGENT_EFFECTS="` - the empty list is the evidence that an unset allowlist names no field |
 | `--fields write_file --program test/fixtures/refusal-abort.eyg` | the same write | `... denied by policy: /tmp/eyg-refusal-probe-<random>/eyg-probe-refused.txt` - naming the field does not open the roots, and the refusal switches to naming the path |
-| `--fields read_file,write_file,standard_out --program test/fixtures/secret-probe.eyg --inside-roots` | `.env.eyg` under a root | `read_file denied by policy: <tree>/.env.eyg` - the secret rule survives the narrowing |
+| `--fields read_file,write_file,standard_out --program test/fixtures/secret-probe.eyg --inside-roots` | `.env.eyg` under a root | `read_file denied by policy: <tree>/.env.eyg` - the hidden-name rule survives the narrowing |
 | same program under `--with-policy agent-roots` | `.env.eyg` under a root | the same refusal - the narrowing adds nothing to the base policy's own rules |
+
+The whole hidden-name ask set, asked of the copy: `node bin/agent/secret-rule-probe.mjs --policy
+$PWD/policies/spawner-effects.eyg --fields read_file,write_file,append_file,delete_file,make_directory,read_directory,search,standard_out` - the same fixture, the same scratch root, the allowlist open on the seven path fields and `standard_out`. All 16 rows hold, and the rows that name a hidden path print the why:
+
+| the child asks for | the answer it gets |
+| --- | --- |
+| `ReadFile` of `<root>/.ssh/config` | `read_file denied by policy: /tmp/eyg-secret-rule-probe-<random>/root/.ssh/config (a name this policy hides)` |
+| `ReadFile` of `<root>/secrets/id_rsa` | `read_file denied by policy: /tmp/eyg-secret-rule-probe-<random>/root/secrets/id_rsa (a name this policy hides)` |
+| `WriteFile` of `<root>/secrets/planted` | `write_file denied by policy: /tmp/eyg-secret-rule-probe-<random>/root/secrets/planted (a name this policy hides)` and no such file on disk afterwards |
+| `Search` rooted at `<root>/secrets` | `search denied by policy: /tmp/eyg-secret-rule-probe-<random>/root/secrets (a name this policy hides)` |
+| `Search` rooted at the root itself | performed |
+
+Ask the same probe of the copy as it stood before the narrowing (`git show` the module into a scratch
+file, `--policy` that file) and it prints `11` `DRIFT` rows, exits 1, and leaves `secrets/planted`
+written - which is the row that carries the change, not a claim about it. That row is an audit row
+named `the spawner policy hides the same names`.
 
 `host.guard-boundary` carries the two probes that hold for this policy as well: an unnamed label
 (`test/fixtures/unnamed-effect.eyg`) never reaches a rule, and a `Search` of `/tmp` answers

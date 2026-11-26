@@ -117,7 +117,7 @@ host performs it.
 
 | Do this | cost | measured |
 | --- | --- | --- |
-| `bin/agent/audit.sh` (a human or a cron runs it; twenty-three rows, each cost printed) | 40 s wall, 23 rows, 0 failed | 2026-11-25 |
+| `bin/agent/audit.sh` (a human or a cron runs it; twenty-four rows, each cost printed) | 40 s wall, 24 rows, 0 failed | 2026-11-26 |
 | `node bin/agent/doc-checks.mjs --all` (the five prose checks: one term, citations, headings, mirrors, dated prose) | 0.07 s wall | 2026-11-22 |
 | `node bin/agent/gen-surface.mjs --check` (the surface file against its four inputs) | 0.04 s wall | 2026-11-22 |
 | `node --test 'test/*.mjs'` (or the single file; one named test per group) | 0.16 s wall, 46 tests, 0 fail | 2026-11-23 |

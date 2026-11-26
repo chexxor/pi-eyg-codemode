@@ -14,9 +14,16 @@ stated plainly: the two files can drift - a rule fixed in `agent-roots.eyg` stay
 until someone mirrors it. What guards it: both files carry one field per entry of `POLICY_FIELDS`,
 which the drift guard already compares against the recorded `rule_mapping` snapshot, and the policy
 claim's `verify` type-checks the copy and asks it two questions
-(`docs/world/entities/pi.spawner-policy.md`). Trigger to do better than a manual mirror: the first
-time a session commits a rule change to `agent-roots.eyg` and the copy is still behind - then a
-generated policy is worth its complexity.
+(`docs/world/entities/pi.spawner-policy.md`). One mirror was made by hand and is checked by a run, not
+by eye: when `agent-roots.eyg` gained the directory-name rule on 2026-11-25 the copy still tested a
+file suffix alone, so a child could read `.ssh/config` under a root it was given; the copy was
+mirrored the next day, and the audit's `the spawner policy hides the same names` row asks the copy
+the same 16 path asks the base policy is asked (`node bin/agent/secret-rule-probe.mjs --policy
+"$PWD/policies/spawner-effects.eyg" --fields <the seven path fields plus `standard_out`>`) and fails
+when one stops refusing. Against the older copy that row prints 11 `DRIFT` lines and leaves a planted
+file on disk, so the row is the mirror check and not the prose. Trigger to do better than a manual
+mirror: the first time a session commits a rule change to `agent-roots.eyg` and the copy is still
+behind that row - then a generated policy is worth its complexity.
 
 **One variable, not one policy per set of effects.** Nine gateable fields is 512 subsets; a policy per
 subset is 512 files to keep in sync, and a policy per *useful* subset would still be a list someone

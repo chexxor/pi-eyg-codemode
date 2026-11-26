@@ -14,22 +14,26 @@
 // chosen because a policy nobody configured must not be the wide one.
 //
 // ctx.roots works exactly as it does in `agent-roots.eyg`: a list of absolute roots,
-// empty meaning none, and `.env.eyg` never readable. A field that IS in the allowlist
-// is still decided by its roots, so the two lists are independent cuts and neither can
-// loosen the other.
+// empty meaning none, and a name the base policy hides stays hidden. A field that IS
+// in the allowlist is still decided by its roots, so the two lists are independent cuts
+// and neither can loosen the other.
 //
 // Self-contained like every policy here: the rules are written out whole rather than
 // imported, because a policy module may not import anything outside this package
 // (`notes/pi-codemode-policy-inlining.md`), so a narrowing policy carries its base.
 // The drift between the two files is a known cost, recorded in
-// `notes/spawner-effect-allowlist.md`.
+// `notes/spawner-effect-allowlist.md`; the count of it is computed, not remembered, in
+// `docs/world/entities/gap.policy-record-extension.md`'s `verify`.
 //
 // What this policy can and cannot do, one row per field:
 //
 //   NAMED IN THE ALLOWLIST: THE AGENT-ROOTS RULE
 //     append_file, delete_file, make_directory, read_directory, read_file, search,
-//     write_file                      - named: the roots rule (read_file keeps hiding
-//                                       `.env.eyg`); not named: refused
+//     write_file                      - named: the roots rule, with the hidden-name rule
+//                                       of agent-roots in front of it (a path through a
+//                                       directory in `secret_directory_names`, or ending
+//                                       `secret_file_suffix`, is refused under a root);
+//                                       not named: refused
 //     cwd, exit, flip, now, random, sleep, standard_error, standard_out
 //                                     - named: passed as agent-roots passes it;
 //                                       not named: refused
@@ -43,19 +47,28 @@
 //                                       is nothing to narrow
 //   NO RULE (available under every policy)
 //     DecodeJSON, EYGParse, Hash, Sign - the language marks them unchecked: they
-//                                       compute over values the program already
-//                                       holds. Naming them in the allowlist changes
-//                                       nothing and the tool says so.
+//                                       compute over values the program already holds.
+//                                       Naming them in the allowlist changes nothing and
+//                                       the tool says so.
 //
-// `search` is its own field here, so naming `read_file` lets a child read files and
-// not search trees; a spawner that wants both names both. The CLI used to decide a
-// search through the `read_file` field, which made the pair one field; `host/guard.eyg`
-// explains why one field per effect is what the guard's own types allow. Naming one
-// can never reach what the other decides.
+// `search` is its own field here, so naming `read_file` lets a child read files and not
+// search trees; a spawner that wants both names both. The CLI used to decide a search
+// through the `read_file` field, which made the pair one field; `host/guard.eyg` explains
+// why one field per effect is what the guard's own types allow. Naming one can never
+// reach what the other decides.
+//
+// The hidden-name rule is the same rule `agent-roots.eyg` carries, and it is what closed
+// the child hole on 2026-11-26: the copy used to test only whether a path ended in
+// `secret_file_suffix`, so a spawned session could read `.ssh/config` under a root it was
+// given. The reason a directory name is the test and a file suffix is not is measured in
+// `notes/pi-codemode-threat-model.md`: a suffix test is beaten by the spelling of a name,
+// a directory a path has to pass through is not.
 //
 // A refusal is a value, not a crash: `<field> denied by policy:
-// EYG_SUBAGENT_EFFECTS=<the list the child was given>`, which is what makes the
-// refusal readable to the child and to the parent that reads its records.
+// EYG_SUBAGENT_EFFECTS=<the list the child was given>` when the field was not named,
+// and `<effect> denied by policy: <path> (a name this policy hides)` for a hidden name
+// under a root - which is what makes the refusal readable to the child and to the parent
+// that reads its records.
 
 // Perform the effect with the value the program asked for, unchanged.
 let pass = (value) -> {
@@ -102,6 +115,12 @@ let denied = (effect, path) -> {
   append(effect, append(" denied by policy: ", path))
 }
 
+// A hidden name gets the why as well as the where, so a program can tell that its
+// path was under a root and the name is what the call refused.
+let hidden_denied = (effect, path) -> {
+  append(denied(effect, path), " (a name this policy hides)")
+}
+
 // Allow a file effect only for paths under one of the absolute roots.
 // `path_of` takes the path out of the effect's value, which differs by effect.
 let under = (effect, roots, path_of) -> {
@@ -124,17 +143,52 @@ let request_path = (request) -> {
   request.path
 }
 
-// Files that hold secrets, by convention `.env.eyg`, are never readable.
-let is_secret = (path) -> {
-  !string_ends_with(path, ".env.eyg")
+// The directory names a call never reaches. They are data, not code: an operator who
+// wants one of them open, or another one closed, edits this list and nothing else -
+// the same list `agent-roots.eyg` carries.
+let secret_directory_names = [".ssh", ".gnupg", ".aws", "credentials", "secrets"]
+
+// The file name that carries credentials by convention in this ecosystem.
+let secret_file_suffix = ".env.eyg"
+
+// Is this path segment one of the hidden directory names.
+let hidden_name = (segment) -> {
+  !list_fold(secret_directory_names, False({}), (name, found) -> {
+    match found {
+      True(_) -> { True({}) }
+      False(_) -> { !equal(name, segment) }
+    }
+  })
 }
 
-// Wrap a read_file rule so a secret file is refused before the root is consulted.
-let hide_secrets = (read_file) -> {
-  (request) -> {
-    match is_secret(request.path) {
-      True(_) -> { Mock(denied("read_file", request.path)) }
-      False(_) -> { read_file(request) }
+// Does the absolute path pass through a hidden directory, or end in the secret file
+// name. The segments come from splitting on `/`: a path arrives absolute, so the first
+// segment is empty and the last is the file's own name. The test is on segments, so a
+// hidden name hides that directory and everything under it - and a *file* named `secrets`
+// is hidden too, which is the cost of a rule that never looks inside a path.
+let hidden = (path) -> {
+  let parts = !string_split(path, "/")
+  let in_hidden_directory = !list_fold(parts.tail, hidden_name(parts.head), (segment, found) -> {
+    match found {
+      True(_) -> { True({}) }
+      False(_) -> { hidden_name(segment) }
+    }
+  })
+  match in_hidden_directory {
+    True(_) -> { True({}) }
+    False(_) -> { !string_ends_with(path, secret_file_suffix) }
+  }
+}
+
+// Wrap a rule so a hidden name is refused before the roots are consulted: the name is
+// refused under a root and outside one alike, which is what makes the wrapped rule
+// narrower than the rule it wraps rather than a different decision.
+let hide_secrets = (effect, path_of, rule) -> {
+  (value) -> {
+    let path = path_of(value)
+    match hidden(path) {
+      True(_) -> { Mock(hidden_denied(effect, path)) }
+      False(_) -> { rule(value) }
     }
   }
 }
@@ -166,10 +220,12 @@ let not_named = (field, fields) -> {
   deny(append(field, append(" denied by policy: EYG_SUBAGENT_EFFECTS=", join_list(fields, ","))))
 }
 
-// A path rule, or a refusal, decided by the allowlist.
+// A path rule, or a refusal, decided by the allowlist. The allowlist is the first
+// cut, so an unnamed field is refused with the boundary text whatever its path is;
+// a named field then gets the agent-roots rule, hidden name included.
 let gated_under = (field, fields, roots, path_of) -> {
   match named(fields, field) {
-    True(_) -> { under(field, roots, path_of) }
+    True(_) -> { hide_secrets(field, path_of, under(field, roots, path_of)) }
     False(_) -> { not_named(field, fields) }
   }
 }
@@ -179,14 +235,6 @@ let gated_pass = (field, fields) -> {
   match named(fields, field) {
     True(_) -> { pass }
     False(_) -> { not_named(field, fields) }
-  }
-}
-
-// read_file keeps hiding `.env.eyg` when it is named at all.
-let gated_read_file = (fields, roots) -> {
-  match named(fields, "read_file") {
-    True(_) -> { hide_secrets(under("read_file", roots, request_path)) }
-    False(_) -> { not_named("read_file", fields) }
   }
 }
 
@@ -206,7 +254,7 @@ let rules = (ctx) -> {
     now: gated_pass("now", fields),
     random: gated_pass("random", fields),
     read_directory: gated_under("read_directory", fields, roots, path_of_value),
-    read_file: gated_read_file(fields, roots),
+    read_file: gated_under("read_file", fields, roots, request_path),
     search: gated_under("search", fields, roots, request_path),
     sleep: gated_pass("sleep", fields),
     standard_error: gated_pass("standard_error", fields),

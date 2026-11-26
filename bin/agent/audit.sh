@@ -129,6 +129,18 @@ secret_rule() {
   return 0
 }
 
+# The same asks under the spawner's narrowing policy, with its allowlist open on the seven path
+# fields and `standard_out`. This is the row that closes the child hole: the copy used to carry
+# only a file-suffix test, so asked of the older file it prints 11 `DRIFT` rows and writes the
+# planted file, and it is a whole-file rewrite of `policies/spawner-effects.eyg` that put the
+# directory-name rule in place of that test.
+spawner_secret_rule() {
+  node bin/agent/secret-rule-probe.mjs --policy "$pkg/policies/spawner-effects.eyg" \
+    --fields read_file,write_file,append_file,delete_file,make_directory,read_directory,search,standard_out |
+    tail -1 | grep -q '16/16 rows hold' || return 1
+  return 0
+}
+
 # The effect set is closed: a label the language does not have - `Bash`, say - reaches no
 # command line at any of the five places a program can try it. The probe prints one row per
 # wall and exits non-zero when a wall stops holding, so the row needs no grep; it is written
@@ -181,6 +193,7 @@ run_check "refusals the shipped policies owe" refusal_probe
 run_check "a program that handles an effect is named" handler_scan
 run_check "an invented effect reaches nothing" invented_effect
 run_check "the hidden-name rule refuses in every direction" secret_rule
+run_check "the spawner policy hides the same names" spawner_secret_rule
 run_check "the alternative policy shape decides the same rows" policy_shape
 run_check "a swallowed refusal still gets named" swallowed_refusal
 run_check "a mis-shaped ask costs a named answer, not the spawn cap" misshaped_ask
