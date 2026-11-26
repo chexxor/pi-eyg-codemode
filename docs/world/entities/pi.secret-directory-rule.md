@@ -4,7 +4,7 @@ type: entity
 owner: delegate
 status: current
 verified_at: 2026-11-26
-verify: "node bin/agent/secret-rule-probe.mjs > /dev/null && eyg check policies/agent-roots.eyg > /dev/null && grep -qF 'let secret_directory_names = [' policies/agent-roots.eyg && grep -qF 'hide_secrets(\"read_file\", request_path, under(\"read_file\", roots, request_path))' policies/agent-roots.eyg && grep -qF 'run_check \"the hidden-name rule refuses in every direction\" secret_rule' bin/agent/audit.sh && test -f test/fixtures/secret-directory-probe.eyg"
+verify: "node bin/agent/secret-rule-probe.mjs > /dev/null && eyg check policies/agent-roots.eyg > /dev/null && grep -qF 'let secret_directory_names = [' policies/agent-roots.eyg && grep -qF 'let secret_directory_names = [' policies/spawner-effects.eyg && grep -qF 'hide_secrets(\"read_file\", request_path, under(\"read_file\", roots, request_path))' policies/agent-roots.eyg && grep -qF 'run_check \"the hidden-name rule refuses in every direction\" secret_rule' bin/agent/audit.sh && test -f test/fixtures/secret-directory-probe.eyg"
 confidence: high
 sources: [policies/agent-roots.eyg, bin/agent/secret-rule-probe.mjs, test/fixtures/secret-directory-probe.eyg, bin/agent/refusal-probe.mjs, notes/pi-codemode-threat-model.md, guides/how-to-write-a-policy.md, guides/tool-reference.md, docs/world/entities/gap.policy-record-extension.md]
 supersedes: null
@@ -43,14 +43,16 @@ in the system temporary directory (`@measured 2026-11-25 by running that command
 The probe is falsifiable: `--policy` points the call at any module, and a copy of the shipped policy
 whose `hidden` returns `False({})` printed 14 `DRIFT` rows and exit 1 while the shipped one printed
 16 `holds` and exit 0. It is an audit row - `run_check "the hidden-name rule refuses in every
-direction" secret_rule` in `bin/agent/audit.sh`.
+direction" secret_rule` in `bin/agent/audit.sh`. Pointed at the spawner's copy with `--policy`, the same
+probe prints the same refusals for the child (`docs/world/entities/pi.spawner-policy.md`).
 
 **What it is not.** It is not a secret scanner: nothing looks inside a file, and a secret in a
-directory nobody named is reachable under a root. It is not applied to a spawned session -
-`policies/spawner-effects.eyg` still carries the suffix-only test, because a policy cannot extend
-another policy's record (`docs/world/entities/gap.policy-record-extension.md`) and the second copy
-of the rule would be 68 lines of duplication; that row and its trigger are in
-`notes/pi-codemode-threat-model.md`. It does not close the symlink route: a link whose own path is
+directory nobody named is reachable under a root. It is applied to a spawned session as well:
+`policies/spawner-effects.eyg` repeats the two name rules inside its own record, because a policy
+cannot extend another policy's record (`docs/world/entities/gap.policy-record-extension.md`) - so a
+rule fixed in one copy stays wrong in the other until someone mirrors it, and the drift between the
+two is counted by the command in that record's `verify` when it matters, not by a line count that
+rots. `notes/pi-codemode-threat-model.md` carries that row and its trigger. It does not close the symlink route: a link whose own path is
 outside a hidden directory still resolves wherever it points
 (`docs/world/entities/gap.symlinks-escape-the-roots.md`).
 
