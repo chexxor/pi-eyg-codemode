@@ -82,7 +82,11 @@ outside the program, where the program cannot reach them.
   A clause there could not have widened what the policy allows - the guard sits outside it, and an
   effect a clause re-performs is decided again - but it answers the program instead of asking the
   host, and that is the boundary this package exists to hold. Perform the effect and match its
-  answer; widening what is decided is a grant, which is the operator's to give.
+  answer; widening what is decided is a grant, which is the operator's to give. The text parsed is the
+  text the call assembles - the prelude and the program - so a clause written inside a module that
+  text imports is never named: the module's effects are still decided, and its re-perform reaches the
+  guard, but that clause can report work the host never performed
+  (`docs/world/entities/gap.one-host-check-not-transitive.md`).
 - **The program may not change the files that decide it.** The guard refuses `write_file`,
   `append_file`, `delete_file` and `make_directory` for a path under `ctx.protected`, before the
   policy rule for that effect is consulted, so no policy and no grant opens those paths. The

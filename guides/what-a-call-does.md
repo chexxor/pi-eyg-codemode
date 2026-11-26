@@ -104,7 +104,7 @@ anything. Three answers stop the call:
 
 - the parse exits non-zero, so the program does not parse and its effects cannot be listed;
 - the parse prints something that is not JSON, so the same;
-- the tree contains a `handle` clause for an effect, in which case the call is refused with the
+- the parsed text contains a `handle` clause for an effect, in which case the call is refused with the
   labels named.
 
 The third is the rule "one host per call". A `handle` clause in the model's program cannot widen
@@ -114,6 +114,15 @@ is the boundary this package exists to hold. The question goes to the compiler's
 than to a text scan, so the word `handle` inside a string, or a function named `handle`, is not a
 refusal. A binary that cannot answer the parse stops the call: a program whose effects were never
 listed is not run.
+
+The text parsed is the text the call assembles - the prelude and the program - and not the body of a
+module that text imports. A clause written inside an imported module therefore installs without ever
+being named: `bin/agent/handler-scan.mjs` prints nothing for `test/fixtures/imported-handler.eyg` and
+`WriteFile` for the module it imports, and the call answers `the program reports a write the host
+never performed`. The module's own effects are still decided, and a clause that re-performs sends the
+effect out to the guard, so nothing is reached that the policy does not allow - what a clause in an
+imported module costs is the honesty of a run's answer. The limit, its two routes and its cost are in
+`docs/world/entities/gap.one-host-check-not-transitive.md`.
 
 The refusal reads:
 
