@@ -3,7 +3,7 @@ id: ADR-006-guard-in-package
 type: adr
 owner: human
 status: accepted
-verified_at: 2026-11-25
+verified_at: 2026-11-26
 verify: "grep -q 'guard.build(policy.rules(ctx), ctx, (_)' lib/render-helpers.mjs && grep -q 'let build = (policy, ctx, body)' host/guard.eyg && grep -qF '[mode, entryPath]' extensions/eyg-codemode.ts && grep -q 'return \\[\"eyg\"\\]' lib/render-helpers.mjs && node --test test/host-coverage.test.mjs > /dev/null"
 confidence: high
 sources: [host/guard.eyg, lib/render-helpers.mjs, extensions/eyg-codemode.ts, test/host-coverage.test.mjs, docs/world/entities/host.guard-boundary.md, docs/world/decisions/ADR-002-handler-seam.md, notes/pi-codemode-host-guard-contract.md, notes/pi-codemode-handler-seam.md, guides/how-to-point-the-tool-at-your-runner.md]

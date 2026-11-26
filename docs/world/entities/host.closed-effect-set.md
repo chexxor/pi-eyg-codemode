@@ -3,7 +3,7 @@ id: host.closed-effect-set
 type: entity
 owner: delegate
 status: current
-verified_at: 2026-11-25
+verified_at: 2026-11-26
 verify: "node bin/agent/invented-effect-probe.mjs > /dev/null && node bin/agent/gen-surface.mjs --check > /dev/null"
 confidence: high
 sources: [bin/agent/invented-effect-probe.mjs, test/fixtures/invented-effect.eyg, test/fixtures/invented-effect-handler.eyg, bin/agent/handler-scan.mjs, bin/agent/refusal-probe.mjs, bin/agent/gen-surface.mjs, guides/eyg-surface.tsv, host/guard.eyg, test/host-coverage.test.mjs, docs/world/entities/host.guard-boundary.md, docs/world/entities/codemode.effect-surface.md, docs/world/entities/gap.one-host-check-not-transitive.md, notes/pi-codemode-threat-model.md]

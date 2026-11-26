@@ -3,7 +3,7 @@ id: doc-checks.mirrors
 type: entity
 owner: delegate
 status: current
-verified_at: 2026-11-25
+verified_at: 2026-11-26
 verify: "node bin/agent/doc-checks.mjs mirrors | grep -qx 'mirrors: ok'"
 confidence: high
 sources: [bin/agent/doc-checks.mjs, test/doc-checks.test.mjs, guides/tool-reference.md, docs/world/decisions/ADR-003-doc-delegation.md]

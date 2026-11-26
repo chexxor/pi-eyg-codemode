@@ -3,7 +3,7 @@ id: gap.runner-release-lacks-policy
 type: entity
 owner: delegate
 status: superseded
-verified_at: 2026-11-25
+verified_at: 2026-11-26
 verify: "grep -qF '[mode, entryPath]' extensions/eyg-codemode.ts && grep -q 'return \\[\"eyg\"\\]' lib/render-helpers.mjs && test -x $HOME/.local/bin/eyg && $HOME/.local/bin/eyg --version | grep -q 'v0.1.0' && ! $HOME/.local/bin/eyg --help 2>&1 | grep -qi policy && test ! -e bin/agent/build-checked-runner.sh"
 confidence: high
 sources: [README.md, docs/world/entities/cli.prebuilt-binary.md, docs/world/traps.md, docs/world/entities/cli.runner-official-install-only.md, docs/world/decisions/ADR-006-guard-in-package.md]

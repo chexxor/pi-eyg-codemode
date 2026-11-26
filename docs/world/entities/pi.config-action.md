@@ -3,7 +3,7 @@ id: pi.config-action
 type: entity
 owner: delegate
 status: current
-verified_at: 2026-11-25
+verified_at: 2026-11-26
 verify: "grep -qF 'const ACTIONS = [\"run\", \"eval\", \"effects\", \"config\"' extensions/eyg-codemode.ts && grep -q 'if (action === \"config\")' extensions/eyg-codemode.ts && grep -q 'export function configLines' lib/render-helpers.mjs && grep -q 'configLines' extensions/eyg-codemode.ts && grep -q 'export function policySlots' lib/render-helpers.mjs && grep -q 'const steps = policySlots' lib/render-helpers.mjs && grep -q 'const { base } = rootSlots' lib/render-helpers.mjs && grep -q 'action config:' test/render-helpers.test.mjs && grep -q 'action: \"config\"' guides/tool-reference.md && node pi-simple-world-model/bin/world_lint.mjs"
 confidence: high
 sources: [extensions/eyg-codemode.ts, lib/render-helpers.mjs, test/render-helpers.test.mjs, guides/tool-reference.md, notes/pi-codemode-config-action.md]

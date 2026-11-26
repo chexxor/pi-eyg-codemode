@@ -3,7 +3,7 @@ id: ADR-000-world-model
 type: adr
 owner: human
 status: accepted
-verified_at: 2026-11-25
+verified_at: 2026-11-26
 verify: "test -f docs/world/00-map.md && test -f docs/world/roster.yaml"
 confidence: high
 sources: [docs/world/00-map.md, docs/world/roster.yaml]

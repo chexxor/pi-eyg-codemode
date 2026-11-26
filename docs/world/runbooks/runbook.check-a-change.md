@@ -3,7 +3,7 @@ id: runbook.check-a-change
 type: runbook
 owner: delegate
 status: current
-verified_at: 2026-11-25
+verified_at: 2026-11-26
 verify: "test -f pi-simple-world-model/bin/world_verify.mjs && grep -q 'world_verify.mjs' AGENTS.md"
 confidence: high
 sources: [AGENTS.md, pi-simple-world-model/README.md, docs/world/invariants.md]

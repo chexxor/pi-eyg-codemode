@@ -3,7 +3,7 @@ id: gap.policy-runner-not-on-main
 type: entity
 owner: delegate
 status: current
-verified_at: 2026-11-25
+verified_at: 2026-11-26
 verify: "grep -q '#(\"Search\"' test/fixtures/rule_mapping.gleam && grep -q 'EYG_RULE_SOURCE' test/fixtures/rule_mapping.PROVENANCE.md && test -x $HOME/.local/bin/eyg && ! $HOME/.local/bin/eyg --help 2>&1 | grep -qi policy && grep -qF '[mode, entryPath]' extensions/eyg-codemode.ts"
 confidence: high
 sources: [test/fixtures/rule_mapping.gleam, test/fixtures/rule_mapping.PROVENANCE.md, lib/render-helpers.mjs, docs/world/entities/gap.runner-release-lacks-policy.md, docs/world/entities/overlay.agent-harness.md, docs/world/entities/cli.checked-runner-on-this-host.md, docs/world/traps.md]

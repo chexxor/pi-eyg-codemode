@@ -3,7 +3,7 @@ id: gap.language-skill-home-undecided
 type: entity
 owner: delegate
 status: current
-verified_at: 2026-11-25
+verified_at: 2026-11-26
 verify: "grep -q 'pi-eyg[-_]expressions' .pi/settings.json && grep -q language-skill docs/world/runbooks/runbook.next-milestone.md && ! ls docs/world/decisions/*language-skill* >/dev/null 2>&1"
 confidence: high
 sources: [.pi/settings.json, notes/pi-codemode-language-skill-packaging.md, docs/world/entities/usability.without-language-skill.md, docs/world/runbooks/runbook.next-milestone.md]

@@ -3,7 +3,7 @@ id: pi.secret-directory-rule
 type: entity
 owner: delegate
 status: current
-verified_at: 2026-11-25
+verified_at: 2026-11-26
 verify: "node bin/agent/secret-rule-probe.mjs > /dev/null && eyg check policies/agent-roots.eyg > /dev/null && grep -qF 'let secret_directory_names = [' policies/agent-roots.eyg && grep -qF 'hide_secrets(\"read_file\", request_path, under(\"read_file\", roots, request_path))' policies/agent-roots.eyg && grep -qF 'run_check \"the hidden-name rule refuses in every direction\" secret_rule' bin/agent/audit.sh && test -f test/fixtures/secret-directory-probe.eyg"
 confidence: high
 sources: [policies/agent-roots.eyg, bin/agent/secret-rule-probe.mjs, test/fixtures/secret-directory-probe.eyg, bin/agent/refusal-probe.mjs, notes/pi-codemode-threat-model.md, guides/how-to-write-a-policy.md, guides/tool-reference.md, docs/world/entities/gap.policy-record-extension.md]
