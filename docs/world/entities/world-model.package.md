@@ -3,7 +3,7 @@ id: world-model.package
 type: entity
 owner: delegate
 status: current
-verified_at: 2026-11-25
+verified_at: 2026-11-26
 verify: "test -f pi-simple-world-model/bin/world_lint.mjs && grep -q pi-simple-world-model .pi/settings.json && grep -q '\"..\"' .pi/settings.json"
 confidence: high
 sources: [pi-simple-world-model/package.json, pi-simple-world-model/README.md, .pi/settings.json, README.md]
