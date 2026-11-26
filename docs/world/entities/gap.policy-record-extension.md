@@ -16,14 +16,15 @@ superseded_by: null
 `guides/how-to-write-a-policy.md` tells an operator to copy the shipped policy nearest what
 they need and change the handlers, and `policies/spawner-effects.eyg` does exactly that inside
 the package: it is `agent-roots.eyg` with an allowlist over its fields, written out whole. The
-hole is the copying itself. 68 of the 84 non-comment lines of `policies/agent-roots.eyg` appear
-verbatim in `policies/spawner-effects.eyg` - `verify` counts them - so every rule change is two
+hole is the copying itself. This record's `verify` counts it: it asks how many of the non-comment
+lines of `policies/agent-roots.eyg` appear verbatim in `policies/spawner-effects.eyg`, and most of
+one file is lines the other already has - so every rule change is two
 edits, and the drift between the copies is a cost already named in
 `notes/spawner-effect-allowlist.md`.
 
 The alternative shape was measured and does not lower that number: a policy written as named
-lists plus derivations (`test/fixtures/policy-data-shape.eyg`, 114 non-comment lines of 145)
-shares 84 lines with `policies/agent-roots.eyg` and decides the same 16 probe rows
+lists plus derivations (`test/fixtures/policy-data-shape.eyg`) shares most of its non-comment lines
+with `policies/agent-roots.eyg`, and decides the same 16 probe rows
 (`node bin/agent/secret-rule-probe.mjs --policy "$PWD/test/fixtures/policy-data-shape.eyg"`), and
 one generic `decide(effect, value)` field does not type-check at all
 (`test/fixtures/policy-generic-decide.eyg`). `notes/pi-codemode-policy-shape.md` carries that
