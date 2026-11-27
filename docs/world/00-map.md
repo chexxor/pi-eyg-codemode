@@ -48,6 +48,8 @@ nothing here reads it at run time, and this tree never writes outside itself.
 | doc-checks.headings | Within the prose set (`README.md`, `AGENTS.md`, `guides/`, `skills/`, `.agents/skills/`; the set ... | delegate | 2026-11-26 |
 | doc-checks.mirrors | Two halves, one per failure mode of an offline documentation copy. | delegate | 2026-11-26 |
 | doc-checks.one-term | `bin/agent/doc-checks.mjs` holds this package's five prose checks, one name each: `one-term`, `citations`, `headings`, ... | delegate | 2026-11-26 |
+| gap.duplication-literals-in-prose | `notes/pi-eyg-codemode-policy-record-extension.md:14` states the duplication as a number: "Of the non-comment lines of ... | delegate | 2026-11-27 |
+| gap.eval-mode-answers-no-value | `action: eval` answers `[]` for every program, whatever the program computes. | delegate | 2026-11-27 |
 | gap.grant-polish-undecided | The mechanism is recorded and partly measured in `docs/world/entities/pi.session-grants.md`: a refusal carries the ask ... | delegate | 2026-11-26 |
 | gap.install-guides-name-no-policy | This page recorded the hole: neither install page at <https://eyg.run/guides> - `install-a-prebuilt-binary` and ... | delegate | 2026-11-26 |
 | gap.language-skill-home-undecided | `.pi/settings.json` declares the EYG language-skill pi package by path, one directory above this one (`@measured ... | delegate | 2026-11-26 |
@@ -56,7 +58,9 @@ nothing here reads it at run time, and this tree never writes outside itself.
 | gap.policy-runner-not-on-main | The one-shot run with a policy module that this package used to start is not in the language repository's `main` as ... | delegate | 2026-11-26 |
 | gap.roots-have-no-config-file | This page recorded the hole: the roots in force were the session working directory or `EYG_ALLOWED_ROOTS`, ... | delegate | 2026-11-26 |
 | gap.runner-release-lacks-policy | This page recorded the hole: the latest release the language repository serves is `gleam_cli-v0.1.0` (read from its ... | delegate | 2026-11-26 |
+| gap.surface-rows-name-no-argument | `guides/eyg-surface.tsv` carries 29 builtin rows and 23 effect rows. | delegate | 2026-11-27 |
 | gap.symlinks-escape-the-roots | `absolute` (`host/guard.eyg:184`) normalizes a path **lexically**: split it into segments, collapse `.` and `..`, ... | delegate | 2026-11-26 |
+| gap.unchecked-effect-ask-costs-the-cap | The four effects the CLI marks unchecked - `DecodeJSON`, `EYGParse`, `Hash`, `Sign` - are the four whose guard clause ... | delegate | 2026-11-27 |
 | gap.windows-is-undocumented | The language's prebuilt-install page (<https://eyg.run/guides/install-a-prebuilt-binary>, read as a copy here on ... | delegate | 2026-11-26 |
 | guides.index | `guides/` holds what an agent reads before writing EYG, and it is one set now: prose this package wrote, plus ... | delegate | 2026-11-26 |
 | guides.surface-file | `guides/eyg-surface.tsv` is the whole offline answer to "what may I call, and what may I ask for": 29 `builtin` rows ... | delegate | 2026-11-26 |
@@ -94,10 +98,11 @@ nothing here reads it at run time, and this tree never writes outside itself.
 | ADR-005-grants-spawn-and-child-surface | ## Context Three mechanisms went in during 2026-11-20, each answering a different question the code could not answer ... | delegate | 2026-11-26 |
 | runbook.check-a-change | Costs are in `AGENTS.md`'s command table, dated where each was measured; they are not repeated here. | delegate | 2026-11-26 |
 | runbook.next-milestone | Each row is a claim whose `verify` still passes, which means the hole is still open. | delegate | 2026-11-26 |
+| runbook.persona-issue-triage | The experiment that produced these rows is recorded in `notes/pi-codemode-new-user-persona.md`: one fresh session, ... | delegate | 2026-11-27 |
 
 ## Where to look for a claim
 
-- entities: 42 · invariants: 4 · decisions: 7 · runbooks: 2 · traps: 99
+- entities: 46 · invariants: 4 · decisions: 7 · runbooks: 3 · traps: 99
 - suspect right now: none
 - re-check everything: `npm run world` · checks: `npm run world:lint` · regenerate this index: `npm run world:map`
 <!-- END GENERATED -->
