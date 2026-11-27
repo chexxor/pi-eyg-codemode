@@ -32,9 +32,10 @@ answered `[]` while the same values printed by a `run` program came back as text
 pins the type. And it is not the silence of a run that hit its cap - an eval call finishes in
 half a second and answers the empty refusal list, so nothing is hanging.
 
-**Trigger to close:** the entry written for eval ends with the program's value rather than the
-guard's refusal list, or the tool reads the value from a record of its own and prints it. Then this
-page's command stops passing, and `guides/tool-reference.md` moves with the row it prints.
+**How it was closed:** the entry written for eval ends with the program's value rather than the
+guard's refusal list - `entryProgram`'s `pure` branch, priced in `docs/world/entities/pi.eval-action.md`.
+The other arm, reading the value out of a record of the tool's own, was rejected in
+`notes/pi-codemode-eval-entry.md` for costing a write a policy could refuse.
 
 ## Not this
 

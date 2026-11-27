@@ -157,6 +157,22 @@ test("one call is four files and one argv, with the guard around the program", (
   assert.equal((withRecord.match(/perform/g) ?? []).length, 1, "the entry performs exactly one effect: the record write");
   assert.equal(withRecord.includes("--"), false, "the entry with a record still passes no flag");
 
+  // The eval entry: the one entry with no guard. `eyg eval` performs no effect at all, so
+  // there is nothing for a guard to decide, and an entry whose last expression is `build`'s
+  // value answers the refusals instead of what the program computed. The last expression here
+  // is the program's own value; a program that asks for an effect gets `unhandled effect`.
+  const pure = entryProgram({
+    guard: "/pkg/host/guard.eyg",
+    policy: "/pkg/policies/agent-roots.eyg",
+    ctx,
+    program: "/tmp/call-1/program.eyg",
+    pure: true,
+  });
+  assert.equal((pure.match(/import/g) ?? []).length, 1, "the eval entry imports only the program");
+  assert.equal(pure.includes("guard"), false, "the eval entry names no guard: eval has no effect to decide");
+  assert.equal(pure.includes("perform"), false, "the eval entry performs nothing, so it writes no record");
+  assert.ok(pure.trimEnd().endsWith("program.run({})"), "the entry's last expression is the program's value");
+
   const source = 'let answer = !int_add(1, 2)\nanswer';
   const wrapped = programModule(source);
   assert.ok(wrapped.includes(source), "the program text travels verbatim");

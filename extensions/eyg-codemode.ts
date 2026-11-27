@@ -527,7 +527,10 @@ async function runGuarded(
   // The record of the guard's refusals. `eval` gets no record file: eval mode has no host
   // for any effect, so a trailer write there would answer `unhandled effect` and buy nothing.
   const recordPath = join(scratch, RECORD_FILE);
-  writeFileSync(entryPath, entryProgram({ guard, policy, ctx, program: programPath, record: mode === "eval" ? null : recordPath }));
+  // In eval mode the entry is the program's own value with no guard around it: `eyg eval` performs
+  // no effect, so a guard there would decide nothing and its `build` value - the refusals - is what
+  // would print, which is why an eval call used to answer `[]` (`entryProgram`'s `pure` branch).
+  writeFileSync(entryPath, entryProgram({ guard, policy, ctx, program: programPath, record: mode === "eval" ? null : recordPath, pure: mode === "eval" }));
   const startedAt = Date.now();
   // The entry, type-checked before the run starts. A mis-shaped ask inside the guarded body
   // prints no report at all - the CLI's error printer walks its whole interpreter state, and on

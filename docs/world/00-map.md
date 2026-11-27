@@ -71,6 +71,7 @@ nothing here reads it at run time, and this tree never writes outside itself.
 | overlay.policy-rules | A running EYG program is stopped at every effect before the host performs it, and a user-supplied function decides. | delegate | 2026-11-27 |
 | pi.codemode-tool | This workspace **is** the package: `pi list` (2026-11-18) resolves the declaration `..` in `.pi/settings.json` to this ... | delegate | 2026-11-27 |
 | pi.config-action | `action: "config"` (`code: ""`) prints the configuration of the call that would come next: the runner candidate and ... | delegate | 2026-11-27 |
+| pi.eval-action | `action: eval` answers what the program computed, not what the guard refused. | delegate | 2026-11-27 |
 | pi.fetch-and-injection-exfiltration | `fetch` is a checked effect whose policy field is `fetch`, and both shipped policies refuse it by name: `fetch: ... | delegate | 2026-11-27 |
 | pi.first-draft | `README.md` opens with a status line calling the package a first draft that has not been proved in extended use, and ... | delegate | 2026-11-27 |
 | pi.onboarding-scaffold | `bin/agent/new-project.mjs <absolute project directory>` writes the one file a project needs to load this package - ... | delegate | 2026-11-27 |
@@ -102,7 +103,7 @@ nothing here reads it at run time, and this tree never writes outside itself.
 
 ## Where to look for a claim
 
-- entities: 46 · invariants: 4 · decisions: 7 · runbooks: 3 · traps: 99
+- entities: 47 · invariants: 4 · decisions: 7 · runbooks: 3 · traps: 99
 - suspect right now: doc-checks.citations
 - re-check everything: `npm run world` · checks: `npm run world:lint` · regenerate this index: `npm run world:map`
 <!-- END GENERATED -->

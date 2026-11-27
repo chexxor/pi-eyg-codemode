@@ -66,21 +66,21 @@ host performs it.
   name has no host, so naming every effect is what makes the default a refusal (`build` in
   `host/guard.eyg:704`, `test/host-coverage.test.mjs`,
   `notes/pi-codemode-host-guard-contract.md`).
-- The model's own call type-checks that entry before the run starts: `<binary> check <entry.eyg>` on the same file, and only an `error: type mismatch` row stops the run (`entryCheckArguments` in `lib/render-helpers.mjs:497`, `ENTRY_CHECK_TIMEOUT_MS` in `extensions/eyg-codemode.ts:197`); a mis-shaped ask inside the guarded body otherwise spends the whole timeout printing nothing (`notes/pi-codemode-misshaped-ask.md`).
+- The model's own call type-checks that entry before the run starts: `<binary> check <entry.eyg>` on the same file, and only an `error: type mismatch` row stops the run (`entryCheckArguments` in `lib/render-helpers.mjs:509`, `ENTRY_CHECK_TIMEOUT_MS` in `extensions/eyg-codemode.ts:197`); a mis-shaped ask inside the guarded body otherwise spends the whole timeout printing nothing (`notes/pi-codemode-misshaped-ask.md`).
 - Policy resolution: the order is stated once, in the table "Which policy a call gets" in
   `guides/how-to-write-a-policy.md`, and it is one function - `resolvePolicy` in
   `lib/render-helpers.mjs:672`, used at `extensions/eyg-codemode.ts:772`. A slot that names no
   module is skipped, and when none names one the tool refuses rather than running unchecked. The
   call's `policy` argument sits outside that chain: it is
   honoured only when it names the policy the chain already chose or `NARROWEST_POLICY_FILE`
-  (`narrows` in `lib/render-helpers.mjs:636`, used at `:684`), and anything else comes back
-  `refusedArgument` (`extensions/eyg-codemode.ts:789`, and `:1502` for a child's policy).
+  (`narrows` in `lib/render-helpers.mjs:648`, used at `:696`), and anything else comes back
+  `refusedArgument` (`extensions/eyg-codemode.ts:792`, and `:1505` for a child's policy).
 - The binary is chosen by name, not by asking it what it can do: `EYG_CODEMODE_RUNNER` (an
   absolute path), else `eyg` on PATH - two places, no third (`runnerCandidates` in
   `lib/render-helpers.mjs:592`, used at `extensions/eyg-codemode.ts:840` and `:1546`). Nothing
   is asked of it but the mode word and a file this package wrote; a missing binary, or one with
   no such mode command, ends the call with one line naming the install and quoting the command
-  that was run (`runnerFailureLine` in `lib/render-helpers.mjs:893`).
+  that was run (`runnerFailureLine` in `lib/render-helpers.mjs:905`).
 - **Nothing here waits on a build of the language.** The installed CLI runs every call:
   `eyg --version` answers `eyg v0.1.0` and `eyg run <the entry this package writes>` runs the
   guard (`@measured 2026-11-22`), so what a shipped policy decides at runtime is re-runnable
@@ -117,7 +117,7 @@ host performs it.
 
 | Do this | cost | measured |
 | --- | --- | --- |
-| `bin/agent/audit.sh` (a human or a cron runs it; twenty-four rows, each cost printed) | 50 s wall, 24 rows, 0 failed | 2026-11-26 |
+| `bin/agent/audit.sh` (a human or a cron runs it; twenty-five rows, each cost printed) | 56 s wall, 25 rows, 0 failed | 2026-11-27 |
 | `node bin/agent/doc-checks.mjs --all` (the five prose checks: one term, citations, headings, mirrors, dated prose) | 0.07 s wall | 2026-11-22 |
 | `node bin/agent/gen-surface.mjs --check` (the surface file against its four inputs) | 0.04 s wall | 2026-11-22 |
 | `node --test 'test/*.mjs'` (or the single file; one named test per group) | 0.16 s wall, 46 tests, 0 fail | 2026-11-23 |

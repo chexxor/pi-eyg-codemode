@@ -206,6 +206,7 @@ run_check "the spawner policy hides the same names" spawner_secret_rule
 run_check "the alternative policy shape decides the same rows" policy_shape
 run_check "a swallowed refusal still gets named" swallowed_refusal
 run_check "a mis-shaped ask costs a named answer, not the spawn cap" misshaped_ask
+run_check "an eval call prints the value it computed" node bin/agent/eval-entry-probe.mjs
 run_check "kept binding shapes" node bin/agent/check-variable-shapes.mjs
 run_check "world lint" node pi-simple-world-model/bin/world_lint.mjs
 run_check "world verify $verify_args" node pi-simple-world-model/bin/world_verify.mjs $verify_args
