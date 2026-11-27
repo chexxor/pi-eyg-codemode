@@ -43,6 +43,7 @@ const here = dirname(fileURLToPath(import.meta.url));
 const packageDir = dirname(dirname(here));
 const SURFACE = join(packageDir, "guides", "eyg-surface.tsv");
 const RULE_MAPPING = join(packageDir, "test", "fixtures", "rule_mapping.gleam");
+const EFFECT_ARGS = join(packageDir, "test", "fixtures", "effect-args.tsv");
 
 // The language's page the builtin rows came from, and the page that carries the effects and
 // the syntax prose - named so a reader can check the surface at its source.
@@ -71,12 +72,44 @@ export function recordedEffects(source) {
   return labels;
 }
 
+/// The argument shapes, one per effect label, as `test/fixtures/effect-args.tsv` records them:
+/// a line is `<label>\t<shape>`, `#` lines are comments. The fixture is an input, not a row of
+/// the surface file - `effect-args.PROVENANCE.md` beside it names where each shape was read
+/// from and how to re-read it - so a shape that drifted from the page or from the guard fails
+/// the check rather than sitting in the file a model reads.
+export function effectArgShapes(source) {
+  const shapes = {};
+  for (const line of String(source).split("\n")) {
+    const trimmed = line.trim();
+    if (trimmed === "" || trimmed.startsWith("#")) continue;
+    const at = trimmed.indexOf("\t");
+    if (at > 0) shapes[trimmed.slice(0, at)] = trimmed.slice(at + 1);
+  }
+  return shapes;
+}
+
 /// The `effect` rows of the surface file: one per name in `POLICY_FIELDS`, with the policy
-/// field that decides it, or `none` for the four no policy can forbid.
+/// field that decides it (`none` for the four no policy can forbid) and the argument shape
+/// the effect's ask carries.
 export function effectRows() {
+  const shapes = effectArgShapes(readFileSync(EFFECT_ARGS, "utf8"));
   return Object.entries(POLICY_FIELDS).map(
-    ([name, field]) => ({ kind: "effect", name, detail1: field ?? "none", detail2: "" }),
+    ([name, field]) => ({ kind: "effect", name, detail1: field ?? "none", detail2: shapes[name] ?? "" }),
   );
+}
+
+/// The fixture's labels against `POLICY_FIELDS`: an effect whose shape is missing from the
+/// fixture renders as a row with an empty last column, which is a hole a model reads as no
+/// answer, so it is named here rather than left to the byte-for-byte comparison below.
+export function shapeDriftProblems(shapes) {
+  const problems = [];
+  for (const name of Object.keys(POLICY_FIELDS)) {
+    if (!Object.keys(shapes).includes(name)) problems.push(`effect with no argument shape in the fixture: ${name}`);
+  }
+  for (const name of Object.keys(shapes)) {
+    if (!Object.keys(POLICY_FIELDS).includes(name)) problems.push(`argument shape for an effect the package does not name: ${name}`);
+  }
+  return problems;
 }
 
 /// The rows of the surface file itself. `#` lines are the header and are ignored.
@@ -139,12 +172,17 @@ function header() {
     "#   <https://eyg.run/guides/cli-effects-reference>, explains what each effect does; the",
     "#   syntax prose is <https://eyg.run/guides/eyg-syntax-guide>. This package copies no",
     "#   prose page: this file is the whole offline surface, and the compiler is the source",
-    "#   under all of it.",
+    "#   under all of it. The last column of an effect row is the argument that effect's ask",
+    "#   carries and what it answers back - the row a `type mismatch` points at. Those shapes",
+    "#   come from test/fixtures/effect-args.tsv, one row per label (`effect-args.PROVENANCE.md",
+    "#   names where each was read from, and which row is this package's own`); an effect with",
+    "#   no row there answers as an empty column and fails the check below.",
     "#",
     ...captureLines(),
     "#",
-    "# drift: node bin/agent/gen-surface.mjs --check re-derives the effect rows from that",
-    "#   fixture, requires their labels to equal POLICY_FIELDS in lib/render-helpers.mjs,",
+    "# drift: node bin/agent/gen-surface.mjs --check re-derives the effect rows from those",
+    "#   two fixtures, requires their labels to equal POLICY_FIELDS in lib/render-helpers.mjs,",
+    "#   requires an argument shape for every one of them and none for an effect it does not",
     "#   requires every !builtin this tree's own .eyg sources call to be listed here, and",
     "#   compares the file",
     "#   byte for byte with what it rebuilds. Offline, under a second.",
@@ -201,8 +239,9 @@ export function surfaceDriftProblems(surfaceText) {
     if (!recorded.some((label) => label.name === name)) problems.push(`POLICY_FIELDS names an effect the runtime does not record: ${name}`);
   }
 
-  // 2. the shape the tool renders from.
+  // 2. the shape the tool renders from, and one argument shape per effect.
   problems.push(...compareRows(effectRows(), effects));
+  problems.push(...shapeDriftProblems(effectArgShapes(readFileSync(EFFECT_ARGS, "utf8"))));
 
   // 3. the names this tree calls.
   const listed = new Set(builtins.map((row) => row.name));

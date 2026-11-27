@@ -58,11 +58,12 @@ nothing here reads it at run time, and this tree never writes outside itself.
 | gap.policy-runner-not-on-main | The one-shot run with a policy module that this package used to start is not in the language repository's `main` as ... | delegate | 2026-11-27 |
 | gap.roots-have-no-config-file | This page recorded the hole: the roots in force were the session working directory or `EYG_ALLOWED_ROOTS`, ... | delegate | 2026-11-27 |
 | gap.runner-release-lacks-policy | This page recorded the hole: the latest release the language repository serves is `gleam_cli-v0.1.0` (read from its ... | delegate | 2026-11-27 |
-| gap.surface-rows-name-no-argument | `guides/eyg-surface.tsv` carries 29 builtin rows and 23 effect rows. | delegate | 2026-11-27 |
+| gap.surface-rows-name-no-argument | **Closed 2026-11-27** by `docs/world/entities/guides.surface-arg-shapes.md`: the last column of every effect row now ... | delegate | 2026-11-27 |
 | gap.symlinks-escape-the-roots | `absolute` (`host/guard.eyg:184`) normalizes a path **lexically**: split it into segments, collapse `.` and `..`, ... | delegate | 2026-11-27 |
 | gap.unchecked-effect-ask-costs-the-cap | The hole was this: the four effects no policy field decides - `DecodeJSON`, `EYGParse`, `Hash`, `Sign` - had guard ... | delegate | 2026-11-27 |
 | gap.windows-is-undocumented | The language's prebuilt-install page (<https://eyg.run/guides/install-a-prebuilt-binary>, read as a copy here on ... | delegate | 2026-11-27 |
 | guides.index | `guides/` holds what an agent reads before writing EYG, and it is one set now: prose this package wrote, plus ... | delegate | 2026-11-27 |
+| guides.surface-arg-shapes | Every one of the 23 effect rows of `guides/eyg-surface.tsv` now ends with the argument that effect's ask carries and ... | delegate | 2026-11-27 |
 | guides.surface-file | `guides/eyg-surface.tsv` is the whole offline answer to "what may I call, and what may I ask for": 29 `builtin` rows ... | delegate | 2026-11-27 |
 | host.closed-effect-set | The question this answers: the tool runs EYG, EYG lets a program name an effect and install a handler for it, so what ... | delegate | 2026-11-27 |
 | host.guard-boundary | `host/guard.eyg` is an EYG program, run by the ordinary installed CLI with no flag, that decides every effect of a call. | delegate | 2026-11-27 |
@@ -103,7 +104,7 @@ nothing here reads it at run time, and this tree never writes outside itself.
 
 ## Where to look for a claim
 
-- entities: 47 · invariants: 4 · decisions: 7 · runbooks: 3 · traps: 99
+- entities: 48 · invariants: 4 · decisions: 7 · runbooks: 3 · traps: 100
 - suspect right now: doc-checks.citations
 - re-check everything: `npm run world` · checks: `npm run world:lint` · regenerate this index: `npm run world:map`
 <!-- END GENERATED -->

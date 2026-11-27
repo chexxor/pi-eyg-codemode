@@ -1,0 +1,28 @@
+# effect-args - one row per effect: the argument shape that effect's ask carries.
+# Generated into guides/eyg-surface.tsv by bin/agent/gen-surface.mjs; the source of
+# each row and the way to refresh it are in effect-args.PROVENANCE.md beside it.
+# Tab-separated: label, then the shape. No row here may be hand-edited to match the
+# surface file - fix this row, then re-run gen-surface.mjs --write.
+AppendFile	{path: String, contents: Binary} -> Result({}, String)
+CreateKey	<Eddsa({}) | ...> -> Result(Eddsa({kty: String, crv: String, x: Binary, d: Binary}), String)
+CWD	{} -> Ok(String) | Error({})
+DecodeJSON	(Binary) -> Ok(List({term, depth})) | Error(String)
+DeleteFile	(String) -> Result({}, String)
+Env	(String) -> Option(String)
+Exit	(Int) -> Never
+EYGParse	(String) -> Ok(List(AstNode)) | Error(String)
+Fetch	{method: GET({}), scheme: HTTPS({}), host: String, port: Option(Int), path: String, query: Option(String), headers: List(...), body: Binary} -> Result({status: Int, headers: List(...), body: Binary}, String)
+Flip	{} -> True({}) | False({})
+Hash	{algorithm: SHA256({}), bytes: Binary} -> Binary
+MakeDirectory	(String) -> Result({}, String)
+Now	{} -> Int
+Random	(Int) -> Int
+ReadDirectory	(String) -> Result(List({name: String, type: Directory({}) | File({size: Int})}), String)
+ReadFile	{path: String, offset: Int, limit: Int} -> Result(Binary, String)
+Search	{path: String, pattern: String, limit: Int} -> Ok(List(String)) | Error(String)
+Sign	{key: <as CreateKey answers>, data: Binary} -> Result(Binary, String)
+Sleep	(Int) -> {}
+StandardError	(String) -> {}
+StandardIn	{} -> Ok(Binary) | Error(String)
+StandardOut	(String) -> {}
+WriteFile	{path: String, contents: Binary} -> Result({}, String)

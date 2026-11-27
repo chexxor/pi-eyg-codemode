@@ -15,9 +15,11 @@ superseded_by: null
 
 `guides/eyg-surface.tsv` is the whole offline answer to "what may I call, and what may I ask
 for": 29 `builtin` rows (name, the section the language's page files it under, its signature)
-and 23 `effect` rows (name, the policy field that decides it, or `none` for the four no policy
-can forbid). `#` lines above the rows are its header, which names the page that records when
-the builtin rows were captured and the command that re-derives the file. `kind`, `name`,
+and 23 `effect` rows (name, the policy field that decides it or `none` for the four no policy
+can forbid, and the argument that ask carries - `docs/world/entities/guides.surface-arg-shapes.md`
+for where that column comes from and what re-reads it). `#` lines above the rows are its header,
+which names the page that records when the builtin rows were captured, the fixture the shapes
+come from, and the command that re-derives the file. `kind`, `name`,
 `detail1`, `detail2`
 is the column line, and a parser that ignores the four kinds it does not know treats that line
 as a row, which is what `surfaceRows` in both readers guards against.

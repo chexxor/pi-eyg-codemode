@@ -2,15 +2,19 @@
 id: gap.surface-rows-name-no-argument
 type: entity
 owner: delegate
-status: current
+status: superseded
 verified_at: 2026-11-27
-verify: "test \"$(awk -F'\\t' '$1==\"effect\"{n++} END{print n}' guides/eyg-surface.tsv)\" = 23 && test \"$(awk -F'\\t' '$1==\"effect\" && $4!=\"\"{n++} END{print n+0}' guides/eyg-surface.tsv)\" = 0"
+verify: "grep -q '^superseded_by: guides.surface-arg-shapes' docs/world/entities/gap.surface-rows-name-no-argument.md && test -f docs/world/entities/guides.surface-arg-shapes.md && test \"$(awk -F'\\t' '$1==\"effect\" && $4==\"\"{n++} END{print n+0}' guides/eyg-surface.tsv)\" = 0"
 confidence: high
 sources: [guides/eyg-surface.tsv, bin/agent/gen-surface.mjs, test/fixtures/rule_mapping.gleam, test/fixtures/unchecked-ask-misshape.eyg, notes/pi-codemode-new-user-persona.md, guides/tool-reference.md]
 supersedes: null
-superseded_by: null
+superseded_by: guides.surface-arg-shapes
 ---
 # Gap: an effect row names the effect and its policy field, and nothing about its argument
+
+**Closed 2026-11-27** by `docs/world/entities/guides.surface-arg-shapes.md`: the last column of
+every effect row now names the argument that effect's ask carries. Read the rows below as the
+hole as it stood until that change.
 
 `guides/eyg-surface.tsv` carries 29 builtin rows and 23 effect rows. On a builtin row the fourth
 column holds the signature the language's builtins page gave it; on every one of the 23 effect rows
@@ -30,11 +34,11 @@ an `Ok(Binary)`; none of that is readable offline, and the language's page on CL
 does describe each effect, is a URL the package copies no prose of (`guides/eyg-surface.tsv` header,
 `ADR-003-doc-delegation`).
 
-**Trigger to close:** a column of argument shapes on the effect rows, with its source named in the
-file's header comment and drift-checked by `bin/agent/gen-surface.mjs --check` like every other row.
-The source is either this package's own guard, whose clause for each effect already types the ask it
-passes the host, or a re-capture of the language's CLI-effects page recorded in
-`test/fixtures/surface.PROVENANCE.md`. When the column is filled, this page's command fails.
+**How it was closed:** a column of argument shapes on the effect rows, generated from
+`test/fixtures/effect-args.tsv` by `bin/agent/gen-surface.mjs` and drift-checked by `--check` like
+every other row; the fixture's source is named in the file's header comment and in
+`test/fixtures/effect-args.PROVENANCE.md`. The guard-alone arm was rejected in
+`notes/pi-codemode-surface-arg-shapes.md` for naming fields but no types.
 
 ## Not this
 

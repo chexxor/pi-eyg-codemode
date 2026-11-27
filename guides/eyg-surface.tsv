@@ -10,7 +10,11 @@
 #   <https://eyg.run/guides/cli-effects-reference>, explains what each effect does; the
 #   syntax prose is <https://eyg.run/guides/eyg-syntax-guide>. This package copies no
 #   prose page: this file is the whole offline surface, and the compiler is the source
-#   under all of it.
+#   under all of it. The last column of an effect row is the argument that effect's ask
+#   carries and what it answers back - the row a `type mismatch` points at. Those shapes
+#   come from test/fixtures/effect-args.tsv, one row per label (`effect-args.PROVENANCE.md
+#   names where each was read from, and which row is this package's own`); an effect with
+#   no row there answers as an empty column and fails the check below.
 #
 # builtins: names and signatures from the language's builtins page,
 #   <https://eyg.run/guides/builtins-reference>; the names are the page's, not this package's. When that capture
@@ -19,8 +23,9 @@
 #   is current when --check below passes and drift when it does not. Re-capture with:
 #   node bin/agent/gen-surface.mjs --builtins <the page as markdown> --write
 #
-# drift: node bin/agent/gen-surface.mjs --check re-derives the effect rows from that
-#   fixture, requires their labels to equal POLICY_FIELDS in lib/render-helpers.mjs,
+# drift: node bin/agent/gen-surface.mjs --check re-derives the effect rows from those
+#   two fixtures, requires their labels to equal POLICY_FIELDS in lib/render-helpers.mjs,
+#   requires an argument shape for every one of them and none for an effect it does not
 #   requires every !builtin this tree's own .eyg sources call to be listed here, and
 #   compares the file
 #   byte for byte with what it rebuilds. Offline, under a second.
@@ -55,26 +60,26 @@ builtin	!binary_concat	Binaries	`(Binary, Binary) -> Binary`
 builtin	!binary_compare	Binaries	`(Binary, Binary) -> Lt({}) | Eq({}) | Gt({})` | Byte-wise comparison.
 builtin	!binary_from_integers	Binaries	`(List(Int)) -> Binary` | Each int must be 0..255.
 builtin	!binary_fold	Binaries	`(Binary, b, (Int, b) -> b) -> b` | Byte-by-byte left fold.
-effect	AppendFile	append_file	
-effect	CreateKey	create_key	
-effect	CWD	cwd	
-effect	DecodeJSON	none	
-effect	DeleteFile	delete_file	
-effect	Env	env	
-effect	Exit	exit	
-effect	EYGParse	none	
-effect	Fetch	fetch	
-effect	Flip	flip	
-effect	Hash	none	
-effect	MakeDirectory	make_directory	
-effect	Now	now	
-effect	Random	random	
-effect	ReadDirectory	read_directory	
-effect	ReadFile	read_file	
-effect	Search	search	
-effect	Sign	none	
-effect	Sleep	sleep	
-effect	StandardError	standard_error	
-effect	StandardIn	standard_in	
-effect	StandardOut	standard_out	
-effect	WriteFile	write_file	
+effect	AppendFile	append_file	{path: String, contents: Binary} -> Result({}, String)
+effect	CreateKey	create_key	<Eddsa({}) | ...> -> Result(Eddsa({kty: String, crv: String, x: Binary, d: Binary}), String)
+effect	CWD	cwd	{} -> Ok(String) | Error({})
+effect	DecodeJSON	none	(Binary) -> Ok(List({term, depth})) | Error(String)
+effect	DeleteFile	delete_file	(String) -> Result({}, String)
+effect	Env	env	(String) -> Option(String)
+effect	Exit	exit	(Int) -> Never
+effect	EYGParse	none	(String) -> Ok(List(AstNode)) | Error(String)
+effect	Fetch	fetch	{method: GET({}), scheme: HTTPS({}), host: String, port: Option(Int), path: String, query: Option(String), headers: List(...), body: Binary} -> Result({status: Int, headers: List(...), body: Binary}, String)
+effect	Flip	flip	{} -> True({}) | False({})
+effect	Hash	none	{algorithm: SHA256({}), bytes: Binary} -> Binary
+effect	MakeDirectory	make_directory	(String) -> Result({}, String)
+effect	Now	now	{} -> Int
+effect	Random	random	(Int) -> Int
+effect	ReadDirectory	read_directory	(String) -> Result(List({name: String, type: Directory({}) | File({size: Int})}), String)
+effect	ReadFile	read_file	{path: String, offset: Int, limit: Int} -> Result(Binary, String)
+effect	Search	search	{path: String, pattern: String, limit: Int} -> Ok(List(String)) | Error(String)
+effect	Sign	none	{key: <as CreateKey answers>, data: Binary} -> Result(Binary, String)
+effect	Sleep	sleep	(Int) -> {}
+effect	StandardError	standard_error	(String) -> {}
+effect	StandardIn	standard_in	{} -> Ok(Binary) | Error(String)
+effect	StandardOut	standard_out	(String) -> {}
+effect	WriteFile	write_file	{path: String, contents: Binary} -> Result({}, String)

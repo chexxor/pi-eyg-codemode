@@ -656,7 +656,7 @@ test("the drift check over the surface file: four inputs, and a planted rename a
   assert.ok(renamed.some((p) => p.includes("row not in the inputs: effect\tWriteFileX")), "and an invented one is an extra row");
   assert.ok(renamed.some((p) => p === "the file does not match what the generator rebuilds"), "and the byte-for-byte rebuild notices");
 
-  const dropped = surfaceDriftProblems(text.replace("effect\tSearch\tsearch\t\n", ""));
+  const dropped = surfaceDriftProblems(text.split("\n").filter((line) => !line.startsWith("effect\tSearch\t")).join("\n"));
   assert.ok(dropped.some((p) => p.includes("missing row: effect\tSearch")), "a deleted effect row is caught by the recorded mapping");
 
   const builtinRenamed = surfaceDriftProblems(text.replace("builtin\t!int_add\tIntegers\t", "builtin\t!int_addx\tIntegers\t"));
