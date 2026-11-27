@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 // bin/agent/doc-checks.mjs - the checks over this package's prose.
 //
-// Five checks, one per rule this package's documentation guidance states:
+// Six checks, one per rule this package's documentation guidance states:
 //
 //   one-term      one word per concept, from the one canonical-term table in
 //                 `README.md`; a rival word for a covered concept is a violation.
@@ -13,6 +13,8 @@
 //   mirrors       no upstream documentation page is copied into `guides/`, and every
 //                 in-tree path the prose mentions exists.
 //   dated-prose   guides, README and the skills carry no dated stamp.
+//   line-count    no sentence states how many lines a tracked file has: a count of a
+//                 file is a snapshot, and it reads as a fact about the file.
 //
 // Scope, and why each exemption exists:
 //
@@ -34,7 +36,7 @@
 //
 // Usage:
 //   node bin/agent/doc-checks.mjs <check>     one check, violations on stdout, exit 1
-//   node bin/agent/doc-checks.mjs --all       all five, one section each
+//   node bin/agent/doc-checks.mjs --all       all six, one section each
 // Offline: reads files under the package directory and runs nothing.
 
 import { readdirSync, readFileSync, statSync } from "node:fs";
@@ -356,6 +358,31 @@ export function checkDatedProse({ root, files = proseFiles(root).filter((f) => f
   return problems;
 }
 
+// --- check 6: no prose states how many lines a tracked file has -------------------
+
+// A count of a file is a snapshot of a file that grows; the sentence that carries it reads
+// as a fact about the file, and nothing notices when the file moves. The rule from
+// `docs/world/entities/gap.duplication-literals-in-prose.md`: name the command that prints
+// the count, not the count. A written budget (`a body under 120 lines`) is an instruction to a
+// reader, not a count of a file, and a run's counts (`s wall`, `rows`, `tests`) are facts about
+// a run - AGENTS.md prices commands this way by design.
+const LINE_COUNT = /\b\d+\s+(?:non-comment |code |raw |total |verbatim )*lines\b/i;
+const LINE_COUNT_ALLOW = /\b(?:s wall|ms wall|rows\b|tests\b|claims?\b)|(?:under|at most|within|no more than|fewer than)\s+\d+/i;
+
+export function checkLineCount({ root, files = proseFiles(root) }) {
+  const problems = [];
+  for (const rel of files) {
+    linesOf(read(root, rel)).forEach((line, i) => {
+      if (ignoreLine(line)) return;
+      const m = line.match(LINE_COUNT);
+      if (m && !LINE_COUNT_ALLOW.test(line)) {
+        problems.push(`${rel}:${i + 1} states a line count \`${m[0]}\`: name the command that prints it - ${line.trim().slice(0, 100)}`);
+      }
+    });
+  }
+  return problems;
+}
+
 // --- cli -------------------------------------------------------------------------
 
 const CHECKS = {
@@ -364,6 +391,7 @@ const CHECKS = {
   headings: checkHeadings,
   mirrors: checkMirrors,
   "dated-prose": checkDatedProse,
+  "line-count": checkLineCount,
 };
 
 function parseArgs(argv) {

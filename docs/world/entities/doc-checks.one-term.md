@@ -13,11 +13,11 @@ superseded_by: null
 
 # One word per concept, checked against one table
 
-`bin/agent/doc-checks.mjs` holds this package's five prose checks, one name each: `one-term`,
-`citations`, `headings`, `mirrors`, `dated-prose`. Each is a function taking `{root, files}` and
-returning problem strings, so a test can point it at a fixture tree, and
+`bin/agent/doc-checks.mjs` holds this package's six prose checks, one name each: `one-term`,
+`citations`, `headings`, `mirrors`, `dated-prose`, `line-count`. Each is a function taking
+`{root, files}` and returning problem strings, so a test can point it at a fixture tree, and
 `node bin/agent/doc-checks.mjs <name>` prints the problems and exits 1 when there are any.
-`bin/agent/audit.sh` runs all five, one row each, with the wall cost of every row printed; that
+`bin/agent/audit.sh` runs all six, one row each, with the wall cost of every row printed; that
 file is the only thing that runs them (`bin/PURPOSE`).
 
 The checks cover two sets. PROSE is `README.md`, `AGENTS.md`, `guides/`, `skills/`,
@@ -55,8 +55,8 @@ default - and the check counts that phrase so a second copy anywhere fails.
 
 The fixtures prove the rules bite: `test/doc-checks.test.mjs` writes temp trees that plant a
 second table, a rival word, a deleted row, and a repeated definition, and asserts the problems;
-the same file asserts all five checks report nothing against this package
-(`docs/world/entities/doc-checks.citations.md` and its four siblings carry the other rules).
+the same file asserts all six checks report nothing against this package
+(`docs/world/entities/doc-checks.citations.md` and its five siblings carry the other rules).
 
 ## Not this
 

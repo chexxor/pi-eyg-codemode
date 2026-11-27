@@ -46,9 +46,10 @@ nothing here reads it at run time, and this tree never writes outside itself.
 | doc-checks.citations | Every markdown file in the tree is scanned (except the session's own goal and note state under `.pi/goals/` and ... | delegate | 2026-11-27 |
 | doc-checks.dated-prose | Within the prose set minus `AGENTS.md`, no line may match an ISO date, `@measured`, "measured <a digit>", "development ... | delegate | 2026-11-27 |
 | doc-checks.headings | Within the prose set (`README.md`, `AGENTS.md`, `guides/`, `skills/`, `.agents/skills/`; the set ... | delegate | 2026-11-27 |
+| doc-checks.line-count | `bin/agent/doc-checks.mjs` now holds this package's six prose checks, one name each: `one-term`, `citations`, ... | delegate | 2026-11-27 |
 | doc-checks.mirrors | Two halves, one per failure mode of an offline documentation copy. | delegate | 2026-11-27 |
-| doc-checks.one-term | `bin/agent/doc-checks.mjs` holds this package's five prose checks, one name each: `one-term`, `citations`, `headings`, ... | delegate | 2026-11-27 |
-| gap.duplication-literals-in-prose | `notes/pi-eyg-codemode-policy-record-extension.md:14` states the duplication as a number: "Of the non-comment lines of ... | delegate | 2026-11-27 |
+| doc-checks.one-term | `bin/agent/doc-checks.mjs` holds this package's six prose checks, one name each: `one-term`, `citations`, `headings`, ... | delegate | 2026-11-27 |
+| gap.duplication-literals-in-prose | `notes/pi-eyg-codemode-policy-record-extension.md` stated the duplication as a number: "Of the non-comment lines of ... | delegate | 2026-11-27 |
 | gap.eval-mode-answers-no-value | `action: eval` answers `[]` for every program, whatever the program computes. | delegate | 2026-11-27 |
 | gap.grant-polish-undecided | The mechanism is recorded and partly measured in `docs/world/entities/pi.session-grants.md`: a refusal carries the ask ... | delegate | 2026-11-27 |
 | gap.install-guides-name-no-policy | This page recorded the hole: neither install page at <https://eyg.run/guides> - `install-a-prebuilt-binary` and ... | delegate | 2026-11-27 |
@@ -104,7 +105,7 @@ nothing here reads it at run time, and this tree never writes outside itself.
 
 ## Where to look for a claim
 
-- entities: 48 · invariants: 4 · decisions: 7 · runbooks: 3 · traps: 100
+- entities: 49 · invariants: 4 · decisions: 7 · runbooks: 3 · traps: 100
 - suspect right now: doc-checks.citations
 - re-check everything: `npm run world` · checks: `npm run world:lint` · regenerate this index: `npm run world:map`
 <!-- END GENERATED -->

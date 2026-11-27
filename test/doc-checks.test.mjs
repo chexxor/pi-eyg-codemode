@@ -20,6 +20,7 @@ import {
   checkCitations,
   checkDatedProse,
   checkHeadings,
+  checkLineCount,
   checkMirrors,
   checkOneTerm,
 } from "../bin/agent/doc-checks.mjs";
@@ -194,13 +195,32 @@ test("dated-prose: no dated stamp in the prose; AGENTS.md prices its commands wi
   }
 });
 
-test("the five checks pass on this package", () => {
+test("line-count: no prose states how many lines a file has; a run's counts stay", () => {
+  const clean = fixture({
+    "AGENTS.md": "# Commands\n\n| command | cost | measured |\n| --- | --- | --- |\n| npm test | 0.16 s wall, 46 tests | 2026-01-02 |\n",
+    "guides/how-to.md": "# How to\n\nRun the check and read what it prints. A skill may say a body stays under 120 lines.\n",
+  });
+  try {
+    assert.deepEqual(checkLineCount({ root: clean }), [], "a priced table and a written budget pass");
+    writeFileSync(join(clean, "guides", "how-to.md"), "# How to\n\nThe copy repeats 75 verbatim lines of `policies/agent-roots.eyg`.\n");
+    const problems = checkLineCount({ root: clean });
+    assert.deepEqual(
+      problems,
+      ["guides/how-to.md:3 states a line count `75 verbatim lines`: name the command that prints it - The copy repeats 75 verbatim lines of `policies/agent-roots.eyg`."],
+    );
+  } finally {
+    rmSync(clean, { recursive: true, force: true });
+  }
+});
+
+test("the six checks pass on this package", () => {
   for (const [name, check] of [
     ["one-term", checkOneTerm],
     ["citations", checkCitations],
     ["headings", checkHeadings],
     ["mirrors", checkMirrors],
     ["dated-prose", checkDatedProse],
+    ["line-count", checkLineCount],
   ]) {
     assert.deepEqual(check({ root: PACKAGE }), [], `${name} reports nothing against the tree`);
   }

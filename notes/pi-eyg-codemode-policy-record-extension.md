@@ -11,12 +11,15 @@ package - `agent-roots.eyg` with an allowlist bolted on - and the copy is the co
 records, not a decision to relitigate (`notes/spawner-effect-allowlist.md` carries why the
 allowlist is a copied file rather than a generated one, and names the drift as a known cost).
 
-**The duplication is countable.** Of the non-comment lines of `policies/agent-roots.eyg`, 75
-appear verbatim in `policies/spawner-effects.eyg` (`@measured 2026-11-21 by
-grep -v '^//' policies/agent-roots.eyg | sed '/^ *$/d' | grep -Fxc -f
-policies/spawner-effects.eyg`; 16 handler names are shared, by
-`grep -o 'let [a-z_]* = ' policies/agent-roots.eyg | sort -u | grep -cxF -f <(grep -o 'let
-[a-z_]* = ' policies/spawner-effects.eyg)`). Every rule that changes must be changed twice,
+**The duplication is countable, and the count is a command rather than a number here.** Run
+`grep -v '^//' policies/agent-roots.eyg | sed '/^ *$/d' | grep -Fxc -f policies/spawner-effects.eyg`
+and read the line count it prints: that many non-comment lines of `policies/agent-roots.eyg`
+appear verbatim in `policies/spawner-effects.eyg`. The sixteen handler names the two files share
+come from `grep -o 'let [a-z_]* = ' policies/agent-roots.eyg | sort -u | grep -cxF -f <(grep -o 'let
+[a-z_]* = ' policies/spawner-effects.eyg)`. A number written down instead ages the moment a policy
+line moves - the sentence that carried one measured 75 on 2026-11-21 and the same command answered
+93 on 2026-11-26, which is why `bin/agent/doc-checks.mjs` now refuses the class (`line-count`,
+`docs/world/entities/doc-checks.line-count.md`). Every rule that changes must be changed twice,
 and nothing in this tree runs either file against a host to catch the drift.
 
 **What the language already has is record update, and it is not this.** `{age: 31, ..person}`

@@ -222,6 +222,7 @@ run_check "doc check: citations" node bin/agent/doc-checks.mjs citations
 run_check "doc check: headings" node bin/agent/doc-checks.mjs headings
 run_check "doc check: mirrors" node bin/agent/doc-checks.mjs mirrors
 run_check "doc check: dated prose" node bin/agent/doc-checks.mjs dated-prose
+run_check "doc check: no line count in prose" node bin/agent/doc-checks.mjs line-count
 # A mechanism that was replaced has to stay replaced in the prose nobody else reads: `notes/` is
 # outside the doc checks and outside the world-model lint, so the only check over it is this one.
 # The sweep reports a retired command line that a reader could run today; a mention under a dated

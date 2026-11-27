@@ -44,7 +44,7 @@ recorded `rule_mapping` snapshot the drift guard compares against, and `guides/e
 reference · `notes/` the trade-offs the code cannot show · `docs/world/` the claims with
 their verify commands · `pi-simple-world-model/` the vendored tool over those claims ·
 `bin/agent/` the scripts a human runs: `audit.sh` the rows below, `gen-surface.mjs` the surface
-file's generator and drift check, `doc-checks.mjs` the five prose checks, `check-variable-shapes.mjs`
+file's generator and drift check, `doc-checks.mjs` the six prose checks, `check-variable-shapes.mjs`
 the generated text of a kept binding, run through the CLI ·
 `.agents/skills/` the skills the coding agent loads. Every one carries a `PURPOSE` file.
 
@@ -117,8 +117,8 @@ host performs it.
 
 | Do this | cost | measured |
 | --- | --- | --- |
-| `bin/agent/audit.sh` (a human or a cron runs it; twenty-five rows, each cost printed) | 56 s wall, 25 rows, 0 failed | 2026-11-27 |
-| `node bin/agent/doc-checks.mjs --all` (the five prose checks: one term, citations, headings, mirrors, dated prose) | 0.07 s wall | 2026-11-22 |
+| `bin/agent/audit.sh` (a human or a cron runs it; twenty-six rows, each cost printed) | 49.6 s wall, 26 rows, 0 failed | 2026-11-27 |
+| `node bin/agent/doc-checks.mjs --all` (the six prose checks: one term, citations, headings, mirrors, dated prose, line count) | 0.10 s wall | 2026-11-27 |
 | `node bin/agent/gen-surface.mjs --check` (the surface file against its four inputs) | 0.04 s wall | 2026-11-22 |
 | `node --test 'test/*.mjs'` (or the single file; one named test per group) | 0.16 s wall, 46 tests, 0 fail | 2026-11-23 |
 | `node bin/agent/refusal-probe.mjs` (one guarded call from a shell: the entry, the policy import and the program module the tool writes, run as `eyg run <entry>`; `--with-policy`, `--fields`, `--program`, `--inside-roots`) | 0.19 s wall | 2026-11-22 |
