@@ -3,7 +3,7 @@ id: variables.generated-shapes
 type: entity
 owner: delegate
 status: current
-verified_at: 2026-11-26
+verified_at: 2026-11-27
 verify: "node bin/agent/check-variable-shapes.mjs | grep -qx 'variable shapes: ok'"
 confidence: high
 sources: [bin/agent/check-variable-shapes.mjs, lib/render-helpers.mjs, bin/agent/audit.sh, docs/world/entities/pi.variable-scopes.md]

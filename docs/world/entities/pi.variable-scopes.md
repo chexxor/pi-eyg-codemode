@@ -3,7 +3,7 @@ id: pi.variable-scopes
 type: entity
 owner: delegate
 status: current
-verified_at: 2026-11-26
+verified_at: 2026-11-27
 verify: "grep -q 'VARIABLE_SCOPES.includes(extern)' extensions/eyg-codemode.ts && grep -q variableWriteOutcomes extensions/eyg-codemode.ts && grep -q eyg-variable lib/render-helpers.mjs && grep -q effectfulBindingProblem lib/render-helpers.mjs && grep -q effectfulBindingProblem extensions/eyg-codemode.ts && node --test test/render-helpers.test.mjs"
 confidence: high
 sources: [extensions/eyg-codemode.ts, lib/render-helpers.mjs, test/render-helpers.test.mjs, guides/how-to-keep-bindings.md, bin/agent/check-variable-shapes.mjs, notes/pi-codemode-kept-bindings.md]

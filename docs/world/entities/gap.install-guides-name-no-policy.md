@@ -3,7 +3,7 @@ id: gap.install-guides-name-no-policy
 type: entity
 owner: delegate
 status: superseded
-verified_at: 2026-11-26
+verified_at: 2026-11-27
 verify: "grep -q 'install-a-prebuilt-binary' README.md && node bin/agent/doc-checks.mjs mirrors > /dev/null && grep -qF 'export function entryProgram' lib/render-helpers.mjs && ! grep -rq -- '--pol' README.md guides/ skills/ extensions/ lib/"
 confidence: high
 sources: [docs/world/entities/cli.runner-official-install-only.md, guides/how-to-point-the-tool-at-your-runner.md, README.md, docs/world/decisions/ADR-003-doc-delegation.md, docs/world/decisions/ADR-006-guard-in-package.md]

@@ -3,7 +3,7 @@ id: doc-checks.dated-prose
 type: entity
 owner: delegate
 status: current
-verified_at: 2026-11-26
+verified_at: 2026-11-27
 verify: "node bin/agent/doc-checks.mjs dated-prose | grep -qx 'dated-prose: ok'"
 confidence: high
 sources: [bin/agent/doc-checks.mjs, test/doc-checks.test.mjs, notes/prose-carries-no-dates.md, .agents/skills/eyg-run/SKILL.md, docs/world/entities/cli.prebuilt-binary.md]

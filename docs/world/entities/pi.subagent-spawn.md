@@ -3,7 +3,7 @@ id: pi.subagent-spawn
 type: entity
 owner: delegate
 status: current
-verified_at: 2026-11-26
+verified_at: 2026-11-27
 verify: "grep -q 'name: .eyg_subagent.' extensions/eyg-codemode.ts && grep -q SPAWNER_POLICY_ENV lib/render-helpers.mjs && grep -q rootsInside extensions/eyg-codemode.ts && grep -q DEPTH_ENV extensions/eyg-codemode.ts && grep -q childTools extensions/eyg-codemode.ts && grep -q CHILD_TOOL_ALLOWLIST lib/render-helpers.mjs && grep -q EFFECT_ALLOWLIST_ENV lib/render-helpers.mjs && grep -q MAX_CALLS_ENV lib/render-helpers.mjs && grep -q callBudget extensions/eyg-codemode.ts && grep -q getActiveTools extensions/eyg-codemode.ts && node --test test/render-helpers.test.mjs"
 confidence: high
 sources: [extensions/eyg-codemode.ts, lib/render-helpers.mjs, test/render-helpers.test.mjs, policies/spawner-effects.eyg, guides/how-to-spawn-a-subagent.md, notes/pi-codemode-subagent-spawn.md, notes/spawner-effect-allowlist.md, docs/world/entities/pi.session-grants.md, docs/world/entities/pi.spawner-policy.md]

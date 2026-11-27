@@ -3,7 +3,7 @@ id: overlay.policy-rules
 type: entity
 owner: delegate
 status: current
-verified_at: 2026-11-26
+verified_at: 2026-11-27
 verify: "test -f test/fixtures/rule_mapping.gleam && grep -q 'pub const rule_mapping' test/fixtures/rule_mapping.gleam && grep -q 'policy.Unchecked' test/fixtures/rule_mapping.gleam && grep -q 'hide_secrets' policies/agent-roots.eyg && grep -q 'Pass(value)' policies/agent-roots.eyg && grep -q 'Mock(denied(' policies/agent-roots.eyg && grep -qF 'let absolute = (cwd, path)' host/guard.eyg && node --test test/host-coverage.test.mjs > /dev/null && node bin/agent/refusal-probe.mjs | grep -qF 'write_file denied by policy: /tmp/eyg-refusal-probe-'"
 confidence: high
 sources: [test/fixtures/rule_mapping.gleam, policies/agent-roots.eyg, policies/deny-all.eyg, host/guard.eyg, README.md, guides/eyg-surface.tsv]

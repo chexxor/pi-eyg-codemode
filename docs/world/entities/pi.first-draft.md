@@ -3,7 +3,7 @@ id: pi.first-draft
 type: entity
 owner: delegate
 status: current
-verified_at: 2026-11-26
+verified_at: 2026-11-27
 verify: "head -20 README.md | grep -qi 'first draft' && head -20 README.md | grep -qi 'no long-running session' && test -f docs/world/entities/cli.checked-runner-on-this-host.md"
 confidence: high
 sources: [README.md, package.json, CHANGELOG.md, docs/world/entities/gap.runner-release-lacks-policy.md, docs/world/entities/gap.policy-runner-not-on-main.md, AGENTS.md]

@@ -3,7 +3,7 @@ id: guides.surface-file
 type: entity
 owner: delegate
 status: current
-verified_at: 2026-11-26
+verified_at: 2026-11-27
 verify: "node bin/agent/gen-surface.mjs --check && node --test test/render-helpers.test.mjs 2>&1 | grep -q 'fail 0'"
 confidence: high
 sources: [guides/eyg-surface.tsv, bin/agent/gen-surface.mjs, test/fixtures/rule_mapping.gleam, test/fixtures/surface.PROVENANCE.md, lib/render-helpers.mjs, test/render-helpers.test.mjs]

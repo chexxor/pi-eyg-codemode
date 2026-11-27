@@ -3,7 +3,7 @@ id: gap.symlinks-escape-the-roots
 type: entity
 owner: delegate
 status: current
-verified_at: 2026-11-26
+verified_at: 2026-11-27
 verify: "t=$(mktemp -d) && trap 'rm -rf $t' EXIT && r=$t/r && r2=$t/r2 && o=$t/o && p=$t/p && mkdir -p $r $r2 $o $p/decides && printf outside > $o/target && ln -s $o/target $r/link && ln -s $o/written $r/wlink && ln -s $p/decides/x.eyg $r2/wlink && node bin/agent/refusal-probe.mjs --roots $r --program test/fixtures/symlink-read-probe.eyg 2>&1 | grep -q 'READ THROUGH SYMLINK' && node bin/agent/refusal-probe.mjs --roots $r --program test/fixtures/symlink-write-probe.eyg 2>&1 | grep -q 'WROTE THROUGH SYMLINK' && test -s $o/written && node bin/agent/refusal-probe.mjs --roots $r2 --protected $p/decides --program test/fixtures/symlink-write-probe.eyg 2>&1 | grep -q 'WROTE THROUGH SYMLINK' && test -s $p/decides/x.eyg"
 confidence: high
 sources: [host/guard.eyg, policies/agent-roots.eyg, bin/agent/refusal-probe.mjs, lib/render-helpers.mjs, test/fixtures/symlink-read-probe.eyg, test/fixtures/symlink-write-probe.eyg, test/fixtures/symlink-directory-probe.eyg, test/fixtures/search-walk.eyg, test/fixtures/self-write-probe.eyg, guides/eyg-surface.tsv, docs/world/entities/host.guard-boundary.md, docs/world/decisions/ADR-006-guard-in-package.md]

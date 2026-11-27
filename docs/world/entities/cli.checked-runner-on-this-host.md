@@ -3,7 +3,7 @@ id: cli.checked-runner-on-this-host
 type: entity
 owner: delegate
 status: superseded
-verified_at: 2026-11-26
+verified_at: 2026-11-27
 verify: "grep -q '^superseded_by: cli.runner-official-install-only' docs/world/entities/cli.checked-runner-on-this-host.md && test -f docs/world/entities/cli.runner-official-install-only.md && ! grep -rq 'eyg-checked' lib/render-helpers.mjs extensions/eyg-codemode.ts test/ && test ! -e bin/agent/build-checked-runner.sh"
 confidence: high
 sources: [test/fixtures/refusal-probe.eyg, lib/render-helpers.mjs, extensions/eyg-codemode.ts, notes/official-installed-runner-only.md, docs/world/entities/gap.policy-runner-not-on-main.md, docs/world/entities/cli.runner-official-install-only.md]

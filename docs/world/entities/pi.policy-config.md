@@ -3,7 +3,7 @@ id: pi.policy-config
 type: entity
 owner: delegate
 status: current
-verified_at: 2026-11-26
+verified_at: 2026-11-27
 verify: "grep -c 'the default policy' README.md && grep -c 'Which policy a call gets' guides/how-to-write-a-policy.md && grep -c 'eyg.policy' guides/how-to-write-a-policy.md && grep -q agent-roots .pi/settings.json && grep -q resolvePolicy extensions/eyg-codemode.ts && grep -q NARROWEST_POLICY_FILE lib/render-helpers.mjs && grep -q refusedArgument extensions/eyg-codemode.ts && node pi-simple-world-model/bin/world_lint.mjs"
 confidence: high
 sources: [README.md, guides/how-to-write-a-policy.md, guides/tool-reference.md, extensions/eyg-codemode.ts, lib/render-helpers.mjs, .pi/settings.json, notes/pi-codemode-project-settings-key.md, docs/world/entities/pi.session-grants.md]

@@ -3,7 +3,7 @@ id: pi.onboarding-scaffold
 type: entity
 owner: delegate
 status: current
-verified_at: 2026-11-26
+verified_at: 2026-11-27
 verify: "grep -qF 'extensions: [\"-builtin:codemode\"]' bin/agent/new-project.mjs && grep -q 'exists, so this is a project someone already configured' bin/agent/new-project.mjs && grep -q 'the project directory must be absolute' bin/agent/new-project.mjs && grep -qF 'pi list --approve' bin/agent/new-project.mjs && grep -q '^## Start a project that loads this package' guides/first-session.md && grep -qF 'Two things the printout does not do for you' bin/agent/new-project.mjs && t=$(mktemp -d) && node bin/agent/new-project.mjs \"$t/try\" >/dev/null && node bin/agent/new-project.mjs \"$t/try\" 2>&1 | grep -q 'nothing written' && (cd \"$t/try\" && pi list --approve) | grep -qF \"$(pwd)\" && rm -rf \"$t\""
 confidence: high
 sources: [bin/agent/new-project.mjs, guides/first-session.md, notes/pi-codemode-onboarding-scaffold.md, .pi/settings.json]
