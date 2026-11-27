@@ -4,50 +4,52 @@ type: entity
 owner: delegate
 status: current
 verified_at: 2026-11-27
-verify: "grep -qF 'let reply = perform DecodeJSON(value)' host/guard.eyg && eyg check test/fixtures/unchecked-ask-misshape.eyg 2>&1 | grep -q 'type mismatch' && node bin/agent/misshape-probe.mjs --program test/fixtures/unchecked-ask-misshape.eyg 2>&1 | grep -q 'no mis-shape'"
+verify: "grep -qF 'handle Hash(({algorithm, bytes}, resume)' host/guard.eyg && node bin/agent/misshape-probe.mjs --program test/fixtures/unchecked-ask-misshape-sign.eyg 2>&1 | grep -q '1 mis-shaped ask(s) named by the check' && node bin/agent/refusal-probe.mjs --program test/fixtures/unchecked-ask-wellshaped.eyg 2>&1 | grep -q 'the four unchecked effects answered'"
 confidence: high
-sources: [host/guard.eyg, test/fixtures/unchecked-ask-misshape.eyg, bin/agent/misshape-probe.mjs, notes/pi-codemode-misshaped-ask.md, test/fixtures/misshaped-ask.eyg, docs/world/entities/codemode.effect-surface.md, docs/world/traps.md]
+sources: [host/guard.eyg, notes/pi-codemode-unchecked-effect-pins.md, test/fixtures/unchecked-ask-misshape.eyg, test/fixtures/unchecked-ask-misshape-eygparse.eyg, test/fixtures/unchecked-ask-misshape-hash.eyg, test/fixtures/unchecked-ask-misshape-sign.eyg, test/fixtures/unchecked-ask-wellshaped.eyg, bin/agent/misshape-probe.mjs, bin/agent/refusal-probe.mjs, notes/pi-codemode-misshaped-ask.md, docs/world/entities/codemode.effect-surface.md, docs/world/traps.md]
 supersedes: null
 superseded_by: null
 ---
-# Gap: a wrong-shaped ask against an unchecked effect costs the whole call cap and prints nothing
+# Closed 2026-11-27: a wrong-shaped ask against an unchecked effect now costs a named row
 
-The four effects the CLI marks unchecked - `DecodeJSON`, `EYGParse`, `Hash`, `Sign` - are the four
-whose guard clause hands the program's argument through with no type pinned:
-`host/guard.eyg:673` reads `let reply = perform DecodeJSON(value)`. The entry check types the whole
-call, and with the clause polymorphic in `value` there is nothing in it to disagree with, so the ask
-is accepted and the run starts. `test/fixtures/unchecked-ask-misshape.eyg` asks
-`DecodeJSON({json: "[1,2]"})`, where the effect wants a `Binary`:
+The hole was this: the four effects no policy field decides - `DecodeJSON`, `EYGParse`, `Hash`,
+`Sign` - had guard clauses that re-performed the ask with whatever the program handed them
+(`let reply = perform DecodeJSON(value)`), so `value` was a type variable and the entry check had
+nothing in the clause to disagree with. A wrong-shaped ask then reached the host, and because the
+CLI's error printer walks its whole interpreter state, the guarded run printed 0 bytes for the call's
+whole cap - 41.39 s wall measured on a 40 s cap - while the same file through the CLI alone named
+`error: type mismatch given: Binary expected: {json: String}` in 0.09 s.
 
-| asked | answer |
+What exists now: each of the four clauses states the shape the effect takes, so `eyg check <the entry>`
+names the ask and the run never starts. `Binary` and `String` are stated by measuring the value
+(`let _ = !binary_size(value)`, `let _ = !string_length(value)`); `Hash` and `Sign` by naming their
+fields in the clause pattern. EYG takes no type annotation in a pattern position, so a builtin that
+already demands the type is how the shape is demanded, and the record effects rebuild their record on
+the re-perform (`notes/pi-codemode-unchecked-effect-pins.md`). The audit's mis-shape row gained a
+fixture per effect, so a regression starts failing there.
+
+| asked today | answer |
 | --- | --- |
-| the fixture through the tool, cap 40 s | `eyg run: timed out after 40 s in 41.39 s wall`, 0 bytes of output |
-| the same file through the CLI alone | `error: type mismatch given: Binary expected: {json: String}`, exit 1 |
-| `eyg check` of that file alone | names the same mismatch, milliseconds |
-| `node bin/agent/misshape-probe.mjs --program` on that file | `no mis-shape: the check named no type mismatch`, 0.426 s, 0 runs |
+| `DecodeJSON({json: "[1,2]"})` guarded | `error: type mismatch given: Binary expected: {json: String}`, 1 mis-shaped ask named in 0.44 s, 0 runs |
+| `EYGParse(1)` guarded | `given: String expected: Integer`, 0.367 s |
+| `Hash({algorithm: "SHA256", bytes: "hello"})` guarded | `given: Binary expected: String`, 0.353 s |
+| `Sign({data: "hello"})` guarded | `given: Binary expected: String`, 0.417 s |
+| the four in their own shape, guarded (`test/fixtures/unchecked-ask-wellshaped.eyg`) | `the four unchecked effects answered`, refusals: (none recorded), exit=0, 0.292 s |
 
-So the guarantee that a mis-shaped ask costs a named answer rather than the spawn cap holds for the
-effects whose clause pins the argument type - the audit's row tests `test/fixtures/misshaped-ask.eyg`
-alone - and not for these four. The cost of the miss is visible as a timeout row, whose advice
-points at `guides/eyg-surface.tsv`, and that file names no argument shape
-(`docs/world/entities/gap.surface-rows-name-no-argument.md`), so the second call spent on the ask
-cannot learn what the first one got wrong. `notes/pi-codemode-misshaped-ask.md` carries why the run
-prints nothing: the CLI's report is a value inspector over the interpreter state, and the guarded
-entry is a large module graph.
+(`@measured 2026-11-27 by `node bin/agent/misshape-probe.mjs --program <fixture>` and by
+`node bin/agent/refusal-probe.mjs --program test/fixtures/unchecked-ask-wellshaped.eyg``; this page's
+command re-runs one mis-shape probe and the well-shaped run.)
 
-**Trigger to close:** each of the four clauses asks for its own argument type, so the entry check
-names the ask and the run never starts. The change is a type written where the clause already is -
-the four effects stay unchecked, which is what keeps them available under every shipped policy
-including the narrowest one. When that lands, this page's command fails and the audit's mis-shape
-row gains a fixture per effect.
+**What this change did not do.** The four effects keep no policy field, so they stay available under
+every shipped policy including the narrowest one - stating a shape in a clause decides nothing about
+reach, and a guard edit may not widen what a call may do.
 
 ## Not this
 
-- which effects no policy can forbid, and why `none` is the field column for these four:
+- which effects no policy field decides, and why `none` is their field column:
   `docs/world/entities/codemode.effect-surface.md`;
+- the mis-shape family the entry check already named before the run starts, on the effects whose
+  clause pinned the type: `notes/pi-codemode-misshaped-ask.md`, `bin/agent/misshape-probe.mjs`;
 - a name the language does not offer at all, which reaches nothing in milliseconds:
   `bin/agent/invented-effect-probe.mjs`;
-- the mis-shape family the entry check does name before the run starts:
-  `notes/pi-codemode-misshaped-ask.md`, `bin/agent/misshape-probe.mjs`;
-- a run that answers nothing because it runs long and prints only at the end - the other meaning of
-  the same timeout row: `guides/what-a-call-does.md`.
+- a run that answers nothing because it runs long and prints only at the end: `guides/what-a-call-does.md`.

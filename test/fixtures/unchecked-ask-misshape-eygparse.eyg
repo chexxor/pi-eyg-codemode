@@ -1,0 +1,6 @@
+// A mis-shaped ask against an effect no policy field decides: `EYGParse` takes a `String`.
+// Unpinned inside the guard this reaches the host and the run prints nothing for the whole cap.
+// Run: eyg check test/fixtures/unchecked-ask-misshape-eygparse.eyg
+// Run: node bin/agent/misshape-probe.mjs --program test/fixtures/unchecked-ask-misshape-eygparse.eyg
+let parsed = perform EYGParse(1)
+perform StandardOut("answered")

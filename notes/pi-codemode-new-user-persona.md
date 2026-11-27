@@ -50,6 +50,10 @@ the `toolResult` parts in `run.jsonl`.
    mismatch. The audit row "a mis-shaped ask costs a named answer, not the spawn cap"
    tests only `test/fixtures/misshaped-ask.eyg`, so the guarantee holds for the effects
    whose clause pins the type and not for the four unchecked ones.
+   **Closed 2026-11-27:** the four clauses now state the shape they take, the audit row gained
+   a fixture per effect, and a wrong ask against them costs 0.35-0.44 s and a named row
+   (`docs/world/entities/gap.unchecked-effect-ask-costs-the-cap.md` quotes the four answers);
+   the 41.39 s below is what this run measured before that change.
 3. The surface file cannot answer the question the refusal text sends a model to it for.
    Every type-mismatch row says to re-check the ask against the effect's own row in
    `guides/eyg-surface.tsv`; the 23 effect rows carry the name and the policy field and

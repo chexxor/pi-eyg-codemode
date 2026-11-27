@@ -668,9 +668,14 @@ let with_exit = (policy, ctx, cont) -> {
 }
 
 // The four effects no policy field decides: recomputation over values the program
-// already holds. The guard performs them unchanged.
+// already holds. The guard performs them unchanged, and each clause states the shape
+// the effect asks for - a `Binary` or `String` pinned by measuring the value, a record
+// pinned by naming its fields. Stating it is what lets `eyg check <entry>` name a wrong-shaped
+// ask before the run starts; left as a type variable, the ask reaches the host and the run
+// spends the call's whole cap printing nothing (docs/world/entities/gap.unchecked-effect-ask-costs-the-cap.md).
 let with_decode_json = (cont) -> {
   handle DecodeJSON((value, resume) -> {
+    let _ = !binary_size(value)
     let reply = perform DecodeJSON(value)
     resume(reply)
   }, cont)
@@ -678,21 +683,24 @@ let with_decode_json = (cont) -> {
 
 let with_eyg_parse = (cont) -> {
   handle EYGParse((value, resume) -> {
+    let _ = !string_length(value)
     let reply = perform EYGParse(value)
     resume(reply)
   }, cont)
 }
 
 let with_hash = (cont) -> {
-  handle Hash((value, resume) -> {
-    let reply = perform Hash(value)
+  handle Hash(({algorithm, bytes}, resume) -> {
+    let _ = !binary_size(bytes)
+    let reply = perform Hash({algorithm: algorithm, bytes: bytes})
     resume(reply)
   }, cont)
 }
 
 let with_sign = (cont) -> {
-  handle Sign((value, resume) -> {
-    let reply = perform Sign(value)
+  handle Sign(({key, data}, resume) -> {
+    let _ = !binary_size(data)
+    let reply = perform Sign({key: key, data: data})
     resume(reply)
   }, cont)
 }

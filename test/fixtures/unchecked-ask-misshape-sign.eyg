@@ -1,0 +1,5 @@
+// A mis-shaped ask against `Sign`: the effect wants `{key: <a tag>, data: Binary}`, and this
+// record carries a `String` for `data` and no `key` field at all.
+// Run: node bin/agent/misshape-probe.mjs --program test/fixtures/unchecked-ask-misshape-sign.eyg
+let signature = perform Sign({data: "hello"})
+perform StandardOut("answered")

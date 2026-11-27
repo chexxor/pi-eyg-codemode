@@ -177,10 +177,19 @@ swallowed_refusal() {
 # in `lib/render-helpers.mjs`, used by `runGuarded` in `extensions/eyg-codemode.ts`). The probe runs
 # that check of the same fixture whose guarded RUN prints 0 bytes for 20 s (`notes/pi-codemode-misshaped-ask.md`
 # carries that figure and the mechanism); the row fails when the check stops naming the type mismatch.
+# The four fixtures named below are the effects no policy field decides - their guard clauses state
+# their argument shape (`notes/pi-codemode-unchecked-effect-pins.md`), which is what lets this check
+# name a wrong ask against them instead of starting a run that prints nothing for the whole cap.
 misshaped_ask() {
   node bin/agent/misshape-probe.mjs | tail -1 | grep -q '1 mis-shaped ask(s) named by the check' || return 1
   node bin/agent/misshape-probe.mjs --program test/fixtures/refusal-probe.eyg | tail -1 |
     grep -q '0 mis-shaped ask(s) named by the check' || return 1
+  for f in test/fixtures/unchecked-ask-misshape.eyg test/fixtures/unchecked-ask-misshape-eygparse.eyg test/fixtures/unchecked-ask-misshape-hash.eyg test/fixtures/unchecked-ask-misshape-sign.eyg; do
+    node bin/agent/misshape-probe.mjs --program "$f" | tail -1 |
+      grep -q '1 mis-shaped ask(s) named by the check' || return 1
+  done
+  node bin/agent/refusal-probe.mjs --program test/fixtures/unchecked-ask-wellshaped.eyg |
+    grep -q 'the four unchecked effects answered' || return 1
   return 0
 }
 

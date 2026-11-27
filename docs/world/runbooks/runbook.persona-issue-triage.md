@@ -24,7 +24,7 @@ Each row is a claim whose `verify` passes while the hole is open, in the same ru
 | row | what it costs a session | the fix this package owns alone | what it costs |
 | --- | --- | --- | --- |
 | `docs/world/entities/gap.surface-rows-name-no-argument.md` | 9 type mismatches, and three calls to land one deletion | an argument-shape column on the 23 effect rows, generated and drift-checked | 2-3 h, 0.04 s on the surface check |
-| `docs/world/entities/gap.unchecked-effect-ask-costs-the-cap.md` | one call that costs the cap and prints nothing, per wrong ask against the four unchecked effects | the four guard clauses ask for their argument type; the entry check then names the ask | ~1 h, 0.5 s on the audit |
+| `docs/world/entities/gap.unchecked-effect-ask-costs-the-cap.md` | closed 2026-11-27: 0.35-0.44 s and a named row per wrong ask, no run started | the four guard clauses state their argument shape, and the audit's mis-shape row gained a fixture per effect | done, 0.5 s on the audit |
 | `docs/world/entities/gap.eval-mode-answers-no-value.md` | a call that spends half a second to answer `[]` | the entry written for eval ends with the program's value | ~1 h, plus 440 s to prove it in a fresh session |
 | `docs/world/entities/gap.duplication-literals-in-prose.md` | one number in a note that reads as a fact about two files | the note names the command; a sixth prose check fails on the class | minutes, 0.01 s |
 

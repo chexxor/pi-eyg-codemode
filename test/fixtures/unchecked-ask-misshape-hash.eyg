@@ -1,0 +1,5 @@
+// A mis-shaped ask against `Hash`: the effect wants `{algorithm: <a tag>, bytes: Binary}`,
+// and this record carries a `String` where a `Binary` is wanted and a `String` for the tag.
+// Run: node bin/agent/misshape-probe.mjs --program test/fixtures/unchecked-ask-misshape-hash.eyg
+let digest = perform Hash({algorithm: "SHA256", bytes: "hello"})
+perform StandardOut("answered")

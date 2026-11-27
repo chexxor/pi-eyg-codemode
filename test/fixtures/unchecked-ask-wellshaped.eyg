@@ -1,0 +1,10 @@
+// The four unchecked effects, each asked in the shape its own row states, so a guard clause
+// that pins that shape still lets the host perform it. Nothing is written: the answers are
+// recomputation over values the program already holds.
+// Run: node bin/agent/refusal-probe.mjs --program test/fixtures/unchecked-ask-wellshaped.eyg
+let parsed = perform DecodeJSON(!string_to_binary("[1,2]"))
+let parsed2 = perform EYGParse("[1,2]")
+let digest = perform Hash({algorithm: SHA256({}), bytes: !string_to_binary("hi")})
+let k = Eddsa({kty: "OKP", crv: "Ed25519", x: !binary_from_integers([1]), d: !binary_from_integers([2])})
+let signature = perform Sign({key: k, data: !string_to_binary("hi")})
+perform StandardOut("the four unchecked effects answered")
