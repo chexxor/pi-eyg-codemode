@@ -22,7 +22,7 @@
 // argv - no shell - and only when a persona and a project are named.
 
 import { spawn } from "node:child_process";
-import { existsSync, readFileSync, writeFileSync } from "node:fs";
+import { appendFileSync, existsSync, readFileSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 
 // What each eyg call turned out to be, in the order the checks apply. A call is one
@@ -153,10 +153,13 @@ function runPass(args) {
 
   console.log(`persona-run: starting a pass in ${project}; transcript to ${out}`);
   const child = spawn("pi", [...argv, prompt], { cwd: project });
-  const chunks = [];
-  const errChunks = [];
-  child.stdout.on("data", (c) => chunks.push(c));
-  child.stderr.on("data", (c) => errChunks.push(c));
+  // Stream, do not buffer: pi writes the JSONL as it goes, and a pass killed by the cap
+  // still leaves a transcript talliable up to the call it reached.
+  writeFileSync(out, "");
+  const errPath = join(project, "run.err");
+  writeFileSync(errPath, "");
+  child.stdout.on("data", (c) => appendFileSync(out, c.toString("utf8")));
+  child.stderr.on("data", (c) => appendFileSync(errPath, c.toString("utf8")));
   const cap = Number(args.timeout ?? 900) * 1000;
   const timer = setTimeout(() => {
     console.log(`persona-run: the pass passed ${Number(args.timeout ?? 900)} s; killing it and tallying what it wrote`);
@@ -164,9 +167,7 @@ function runPass(args) {
   }, cap);
   child.on("close", (code) => {
     clearTimeout(timer);
-    const text = Buffer.concat(chunks).toString("utf8");
-    writeFileSync(out, text);
-    if (errChunks.length) writeFileSync(join(project, "run.err"), Buffer.concat(errChunks).toString("utf8"));
+    const text = readFileSync(out, "utf8");
     console.log(`persona-run: pi exit ${code}, ${text.length} bytes of transcript`);
     printTally(tally(parseJsonl(text)), out);
   });
